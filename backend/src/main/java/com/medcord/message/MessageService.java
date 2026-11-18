@@ -21,6 +21,7 @@ public class MessageService {
     private final MessageRepository messages;
     private final MessageRevisionRepository revisions;
     private final ThreadRepository threads;
+    private final ReactionRepository reactions;
     private final ChannelRepository channels;
     private final UserRepository users;
     private final ProfessionalProfileRepository profiles;
@@ -28,11 +29,11 @@ public class MessageService {
     private final ChannelTransport transport;
     private final Duration editWindow;
 
-    public MessageService(MessageRepository messages, MessageRevisionRepository revisions, ThreadRepository threads, ChannelRepository channels,
+    public MessageService(MessageRepository messages, MessageRevisionRepository revisions, ThreadRepository threads, ReactionRepository reactions, ChannelRepository channels,
                           UserRepository users, ProfessionalProfileRepository profiles, PermissionService perms,
                           ChannelTransport transport,
                           @Value("${medcord.messages.edit-window-minutes:1440}") long editWindowMinutes) {
-        this.messages = messages; this.revisions = revisions; this.threads = threads; this.channels = channels; this.users = users;
+        this.messages = messages; this.revisions = revisions; this.threads = threads; this.reactions = reactions; this.channels = channels; this.users = users;
         this.profiles = profiles; this.perms = perms; this.transport = transport;
         this.editWindow = Duration.ofMinutes(editWindowMinutes);
     }
@@ -72,7 +73,7 @@ public class MessageService {
         }
         msg = messages.saveAndFlush(msg);
         transport.onMessageSent(ch.getCommunityId(), ch.getId(), msg.getId());
-        return toDtos(List.of(msg)).get(0);
+        return toDtos(List.of(msg), userId).get(0);
     }
 
     /** Page of a thread's replies (oldest to newest within the page). */
@@ -91,10 +92,10 @@ public class MessageService {
         boolean hasMore = page.size() > size;
         List<Message> slice = new ArrayList<>(hasMore ? page.subList(0, size) : page);
         Collections.reverse(slice);
-        return new MessagePage(toDtos(slice), hasMore);
+        return new MessagePage(toDtos(slice, userId), hasMore);
     }
 
-    MessageDto dto(Message m) { return toDtos(List.of(m)).get(0); }
+    MessageDto dto(Message m, UUID viewerId) { return toDtos(List.of(m), viewerId).get(0); }
 
     /** Newest page first in storage order; returned oldest-to-newest for display. Cursor = id of the oldest message already loaded. */
     @Transactional(readOnly = true)
@@ -113,7 +114,7 @@ public class MessageService {
         boolean hasMore = page.size() > size;
         List<Message> slice = new ArrayList<>(hasMore ? page.subList(0, size) : page);
         Collections.reverse(slice);
-        return new MessagePage(toDtos(slice), hasMore);
+        return new MessagePage(toDtos(slice, userId), hasMore);
     }
 
     /** Author-only, inside the edit window. The previous content is snapshotted first. */
@@ -135,7 +136,7 @@ public class MessageService {
         msg.setEditedAt(Instant.now());
         messages.saveAndFlush(msg);
         transport.onMessageEdited(ch.getCommunityId(), ch.getId(), msg.getId());
-        return toDtos(List.of(msg)).get(0);
+        return toDtos(List.of(msg), userId).get(0);
     }
 
     /** Author or MODERATE_MESSAGES. Soft delete + tombstone snapshot (kept for audit). */
@@ -191,7 +192,7 @@ public class MessageService {
     }
 
     /** Batch-loads authors, profiles and reply targets to avoid N+1 queries. */
-    private List<MessageDto> toDtos(List<Message> list) {
+    List<MessageDto> toDtos(List<Message> list, UUID viewerId) {
         Set<UUID> replyIds = list.stream().map(Message::getReplyToId).filter(Objects::nonNull).collect(Collectors.toSet());
         Map<UUID, Message> replies = messages.findAllById(replyIds).stream().collect(Collectors.toMap(Message::getId, x -> x));
         Set<UUID> authorIds = new HashSet<>();
@@ -202,6 +203,9 @@ public class MessageService {
             .stream().collect(Collectors.toMap(MessageThread::getRootMessageId, x -> x));
         Map<UUID, ThreadRepository.Stats> stats = threadByRoot.isEmpty() ? Map.of()
             : threads.stats(threadByRoot.values().stream().map(MessageThread::getId).toList()).stream().collect(Collectors.toMap(ThreadRepository.Stats::getThreadId, x -> x));
+        Map<UUID, List<ReactionDto>> reactionMap = new HashMap<>();
+        reactions.counts(list.stream().map(Message::getId).toList(), viewerId).forEach(c ->
+            reactionMap.computeIfAbsent(c.getMessageId(), k -> new ArrayList<>()).add(new ReactionDto(c.getEmoji(), c.getTotal(), c.getMine() > 0)));
         Map<UUID, ProfessionalProfile> profs = profiles.findAllById(authorIds).stream().collect(Collectors.toMap(ProfessionalProfile::getUserId, x -> x));
 
         return list.stream().map(m -> {
@@ -226,7 +230,8 @@ public class MessageService {
                     st == null ? null : st.getLastReplyAt(), th.isArchived());
             }
             return new MessageDto(m.getId(), m.getChannelId(), author, m.isDeleted() ? null : m.getBody(),
-                m.getCreatedAt(), m.getEditedAt(), m.isDeleted(), preview, summary, m.getThreadId());
+                m.getCreatedAt(), m.getEditedAt(), m.isDeleted(), preview, summary, m.getThreadId(),
+                m.isDeleted() ? List.of() : reactionMap.getOrDefault(m.getId(), List.of()), m.getPinnedAt() != null && !m.isDeleted());
         }).toList();
     }
 

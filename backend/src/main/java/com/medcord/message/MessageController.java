@@ -14,10 +14,12 @@ import org.springframework.web.bind.annotation.*;
 public class MessageController {
     private final MessageService service;
     private final ThreadService threads;
+    private final ReactionService reactions;
 
-    public MessageController(MessageService service, ThreadService threads) {
+    public MessageController(MessageService service, ThreadService threads, ReactionService reactions) {
         this.service = service;
         this.threads = threads;
+        this.reactions = reactions;
     }
 
     private static UUID me(Jwt jwt) { return UUID.fromString(jwt.getSubject()); }
@@ -66,4 +68,20 @@ public class MessageController {
     MessageDto replyInThread(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody SendRequest r) {
         return threads.reply(id, me(jwt), r);
     }
+
+    // reactions and pins
+    @PutMapping("/messages/{id}/reactions/{emoji}")
+    MessageDto react(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @PathVariable String emoji) { return reactions.react(id, me(jwt), emoji); }
+
+    @DeleteMapping("/messages/{id}/reactions/{emoji}")
+    MessageDto unreact(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @PathVariable String emoji) { return reactions.unreact(id, me(jwt), emoji); }
+
+    @PutMapping("/messages/{id}/pin")
+    MessageDto pin(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) { return reactions.pin(id, me(jwt), true); }
+
+    @DeleteMapping("/messages/{id}/pin")
+    MessageDto unpin(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) { return reactions.pin(id, me(jwt), false); }
+
+    @GetMapping("/channels/{channelId}/pins")
+    List<MessageDto> pins(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID channelId) { return reactions.pinned(channelId, me(jwt)); }
 }

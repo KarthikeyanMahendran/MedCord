@@ -17,11 +17,14 @@ public final class MessageDtos {
 
     public record ReplyPreview(UUID id, String authorName, String excerpt, boolean deleted) {}
 
+    public record ReactionDto(String emoji, long count, boolean mine) {}
+
     public record ThreadSummary(UUID id, String title, long replyCount, Instant lastReplyAt, boolean archived) {}
 
     /** body is null when deleted. thread is set on a root message that has a thread; threadId on a thread reply. */
     public record MessageDto(UUID id, UUID channelId, Author author, String body, Instant createdAt,
-                             Instant editedAt, boolean deleted, ReplyPreview replyTo, ThreadSummary thread, UUID threadId) {}
+                             Instant editedAt, boolean deleted, ReplyPreview replyTo, ThreadSummary thread, UUID threadId,
+                             List<ReactionDto> reactions, boolean pinned) {}
 
     public record CreateThreadRequest(@Size(max = 120) String title) {}
 

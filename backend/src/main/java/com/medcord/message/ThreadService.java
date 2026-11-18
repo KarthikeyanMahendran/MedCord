@@ -29,7 +29,7 @@ public class ThreadService {
         Channel ch = channel(root.getChannelId());
         Membership m = perms.membership(ch.getCommunityId(), userId);
         var existing = threads.findByRootMessageId(messageId);
-        if (existing.isPresent()) return dto(existing.get());
+        if (existing.isPresent()) return dto(existing.get(), userId);
         if (root.getThreadId() != null) throw new ApiException(HttpStatus.BAD_REQUEST, "Threads cannot be nested");
         if (root.isDeleted()) throw new ApiException(HttpStatus.CONFLICT, "Cannot start a thread on a deleted message");
         if (ch.isArchived()) throw new ApiException(HttpStatus.CONFLICT, "This channel is archived and read-only");
@@ -39,14 +39,14 @@ public class ThreadService {
         t.setRootMessageId(messageId);
         t.setCreatedBy(userId);
         if (title != null && !title.isBlank()) t.setTitle(title.trim());
-        return dto(threads.saveAndFlush(t));
+        return dto(threads.saveAndFlush(t), userId);
     }
 
     @Transactional(readOnly = true)
     public ThreadDto get(UUID threadId, UUID userId) {
         MessageThread t = thread(threadId);
         perms.membership(channel(t.getChannelId()).getCommunityId(), userId);
-        return dto(t);
+        return dto(t, userId);
     }
 
     @Transactional(readOnly = true)
@@ -71,11 +71,11 @@ public class ThreadService {
         }
         if (r.title() != null) t.setTitle(r.title().isBlank() ? null : r.title().trim());
         if (r.archived() != null) t.setArchived(r.archived());
-        return dto(threads.saveAndFlush(t));
+        return dto(threads.saveAndFlush(t), userId);
     }
 
-    private ThreadDto dto(MessageThread t) {
-        MessageDto root = messageService.dto(messages.findById(t.getRootMessageId()).orElseThrow());
+    private ThreadDto dto(MessageThread t, UUID viewerId) {
+        MessageDto root = messageService.dto(messages.findById(t.getRootMessageId()).orElseThrow(), viewerId);
         ThreadSummary s = root.thread();
         return new ThreadDto(t.getId(), t.getChannelId(), t.getRootMessageId(), t.getTitle(), t.isArchived(),
             s == null ? 0 : s.replyCount(), s == null ? null : s.lastReplyAt(), t.getCreatedBy(), t.getCreatedAt(), root);

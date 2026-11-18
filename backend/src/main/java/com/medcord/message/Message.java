@@ -21,6 +21,8 @@ public class Message {
     @Column(name = "edited_at") private Instant editedAt;
     @Column(name = "deleted_at") private Instant deletedAt;
     @Column(name = "deleted_by") private UUID deletedBy;
+    @Column(name = "pinned_at") private Instant pinnedAt;
+    @Column(name = "pinned_by") private UUID pinnedBy;
 
     public boolean isDeleted() { return deletedAt != null; }
 }
