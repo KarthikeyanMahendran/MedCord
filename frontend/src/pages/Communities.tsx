@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Globe, Lock, Plus, Search, Users } from 'lucide-react'
-import { Alert, Badge, Button, Card, CardBody, EmptyState, FormGroup, Input, Modal, Textarea } from '../components/ui'
+import { Alert, Avatar, Badge, Button, Card, CardBody, EmptyState, FormGroup, Input, Modal, PageHeader, Textarea } from '../components/ui'
 import { createCommunity, discover, joinCommunity, listMine } from '../api/communities'
 import type { Community } from '../api/communities'
 import { fieldErrors, problemMessage } from '../api/client'
@@ -11,19 +11,20 @@ import { useAuth } from '../context/AuthContext'
 function CommunityCard({ c, action }: { c: Community; action?: React.ReactNode }) {
   return (
     <Card>
-      <CardBody>
-        <div className="mc-row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <Link to={`/communities/${c.id}`} style={{ fontWeight: 700, fontSize: 16 }}>{c.name}</Link>
-            <div className="mc-row" style={{ marginTop: 6, flexWrap: 'wrap' }}>
-              {c.specialtyTag && <Badge tone="info">{c.specialtyTag}</Badge>}
-              <Badge tone="neutral">{c.visibility === 'PRIVATE' ? <><Lock size={11} /> Private</> : <><Globe size={11} /> Public</>}</Badge>
-              <span className="mc-muted-sub"><Users size={12} style={{ verticalAlign: -2 }} /> {c.memberCount}</span>
+      <CardBody style={{ display: 'grid', gap: 12, height: '100%' }}>
+        <div className="mc-row" style={{ alignItems: 'flex-start' }}>
+          <Avatar name={c.name} size="md" square />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Link to={`/communities/${c.id}`} style={{ color: 'var(--mc-text)', fontWeight: 500, fontSize: 15 }}>{c.name}</Link>
+            <div className="mc-muted-sub" style={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+              {c.visibility === 'PRIVATE' ? <Lock size={11} /> : <Globe size={11} />}{c.visibility === 'PRIVATE' ? 'Private' : 'Public'}
+              <span aria-hidden="true">·</span><Users size={11} /> <span className="mc-num">{c.memberCount}</span> members
             </div>
           </div>
           {action}
         </div>
-        {c.description && <p className="mc-hint" style={{ margin: '10px 0 0' }}>{c.description}</p>}
+        {c.description && <p style={{ fontSize: 13, color: 'var(--mc-text-2)', lineHeight: 1.5 }}>{c.description}</p>}
+        {c.specialtyTag && <div><Badge tone="neutral">{c.specialtyTag}</Badge></div>}
       </CardBody>
     </Card>
   )
@@ -75,35 +76,28 @@ export default function Communities() {
 
   return (
     <main className="mc-page mc-page-wide">
-      <div className="mc-row" style={{ justifyContent: 'space-between' }}>
-        <div>
-          <h1 style={{ fontSize: 22 }}>Communities</h1>
-          <p className="mc-hint" style={{ margin: '4px 0 0' }}>Specialty groups for discussion, cases and collaboration.</p>
-        </div>
-        <Button onClick={() => setCreating(true)} disabled={!verified} title={verified ? undefined : 'Only verified professionals can create communities'}>
-          <Plus size={16} /> New community
-        </Button>
-      </div>
+      <PageHeader title="Communities" description="Specialty groups for discussion, cases and collaboration."
+        actions={<Button onClick={() => setCreating(true)} disabled={!verified} title={verified ? undefined : 'Only verified professionals can create communities'}><Plus size={15} /> New community</Button>} />
       {!verified && <Alert tone="info">You can browse and join communities now. Creating one requires a verified licence.</Alert>}
       {error && <Alert tone="danger">{error}</Alert>}
 
       <section aria-labelledby="mine-h" style={{ display: 'grid', gap: 12 }}>
-        <h2 id="mine-h" style={{ fontSize: 16 }}>Your communities</h2>
+        <h2 id="mine-h" className="mc-section-title">Your communities</h2>
         {loading ? <div className="mc-skeleton" style={{ height: 80 }} /> : mine.length === 0
-          ? <Card><EmptyState title="You haven't joined any communities yet">Find one below or ask for an invite link.</EmptyState></Card>
+          ? <Card><EmptyState title="You haven't joined any communities yet" icon={<Users size={18} />}>Find one below, or ask a colleague for an invite link.</EmptyState></Card>
           : <div className="mc-grid-2">{mine.map((c) => <CommunityCard key={c.id} c={c} />)}</div>}
       </section>
 
       <section aria-labelledby="disc-h" style={{ display: 'grid', gap: 12 }}>
         <div className="mc-row" style={{ justifyContent: 'space-between' }}>
-          <h2 id="disc-h" style={{ fontSize: 16 }}>Discover</h2>
+          <h2 id="disc-h" className="mc-section-title">Discover</h2>
           <div style={{ position: 'relative', width: 260 }}>
-            <Search size={14} style={{ position: 'absolute', left: 10, top: 13, color: 'var(--mc-text-muted)' }} />
+            <Search size={14} style={{ position: 'absolute', left: 10, top: 11, color: 'var(--mc-text-faint)' }} />
             <Input aria-label="Search communities" placeholder="Search by name or specialty" value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 30 }} />
           </div>
         </div>
         {discoverable.length === 0 && !loading
-          ? <Card><EmptyState title="No public communities to show">Try a different search.</EmptyState></Card>
+          ? <Card><EmptyState title="No public communities to show" icon={<Search size={18} />}>Try a different name or specialty.</EmptyState></Card>
           : <div className="mc-grid-2">{discoverable.map((c) => <CommunityCard key={c.id} c={c} action={<Button size="sm" variant="secondary" onClick={() => join(c)}>Join</Button>} />)}</div>}
       </section>
 

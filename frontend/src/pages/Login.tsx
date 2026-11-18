@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { Alert, Button, FormGroup, Input } from '../components/ui'
+import { Alert, Button, FormGroup, Input, PasswordInput } from '../components/ui'
 import { AuthLayout } from '../components/AuthLayout'
 import { useAuth } from '../context/AuthContext'
 import { problemMessage } from '../api/client'
@@ -34,8 +34,8 @@ export default function Login() {
   return (
     <AuthLayout>
       <div>
-        <h2 style={{ fontSize: 24 }}>Sign in</h2>
-        <p className="mc-hint">Welcome back. Enter your credentials to continue.</p>
+        <h2>Sign in to MedCord</h2>
+        <p className="mc-hint">Use the work email you registered with.</p>
       </div>
       {error && <Alert tone="danger">{error}</Alert>}
       <form onSubmit={onSubmit} style={{ display: 'grid', gap: 16 }} noValidate>
@@ -43,11 +43,12 @@ export default function Login() {
           <Input id="email" type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@hospital.org" />
         </FormGroup>
         <FormGroup id="password" label="Password">
-          <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <PasswordInput id="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </FormGroup>
         <Button type="submit" full loading={busy} disabled={!email || !password}>Sign in</Button>
       </form>
-      <p className="mc-hint">New to MedCord? <Link to="/register">Create an account</Link></p>
+      <div className="mc-auth-divider">New to MedCord?</div>
+      <Link to="/register" style={{ textDecoration: 'none' }}><Button variant="secondary" full>Create an account</Button></Link>
     </AuthLayout>
   )
 }

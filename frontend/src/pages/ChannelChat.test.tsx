@@ -33,6 +33,7 @@ describe('ChannelChat', () => {
     vi.resetAllMocks()
     vi.mocked(comm.getCommunity).mockResolvedValue(community(['SEND_MESSAGES']))
     vi.mocked(comm.listChannels).mockResolvedValue([channel()])
+    vi.mocked(comm.listMembers).mockResolvedValue([])
     window.HTMLElement.prototype.scrollIntoView = vi.fn()
   })
 
@@ -42,7 +43,7 @@ describe('ChannelChat', () => {
     ] })
     setup()
     expect(await screen.findByText('Hello team')).toBeInTheDocument()
-    expect(screen.getAllByText('verified').length).toBeGreaterThan(0)
+    expect(screen.getAllByLabelText('Verified').length).toBeGreaterThan(0)
     expect(screen.getByText('(edited)')).toBeInTheDocument()
     expect(screen.getByText('This message was deleted.')).toBeInTheDocument()
   })
@@ -214,7 +215,6 @@ describe('ChannelChat in DM mode', () => {
   it('lists conversations, shows the person and sends a message', async () => {
     vi.mocked(msgs.sendMessage).mockResolvedValue(message({ id: 'n1', body: 'hi sara' }))
     setupDm()
-    expect(await screen.findByRole('heading', { name: 'Direct messages' })).toBeInTheDocument()
     expect((await screen.findAllByText('Dr Sara')).length).toBeGreaterThan(0)
     await userEvent.type(await screen.findByLabelText('Message'), 'hi sara{Enter}')
     await waitFor(() => expect(msgs.sendMessage).toHaveBeenCalledWith('dm1', 'hi sara', undefined))
@@ -232,7 +232,7 @@ describe('ChannelChat in DM mode', () => {
 
   it('shows a placeholder when no conversation is selected', async () => {
     setupDm('/messages')
-    expect(await screen.findByText('Select a conversation')).toBeInTheDocument()
+    expect(await screen.findByText('No conversation selected')).toBeInTheDocument()
     expect(msgs.listMessages).not.toHaveBeenCalled()
   })
 })

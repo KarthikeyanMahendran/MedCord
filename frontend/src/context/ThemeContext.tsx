@@ -10,12 +10,12 @@ function initial(): Theme {
     const s = localStorage.getItem(KEY)
     if (s === 'light' || s === 'dark') return s
   } catch { /* ignore */ }
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  return 'dark' // Discord-style default; the user can switch to light
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(initial)
-  useEffect(() => { document.documentElement.classList.toggle('dark', theme === 'dark') }, [theme])
+  useEffect(() => { document.documentElement.classList.toggle('light', theme === 'light') }, [theme])
   const toggle = useCallback(() => setTheme((t) => {
     const next = t === 'light' ? 'dark' : 'light'
     try { localStorage.setItem(KEY, next) } catch { /* ignore */ }

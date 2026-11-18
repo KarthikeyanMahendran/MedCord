@@ -7,6 +7,9 @@ import { ThemeProvider } from './context/ThemeContext'
 import './styles/tokens.css'
 import './styles/base.css'
 import './styles/components.css'
+import './styles/shell.css'
+import './styles/chat.css'
+import './styles/auth.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Hash, MessageCircle, Search as SearchIcon } from 'lucide-react'
-import { Alert, Button, Card, CardBody, EmptyState, Input } from '../components/ui'
+import { Alert, Button, Card, CardBody, EmptyState, Input, PageHeader } from '../components/ui'
 import { Highlight } from '../components/chat/Highlight'
 import { listMine } from '../api/communities'
 import type { Community } from '../api/communities'
@@ -50,13 +50,10 @@ export default function Search() {
 
   return (
     <main className="mc-page mc-page-wide">
-      <div>
-        <h1 style={{ fontSize: 22 }}>Search</h1>
-        <p className="mc-hint" style={{ margin: '4px 0 0' }}>Search messages in your communities and direct messages. Use "quotes" for phrases and -word to exclude.</p>
-      </div>
+      <PageHeader title="Search" description={<>Messages across your communities and direct messages. Use <span className="mc-kbd">"phrase"</span> for exact matches and <span className="mc-kbd">-word</span> to exclude.</>} />
       <div className="mc-row" style={{ gap: 12 }}>
         <div style={{ position: 'relative', flex: 1 }}>
-          <SearchIcon size={15} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--mc-text-muted)' }} />
+          <SearchIcon size={15} style={{ position: 'absolute', left: 11, top: 10, color: 'var(--mc-text-faint)' }} />
           <Input aria-label="Search messages" autoFocus placeholder="Search messages…" value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 34 }} />
         </div>
         <select className="mc-input" style={{ width: 220 }} aria-label="Filter by community" value={communityId} onChange={(e) => setCommunityId(e.target.value)}>
@@ -65,8 +62,8 @@ export default function Search() {
         </select>
       </div>
       {error && <Alert tone="danger">{error}</Alert>}
-      {q.trim().length < 2 && <Card><EmptyState title="Type at least 2 characters to search" /></Card>}
-      {searched && hits.length === 0 && !loading && <Card><EmptyState title="No messages found">Try different words or remove the community filter.</EmptyState></Card>}
+      {q.trim().length < 2 && <Card><EmptyState title="Type at least 2 characters to search" icon={<SearchIcon size={18} />}>Results only include channels and conversations you can access.</EmptyState></Card>}
+      {searched && hits.length === 0 && !loading && <Card><EmptyState title="No messages found" icon={<SearchIcon size={18} />}>Try different words or remove the community filter.</EmptyState></Card>}
       <div style={{ display: 'grid', gap: 10 }}>
         {hits.map((h) => (
           <Card key={h.messageId}>

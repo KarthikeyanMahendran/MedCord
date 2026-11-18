@@ -2,6 +2,17 @@
 
 MedCord has its own standalone design system: TypeScript components with the `mc-` prefix and MedCord branding. It does not depend on or import from any other project.
 
+## Visual language (v3, "Clinical Graphite")
+- **Typeface:** Lexend (shared with the ZenoHosp product family), weights 400/500/600 only; tabular numerals for times and counts.
+- **Colour:** neutral graphite elevation ladder (`rail < side < bg < surface < surface-2 < surface-3`) and **one** accent (cobalt `--mc-brand`). Semantic colours (success/warning/danger/info, online) are used only to carry meaning — never decoration. No gradients, glows or emoji in product chrome.
+- **Shape and motion:** 6–10px radii; 120ms fades/scale-ins only; `prefers-reduced-motion` respected.
+- **Identity:** muted avatar tones with even luminance (white initials stay AA); a small `VerifiedMark` check replaces repeated "verified" pills.
+- **Shell:** `ServerRail` (40px square tiles, accent ring + indicator bar for the active item, tooltips) | `SideColumn` (contextual: channels, DMs or navigation; user panel) | content. One destination per rail item.
+- **Pages** use `PageHeader` (eyebrow/breadcrumb, title, description, actions); lists use card + `mc-list-row`; zero states use `EmptyState` with an icon, one line of guidance and at most one action.
+- **Chat:** Discord-grade density — author runs collapse within 5 minutes, day dividers, channel intro block, layout-matched skeletons, hover toolbar with destructive actions separated, keyboard hints under the composer, full timestamps on hover.
+- **Accessibility:** every icon-only button gets a tooltip from its accessible label automatically; focus-visible rings; disabled controls look inactive rather than dimmed.
+- Styles: `tokens.css`, `base.css`, `components.css` (kit), `shell.css`, `chat.css`, `auth.css`.
+
 ## Principles
 - Calm, clinical, high-contrast neutral palette; one accent colour. Dense but readable (chat apps are information-heavy).
 - Keyboard-first (Esc closes, Enter sends, ↑ edits last message, `/` focuses search). WCAG AA contrast, visible focus rings, ARIA roles on lists/dialogs.
