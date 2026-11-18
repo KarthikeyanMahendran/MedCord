@@ -1,36 +1,42 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { Hash, Megaphone, Pin, Send, ShieldOff, UserX, X } from 'lucide-react'
-import { Alert, Badge, Button, FormGroup, Modal, Textarea } from '../components/ui'
-import { REPORT_REASONS, reportMessage } from '../api/moderation'
-import type { ReportReason } from '../api/moderation'
-import { getCommunity, listChannels } from '../api/communities'
-import type { Channel, Community } from '../api/communities'
+import { useParams } from 'react-router-dom'
+import { ArrowUp, Hash, Megaphone, MessageCircle, Pin, ShieldOff, UserX, Users, X } from 'lucide-react'
+import { Alert, Avatar, Button, EmptyState, FormGroup, Modal, Textarea, VerifiedMark } from '../components/ui'
 import { PresenceDot } from '../components/chat/PresenceDot'
-import { blockUser, getDm, listDms, unblockUser } from '../api/dms'
-import type { Conversation } from '../api/dms'
 import { MessageItem } from '../components/chat/MessageItem'
 import { ThreadPanel } from '../components/chat/ThreadPanel'
+import { getCommunity, listChannels, listMembers } from '../api/communities'
+import type { Channel, Community, Member } from '../api/communities'
+import { blockUser, getDm, unblockUser } from '../api/dms'
+import type { Conversation } from '../api/dms'
 import { deleteMessage, editMessage, listMessages, listPins, messageHistory, pinMessage, react, sendMessage, startThread, unpinMessage, unreact } from '../api/messages'
 import type { Message, Revision } from '../api/messages'
+import { REPORT_REASONS, reportMessage } from '../api/moderation'
+import type { ReportReason } from '../api/moderation'
 import { problemMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 
 const POLL_MS = 4000
 const dayKey = (iso: string) => new Date(iso).toDateString()
 const dayLabel = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })
+const GROUP_WINDOW_MS = 5 * 60 * 1000
 
+/** Message pane for a community channel (`/communities/:id/channels/:channelId`) or a DM (`/messages/:channelId`). The sidebar lives in the app shell. */
 export default function ChannelChat() {
   const { id = '', channelId = '' } = useParams()
   const dmMode = !id
   const { user } = useAuth()
   const [community, setCommunity] = useState<Community | null>(null)
   const [channels, setChannels] = useState<Channel[]>([])
+  const [members, setMembers] = useState<Member[]>([])
+  const [showMembers, setShowMembers] = useState(true)
+  const [conv, setConv] = useState<Conversation | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [hasMore, setHasMore] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!!channelId)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [text, setText] = useState('')
   const [replyTo, setReplyTo] = useState<Message | null>(null)
   const [editing, setEditing] = useState<Message | null>(null)
@@ -38,14 +44,12 @@ export default function ChannelChat() {
   const [confirmDelete, setConfirmDelete] = useState<Message | null>(null)
   const [openThread, setOpenThread] = useState<string | null>(null)
   const [pins, setPins] = useState<Message[] | null>(null)
-  const [convs, setConvs] = useState<Conversation[]>([])
   const [reporting, setReporting] = useState<Message | null>(null)
   const [reason, setReason] = useState<ReportReason>('PHI')
   const [details, setDetails] = useState('')
-  const [notice, setNotice] = useState<string | null>(null)
-  const [conv, setConv] = useState<Conversation | null>(null)
   const [history, setHistory] = useState<{ msg: Message; revs: Revision[] } | null>(null)
   const scroller = useRef<HTMLDivElement>(null)
+  const composer = useRef<HTMLTextAreaElement>(null)
   const stick = useRef(true)
 
   const channel = channels.find((c) => c.id === channelId)
@@ -55,7 +59,6 @@ export default function ChannelChat() {
     : !!channel && !channel.archived && perms.includes('SEND_MESSAGES') && (channel.type !== 'ANNOUNCEMENT' || perms.includes('POST_ANNOUNCEMENTS'))
   const moderator = !dmMode && perms.includes('MODERATE_MESSAGES')
   const otherPerson = conv && !conv.group ? conv.participants.find((p) => p.id !== user?.id) : undefined
-  const title = dmMode ? (conv?.name ?? '…') : `# ${channel?.name ?? '…'}`
 
   useEffect(() => {
     if (dmMode) return
@@ -63,12 +66,12 @@ export default function ChannelChat() {
   }, [id, dmMode])
 
   useEffect(() => {
-    if (!dmMode) return
-    const load = () => listDms().then(setConvs).catch(() => undefined)
+    if (dmMode || !showMembers) return
+    const load = () => listMembers(id).then(setMembers).catch(() => undefined)
     void load()
-    const t = setInterval(() => { if (document.visibilityState !== 'hidden') void load() }, 15000)
+    const t = setInterval(() => { if (document.visibilityState !== 'hidden') void load() }, 30000)
     return () => clearInterval(t)
-  }, [dmMode])
+  }, [id, dmMode, showMembers])
 
   useEffect(() => {
     if (!dmMode || !channelId) { setConv(null); return }
@@ -93,7 +96,7 @@ export default function ChannelChat() {
   }, [])
 
   useEffect(() => {
-    setMessages([]); setLoading(!!channelId); setReplyTo(null); setEditing(null); setOpenThread(null); setText(''); stick.current = true
+    setMessages([]); setLoading(!!channelId); setReplyTo(null); setEditing(null); setOpenThread(null); setText(''); setNotice(null); stick.current = true
     if (!channelId) return
     let alive = true
     listMessages(channelId).then((p) => { if (alive) { setMessages(p.items); setHasMore(p.hasMore); setError(null) } })
@@ -109,6 +112,12 @@ export default function ChannelChat() {
     const el = scroller.current
     if (el && stick.current) el.scrollTop = el.scrollHeight
   }, [messages])
+
+  // Auto-grow the composer up to its max height.
+  useLayoutEffect(() => {
+    const el = composer.current
+    if (el) { el.style.height = 'auto'; el.style.height = `${Math.min(el.scrollHeight, 180)}px` }
+  }, [text])
 
   async function loadOlder() {
     if (messages.length === 0) return
@@ -137,6 +146,8 @@ export default function ChannelChat() {
     } catch (e) { setError(problemMessage(e)) } finally { setSending(false) }
   }
 
+  function startEdit(m: Message) { setEditing(m); setReplyTo(null); setText(m.body ?? ''); composer.current?.focus() }
+
   function onKey(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void submit() }
     else if (e.key === 'Escape') { setEditing(null); setReplyTo(null); setText('') }
@@ -145,8 +156,6 @@ export default function ChannelChat() {
       if (mine) { e.preventDefault(); startEdit(mine) }
     }
   }
-
-  function startEdit(m: Message) { setEditing(m); setReplyTo(null); setText(m.body ?? '') }
 
   async function doDelete() {
     if (!confirmDelete) return
@@ -178,74 +187,89 @@ export default function ChannelChat() {
     try { merge([await (m.pinned ? unpinMessage(m.id) : pinMessage(m.id))]) } catch (e) { setError(problemMessage(e)) }
   }
 
+  async function showPins() {
+    try { setPins(await listPins(channelId)) } catch (e) { setError(problemMessage(e)) }
+  }
+
   async function submitReport() {
     if (!reporting) return
     try { await reportMessage(reporting.id, reason, details || undefined); setNotice('Thanks — moderators will review this message.'); setReporting(null); setDetails('') }
     catch (e) { setError(problemMessage(e)); setReporting(null) }
   }
 
-  async function showPins() {
-    try { setPins(await listPins(channelId)) } catch (e) { setError(problemMessage(e)) }
-  }
-
   const rows = useMemo(() => {
-    let last = ''
-    return messages.map((m) => { const k = dayKey(m.createdAt); const header = k !== last; last = k; return { m, header } })
+    let lastDay = ''
+    return messages.map((m, i) => {
+      const k = dayKey(m.createdAt)
+      const header = k !== lastDay
+      lastDay = k
+      const prev = messages[i - 1]
+      const compact = !header && !!prev && prev.author.id === m.author.id && !prev.deleted && !m.replyTo && !prev.thread
+        && new Date(m.createdAt).getTime() - new Date(prev.createdAt).getTime() < GROUP_WINDOW_MS
+      return { m, header, compact }
+    })
   }, [messages])
 
-  return (
-    <div className={`mc-chat ${openThread ? 'has-thread' : ''}`}>
-      <aside className="mc-chat-side" aria-label={dmMode ? 'Conversations' : 'Channels'}>
-        {dmMode ? (<>
-          <h2>Direct messages</h2>
-          {convs.length === 0 && <span className="mc-hint" style={{ padding: '4px 8px' }}>No conversations yet. Open a community and message a member.</span>}
-          {convs.map((c) => {
-            const other = c.group ? undefined : c.participants.find((p) => p.id !== user?.id)
-            return (
-              <Link key={c.id} to={`/messages/${c.id}`} className={`mc-chan ${c.id === channelId ? 'active' : ''}`} aria-current={c.id === channelId ? 'page' : undefined}>
-                {other ? <PresenceDot online={other.online} /> : <span className="mc-muted-sub">👥</span>}
-                <span style={{ minWidth: 0 }}>
-                  <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
-                  {c.lastMessage && <span className="mc-muted-sub" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 400 }}>{c.lastMessage.excerpt}</span>}
-                </span>
-              </Link>
-            )
-          })}
-        </>) : (<>
-          <Link to={`/communities/${id}`} className="mc-muted-sub" style={{ padding: '4px 8px' }}>← {community?.name ?? 'Community'}</Link>
-          <h2>Channels</h2>
-          {channels.map((c) => (
-            <Link key={c.id} to={`/communities/${id}/channels/${c.id}`} className={`mc-chan ${c.id === channelId ? 'active' : ''}`} aria-current={c.id === channelId ? 'page' : undefined}>
-              {c.type === 'ANNOUNCEMENT' ? <Megaphone size={15} /> : <Hash size={15} />}{c.name}{c.archived && <Badge tone="neutral">archived</Badge>}
-            </Link>
-          ))}
-        </>)}
-      </aside>
+  const online = members.filter((m) => m.online)
+  const offline = members.filter((m) => !m.online)
+  const memberRow = (m: Member) => (
+    <div key={m.userId} className={`mc-member ${m.online ? '' : 'is-offline'}`}>
+      <span className="mc-member-avatar"><Avatar name={m.displayName} size="sm" /><PresenceDot online={m.online} /></span>
+      <span style={{ minWidth: 0 }}>
+        <span className="mc-member-name"><span>{m.displayName}</span>{m.verified && <VerifiedMark size={13} />}</span>
+        <span className="mc-member-sub">{m.roles.find((r) => r.name !== 'Member')?.name ?? m.specialty ?? ''}</span>
+      </span>
+    </div>
+  )
 
+  return (
+    <div className="mc-chat">
       <section className="mc-chat-main">
         <div className="mc-chat-head">
-          <div className="mc-row">
-            {dmMode && otherPerson && <PresenceDot online={otherPerson.online} />}
-            <strong>{title}</strong>
-            {!dmMode && channel?.topic && <span className="mc-muted-sub" style={{ marginLeft: 10 }}>{channel.topic}</span>}
-            {dmMode && otherPerson && <span className="mc-muted-sub">{otherPerson.specialty}{otherPerson.verified ? ' · verified' : ''}</span>}
+          <div className="mc-chat-title">
+            {dmMode
+              ? (<>{otherPerson
+                    ? <span className="mc-member-avatar"><Avatar name={otherPerson.displayName} size="sm" /><PresenceDot online={otherPerson.online} /></span>
+                    : conv ? <Users size={18} /> : <MessageCircle size={18} />}
+                  <strong>{conv?.name ?? (channelId ? '…' : 'Direct messages')}</strong>
+                  {otherPerson?.verified && <VerifiedMark />}
+                  {otherPerson && <span className="mc-chat-topic">{otherPerson.specialty ?? ''}{otherPerson.online ? ' · Online' : ' · Offline'}</span>}
+                  {conv?.group && <span className="mc-chat-topic">{conv.participants.length} members</span>}</>)
+              : (<>{channel?.type === 'ANNOUNCEMENT' ? <Megaphone size={18} /> : <Hash size={18} />}<strong>{channel?.name ?? '…'}</strong>
+                  {channel?.topic && <span className="mc-chat-topic">{channel.topic}</span>}</>)}
           </div>
-          <div className="mc-row">
+          <div className="mc-chat-actions">
             {dmMode && otherPerson && <Button variant="ghost" size="sm" onClick={toggleBlock}>{conv?.blockedByMe ? <><ShieldOff size={14} /> Unblock</> : <><UserX size={14} /> Block</>}</Button>}
-            {!dmMode && <Button variant="ghost" size="sm" onClick={showPins}><Pin size={14} /> Pinned</Button>}
+            {!dmMode && <Button variant="icon" aria-label="Pinned" onClick={showPins}><Pin size={17} /></Button>}
+            {!dmMode && <Button variant="icon" aria-label={showMembers ? 'Hide member list' : 'Show member list'} aria-pressed={showMembers} onClick={() => setShowMembers((v) => !v)}><Users size={17} /></Button>}
           </div>
         </div>
 
         <div className="mc-msgs" ref={scroller} onScroll={(e) => { const el = e.currentTarget; stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80 }} role="log" aria-live="polite" aria-label="Messages">
           {hasMore && <div style={{ textAlign: 'center' }}><Button variant="ghost" size="sm" onClick={loadOlder}>Load earlier messages</Button></div>}
-          {loading && <div className="mc-skeleton" style={{ height: 48, margin: 8 }} />}
-          {!channelId && dmMode && <div className="mc-empty"><strong>Select a conversation</strong><p className="mc-hint">Or message someone from a community's member list.</p></div>}
-          {!loading && channelId && messages.length === 0 && <div className="mc-empty"><strong>{dmMode ? `This is the start of your conversation with ${conv?.name ?? ''}` : `This is the start of #${channel?.name}`}</strong><p className="mc-hint">Say hello 👋</p></div>}
-          {rows.map(({ m, header }) => (
+          {loading && [0, 1, 2].map((i) => (
+            <div key={i} className="mc-msg-skel" aria-hidden="true">
+              <span className="mc-skeleton is-avatar" />
+              <span style={{ display: 'grid', gap: 8, paddingTop: 4 }}><span className="mc-skeleton" style={{ width: 140 }} /><span className="mc-skeleton" style={{ width: `${70 - i * 15}%` }} /></span>
+            </div>
+          ))}
+          {!channelId && dmMode && (
+            <div style={{ margin: 'auto' }}>
+              <EmptyState title="No conversation selected" icon={<MessageCircle size={18} />}>Pick a conversation on the left, or message a colleague from any community&apos;s member list.</EmptyState>
+            </div>
+          )}
+          {!loading && channelId && !hasMore && (dmMode ? conv : channel) && (
+            <div className="mc-intro">
+              <div className="mc-intro-icon">{dmMode ? <MessageCircle size={22} /> : channel?.type === 'ANNOUNCEMENT' ? <Megaphone size={22} /> : <Hash size={22} />}</div>
+              <h2>{dmMode ? conv?.name : `Welcome to #${channel?.name}`}</h2>
+              <p>{dmMode ? 'This is the beginning of your direct message history.' : `This is the start of the #${channel?.name} channel.${channel?.topic ? ` ${channel.topic}.` : ''}`}</p>
+            </div>
+          )}
+          {rows.map(({ m, header, compact }) => (
             <div key={m.id}>
               {header && <div className="mc-day">{dayLabel(m.createdAt)}</div>}
-              <MessageItem m={m} userId={user?.id} canPost={canPost} moderator={moderator}
-                onReply={(x) => { setReplyTo(x); setEditing(null) }} onEdit={startEdit} onDelete={setConfirmDelete}
+              <MessageItem m={m} compact={compact} userId={user?.id} canPost={canPost} moderator={moderator}
+                onReply={(x) => { setReplyTo(x); setEditing(null); composer.current?.focus() }} onEdit={startEdit} onDelete={setConfirmDelete}
                 onHistory={showHistory} onThread={openOrStartThread} onReact={toggleReaction} onPin={togglePin} onReport={dmMode ? undefined : setReporting} />
             </div>
           ))}
@@ -261,15 +285,29 @@ export default function ChannelChat() {
             ? <Alert tone="info">{channel.archived ? 'This channel is archived and read-only.' : channel.type === 'ANNOUNCEMENT' ? 'Only members with announcement permission can post here.' : 'You do not have permission to send messages.'}</Alert>
             : (
               <div className="mc-composer-row" hidden={!channelId || (dmMode && !canPost)}>
-                <textarea className="mc-input" rows={1} aria-label="Message" placeholder={dmMode ? `Message ${conv?.name ?? ''}` : channel ? `Message #${channel.name}` : 'Message'} value={text}
-                  onChange={(e) => setText(e.target.value)} onKeyDown={onKey} maxLength={4000} />
-                <Button onClick={submit} loading={sending} disabled={!text.trim()} aria-label={editing ? 'Save edit' : 'Send'}><Send size={16} /></Button>
+                <textarea ref={composer} rows={1} aria-label="Message" placeholder={dmMode ? `Message ${conv?.name ?? ''}` : channel ? `Message #${channel.name}` : 'Message'}
+                  value={text} onChange={(e) => setText(e.target.value)} onKeyDown={onKey} maxLength={4000} />
+                <Button onClick={submit} loading={sending} disabled={!text.trim()} aria-label={editing ? 'Save edit' : 'Send'}><ArrowUp size={16} /></Button>
               </div>
             )}
+          {channelId && canPost && (
+            <div className="mc-composer-hint" aria-hidden="true">
+              <span><b>Enter</b> to send</span><span><b>Shift + Enter</b> new line</span>{!editing && <span><b>↑</b> edit last</span>}<span><b>Esc</b> cancel</span>
+            </div>
+          )}
         </div>
       </section>
 
       {openThread && <ThreadPanel threadId={openThread} userId={user?.id} canPost={canPost} moderator={moderator} onClose={() => setOpenThread(null)} onChanged={refreshTimeline} />}
+
+      {!dmMode && showMembers && !openThread && (
+        <aside className="mc-panel mc-members" aria-label="Members">
+          <div className="mc-side-label">Online — {online.length}</div>
+          {online.map(memberRow)}
+          <div className="mc-side-label">Offline — {offline.length}</div>
+          {offline.map(memberRow)}
+        </aside>
+      )}
 
       <Modal isOpen={confirmDelete !== null} onClose={() => setConfirmDelete(null)} title="Delete message?" size="sm"
         footer={<><Button variant="secondary" onClick={() => setConfirmDelete(null)}>Cancel</Button><Button variant="danger" onClick={doDelete}>Delete</Button></>}>

@@ -1,0 +1,108 @@
+/* ==========================================================================
+   Chat
+   ========================================================================== */
+.mc-chat { display: flex; height: 100%; min-height: 0; }
+.mc-chat-main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+
+/* ---- Header ---- */
+.mc-chat-head { height: 48px; flex: none; padding: 0 12px 0 20px; border-bottom: 1px solid var(--mc-border); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.mc-chat-title { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.mc-chat-title > svg { color: var(--mc-text-faint); flex: none; }
+.mc-chat-title strong { font-size: 15px; font-weight: 600; white-space: nowrap; }
+.mc-chat-topic { color: var(--mc-text-muted); font-size: 13px; padding-left: 12px; margin-left: 4px; border-left: 1px solid var(--mc-border-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.mc-chat-actions { display: flex; align-items: center; gap: 2px; }
+
+/* ---- Timeline ---- */
+.mc-msgs { flex: 1; overflow-y: auto; padding: 8px 0 16px; display: flex; flex-direction: column; }
+.mc-intro { padding: 32px 20px 16px; border-bottom: 1px solid var(--mc-border); margin-bottom: 8px; }
+.mc-intro-icon { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; background: var(--mc-surface-2); border: 1px solid var(--mc-border); color: var(--mc-text-muted); margin-bottom: 12px; }
+.mc-intro h2 { font-size: 20px; }
+.mc-intro p { color: var(--mc-text-muted); font-size: 13px; margin-top: 4px; }
+.mc-day { display: flex; align-items: center; gap: 12px; margin: 16px 20px 4px; color: var(--mc-text-faint); font-size: 12px; font-weight: 500; }
+.mc-day::before, .mc-day::after { content: ''; flex: 1; height: 1px; background: var(--mc-border); }
+
+.mc-msg { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 14px; padding: 3px 20px 3px 20px; margin-top: 14px; transition: background 80ms linear; }
+.mc-msg.is-compact { margin-top: 0; padding-top: 1px; padding-bottom: 1px; }
+.mc-msg:hover, .mc-msg:focus-within { background: var(--mc-hover); }
+.mc-msg > div { min-width: 0; }
+.mc-msg-gutter { width: 36px; display: flex; justify-content: center; padding-top: 2px; }
+.mc-msg-hovertime { visibility: hidden; font-size: 10px; color: var(--mc-text-faint); padding-top: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mc-msg:hover .mc-msg-hovertime { visibility: visible; }
+.mc-msg-meta { display: flex; align-items: center; gap: 6px; min-width: 0; line-height: 1.35; margin-bottom: 1px; }
+.mc-msg-name { font-weight: 500; font-size: 14px; color: var(--mc-text); white-space: nowrap; }
+.mc-msg-role { font-size: 12px; color: var(--mc-text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-msg-time { color: var(--mc-text-faint); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mc-msg-body { white-space: pre-wrap; word-break: break-word; font-size: 14px; line-height: 1.55; color: var(--mc-text-2); }
+.mc-msg-deleted { color: var(--mc-text-faint); font-style: italic; }
+.mc-edited { color: var(--mc-text-faint); font-size: 11px; margin-left: 4px; }
+.mc-pinned-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--mc-warning); }
+
+/* Hover toolbar */
+.mc-msg-tools { position: absolute; right: 16px; top: -14px; display: none; gap: 0; padding: 2px; background: var(--mc-surface); border-radius: var(--mc-radius-md); box-shadow: var(--mc-shadow-md); z-index: 5; }
+.mc-msg:hover .mc-msg-tools, .mc-msg:focus-within .mc-msg-tools { display: flex; }
+.mc-msg-tools .mc-btn { flex: none; }
+.mc-msg-tools .mc-tools-sep { width: 1px; margin: 5px 2px; background: var(--mc-border-strong); }
+
+/* Reply quote */
+.mc-quote { display: flex; align-items: center; gap: 6px; min-width: 0; margin: 0 0 3px; font-size: 12px; color: var(--mc-text-muted); }
+/* Spine from the avatar's centre up into the quoted line (avatar 36px + 14px gap: centre sits 32px left of content). */
+.mc-quote::before { content: ''; flex: none; align-self: flex-end; width: 26px; height: 8px; margin: 0 4px -2px -32px; border-left: 2px solid var(--mc-border-strong); border-top: 2px solid var(--mc-border-strong); border-top-left-radius: 6px; }
+.mc-thread .mc-quote::before { width: 20px; margin-left: -26px; }
+.mc-quote strong { flex: none; font-weight: 500; color: var(--mc-text-2); }
+.mc-quote span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Thread summary */
+.mc-thread-chip { display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; padding: 4px 10px 4px 8px; border: 1px solid var(--mc-border); border-radius: var(--mc-radius-md); background: var(--mc-surface); color: var(--mc-brand-text); font-size: 12px; font-weight: 500; cursor: pointer; transition: background var(--mc-transition), border-color var(--mc-transition); }
+.mc-thread-chip span { color: var(--mc-text-faint); font-weight: 400; }
+.mc-thread-chip:hover { border-color: var(--mc-border-strong); background: var(--mc-surface-2); }
+
+/* Reactions */
+.mc-reactions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.mc-reaction { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; border: 1px solid var(--mc-border); border-radius: var(--mc-radius-md); background: var(--mc-surface); font-size: 13px; line-height: 1; cursor: pointer; color: var(--mc-text); transition: background var(--mc-transition), border-color var(--mc-transition); }
+.mc-reaction span { font-size: 12px; font-weight: 500; color: var(--mc-text-muted); font-variant-numeric: tabular-nums; }
+.mc-reaction:hover:not(:disabled) { border-color: var(--mc-border-strong); background: var(--mc-surface-2); }
+.mc-reaction.is-mine { border-color: var(--mc-brand); background: var(--mc-brand-soft); }
+.mc-reaction.is-mine span { color: var(--mc-brand-text); }
+.mc-reaction:disabled { cursor: default; }
+.mc-picker { position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; display: grid; grid-template-columns: repeat(4, 32px); gap: 2px; padding: 6px; background: var(--mc-surface); border-radius: var(--mc-radius-md); box-shadow: var(--mc-shadow-md); animation: mc-scale-in 120ms var(--mc-ease); }
+.mc-picker button { width: 32px; height: 32px; border: 0; background: transparent; font-size: 18px; border-radius: 6px; cursor: pointer; }
+.mc-picker button:hover { background: var(--mc-hover); }
+
+/* Skeleton rows */
+.mc-msg-skel { display: grid; grid-template-columns: 36px 1fr; column-gap: 14px; padding: 10px 20px; }
+.mc-msg-skel .mc-skeleton.is-avatar { width: 36px; height: 36px; border-radius: 50%; }
+
+/* ---- Composer ---- */
+.mc-composer { padding: 0 20px 16px; display: grid; gap: 6px; flex: none; }
+.mc-composer-bar { display: flex; justify-content: space-between; align-items: center; height: 32px; padding: 0 6px 0 12px; font-size: 12px; color: var(--mc-text-muted); background: var(--mc-surface-2); border: 1px solid var(--mc-border-strong); border-bottom: 0; border-radius: var(--mc-radius-md) var(--mc-radius-md) 0 0; margin-bottom: -7px; }
+.mc-composer-bar strong { color: var(--mc-text-2); font-weight: 500; }
+.mc-composer-row { display: flex; gap: 6px; align-items: flex-end; background: var(--mc-surface-2); border: 1px solid var(--mc-border-strong); border-radius: var(--mc-radius-md); padding: 4px 4px 4px 14px; transition: border-color var(--mc-transition), box-shadow var(--mc-transition); }
+.mc-composer-row:focus-within { border-color: var(--mc-brand); box-shadow: 0 0 0 3px var(--mc-brand-soft); }
+.mc-composer-row textarea { flex: 1; min-height: 34px; max-height: 180px; resize: none; background: transparent; border: 0; outline: none; color: var(--mc-text); font-size: 14px; line-height: 1.45; padding: 7px 0; }
+.mc-composer-row textarea::placeholder { color: var(--mc-text-faint); }
+.mc-composer-row .mc-btn-primary { width: 32px; height: 32px; padding: 0; }
+.mc-composer-hint { display: flex; justify-content: flex-end; gap: 12px; font-size: 11px; color: var(--mc-text-faint); padding: 0 2px; }
+.mc-composer-hint b { font-weight: 500; color: var(--mc-text-muted); }
+
+/* ---- Side panels ---- */
+.mc-panel { flex: none; display: flex; flex-direction: column; min-height: 0; background: var(--mc-side); border-left: 1px solid var(--mc-border); animation: mc-fade 140ms var(--mc-ease); }
+.mc-thread { width: 400px; }
+.mc-panel-head, .mc-thread-head { height: 48px; flex: none; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 0 8px 0 16px; border-bottom: 1px solid var(--mc-border); }
+.mc-panel-head strong, .mc-thread-head strong { font-size: 14px; font-weight: 600; }
+.mc-thread-body { flex: 1; overflow-y: auto; padding: 4px 0 8px; display: flex; flex-direction: column; }
+.mc-thread-root { border-bottom: 1px solid var(--mc-border); padding-bottom: 10px; margin-bottom: 4px; }
+.mc-thread .mc-msg { grid-template-columns: 28px minmax(0, 1fr); column-gap: 10px; padding-left: 16px; padding-right: 16px; }
+.mc-thread .mc-msg-gutter { width: 28px; }
+.mc-thread .mc-composer { padding: 8px 16px 16px; }
+.mc-members { width: 240px; overflow-y: auto; padding: 8px; }
+.mc-member { display: flex; align-items: center; gap: 10px; padding: 5px 8px; border-radius: var(--mc-radius); transition: background var(--mc-transition); }
+.mc-member:hover { background: var(--mc-hover); }
+.mc-member.is-offline { opacity: 0.5; }
+.mc-member-avatar { position: relative; display: inline-flex; flex: none; }
+.mc-member-avatar .mc-presence { position: absolute; right: -2px; bottom: -2px; width: 9px; height: 9px; }
+.mc-member-name { display: flex; align-items: center; gap: 4px; font-weight: 500; font-size: 13px; color: var(--mc-text-2); min-width: 0; }
+.mc-member-name > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-member-sub { display: block; font-size: 11px; color: var(--mc-text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 1200px) { .mc-members { display: none; } }
+@media (max-width: 1000px) { .mc-thread { position: absolute; right: 0; top: 0; bottom: 0; z-index: 30; box-shadow: var(--mc-shadow-lg); } }

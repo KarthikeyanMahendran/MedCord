@@ -91,7 +91,7 @@ export function ThreadPanel({ threadId, userId, canPost, moderator, onClose, onC
     onHistory: async (m: Message) => { try { setHistory({ msg: m, revs: await messageHistory(m.id) }) } catch (e) { setError(problemMessage(e)) } } }
 
   return (
-    <aside className="mc-thread" aria-label="Thread">
+    <aside className="mc-panel mc-thread" aria-label="Thread">
       <div className="mc-thread-head">
         <div style={{ minWidth: 0 }}>
           <strong>{thread?.title ?? 'Thread'}</strong>
