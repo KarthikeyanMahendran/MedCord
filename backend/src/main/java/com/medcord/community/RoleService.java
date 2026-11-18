@@ -16,8 +16,10 @@ public class RoleService {
     private final RoleRepository roles;
     private final MembershipRepository memberships;
     private final PermissionService perms;
+    private final com.medcord.audit.AuditService audit;
 
-    public RoleService(RoleRepository roles, MembershipRepository memberships, PermissionService perms) {
+    public RoleService(RoleRepository roles, MembershipRepository memberships, PermissionService perms, com.medcord.audit.AuditService audit) {
+        this.audit = audit;
         this.roles = roles;
         this.memberships = memberships;
         this.perms = perms;
@@ -57,7 +59,9 @@ public class RoleService {
         if (r.position() <= actor.topPosition()) throw new ApiException(HttpStatus.FORBIDDEN, "Cannot create a role at or above your own rank");
         if (roles.existsByCommunityIdAndNameIgnoreCase(communityId, r.name().trim())) throw new ApiException(HttpStatus.CONFLICT, "Role name already exists");
         requireHeld(actor, r.permissions());
-        return dto(mk(communityId, r.name().trim(), r.position(), null, r.permissions()));
+        Role created = mk(communityId, r.name().trim(), r.position(), null, r.permissions());
+        audit.record(communityId, actorId, "ROLE_CREATED", "ROLE", created.getId(), "Created role \"" + created.getName() + "\" with " + created.getPermissions().size() + " permissions");
+        return dto(created);
     }
 
     @Transactional
@@ -75,6 +79,7 @@ public class RoleService {
             role.getPermissions().clear();
             role.getPermissions().addAll(r.permissions());
         }
+        audit.record(communityId, actorId, "ROLE_UPDATED", "ROLE", roleId, "Updated role \"" + role.getName() + "\"");
         return dto(roles.save(role));
     }
 
@@ -84,6 +89,7 @@ public class RoleService {
         Role role = find(communityId, roleId);
         guardManageable(actor, role);
         if (role.isSystem()) throw new ApiException(HttpStatus.BAD_REQUEST, "System roles cannot be deleted");
+        audit.record(communityId, actorId, "ROLE_DELETED", "ROLE", roleId, "Deleted role \"" + role.getName() + "\"");
         roles.delete(role);
     }
 
@@ -106,6 +112,7 @@ public class RoleService {
         target.getRoles().clear();
         target.getRoles().addAll(next);
         memberships.save(target);
+        audit.record(communityId, actorId, "ROLES_ASSIGNED", "USER", targetUserId, "Set roles for " + audit.userName(targetUserId) + " to " + target.getRoles().stream().map(Role::getName).sorted().collect(Collectors.joining(", ")));
         return target.getRoles().stream().sorted(Comparator.comparingInt(Role::getPosition))
             .map(x -> new RoleRef(x.getId(), x.getName())).toList();
     }

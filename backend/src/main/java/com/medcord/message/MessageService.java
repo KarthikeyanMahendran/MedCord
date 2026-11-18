@@ -27,14 +27,17 @@ public class MessageService {
     private final ProfessionalProfileRepository profiles;
     private final ChannelAccess access;
     private final ChannelTransport transport;
+    private final com.medcord.moderation.MuteRepository mutes;
+    private final com.medcord.audit.AuditService audit;
     private final Duration editWindow;
 
     public MessageService(MessageRepository messages, MessageRevisionRepository revisions, ThreadRepository threads, ReactionRepository reactions, ChannelRepository channels,
                           UserRepository users, ProfessionalProfileRepository profiles, ChannelAccess access,
-                          ChannelTransport transport,
+                          ChannelTransport transport, com.medcord.moderation.MuteRepository mutes, com.medcord.audit.AuditService audit,
                           @Value("${medcord.messages.edit-window-minutes:1440}") long editWindowMinutes) {
         this.messages = messages; this.revisions = revisions; this.threads = threads; this.reactions = reactions; this.channels = channels; this.users = users;
         this.profiles = profiles; this.access = access; this.transport = transport;
+        this.mutes = mutes; this.audit = audit;
         this.editWindow = Duration.ofMinutes(editWindowMinutes);
     }
 
@@ -48,6 +51,11 @@ public class MessageService {
         Set<Permission> held = access.permissions(ch, userId);
         if (ch.isArchived()) throw new ApiException(HttpStatus.CONFLICT, "This channel is archived and read-only");
         access.assertCanPost(ch, userId);
+        if (ch.getCommunityId() != null) {
+            mutes.findByCommunityIdAndUserId(ch.getCommunityId(), userId).filter(x -> x.getUntil().isAfter(Instant.now())).ifPresent(x -> {
+                throw new ApiException(HttpStatus.FORBIDDEN, "You are muted in this community until " + x.getUntil());
+            });
+        }
         if (!held.contains(Permission.SEND_MESSAGES)) throw new ApiException(HttpStatus.FORBIDDEN, "Missing permission: SEND_MESSAGES");
         // Announcement channels restrict top-level posts; discussion in their threads stays open to members.
         if (thread == null && ch.getType() == Channel.Type.ANNOUNCEMENT && !held.contains(Permission.POST_ANNOUNCEMENTS)) {
@@ -152,6 +160,9 @@ public class MessageService {
         msg.setDeletedAt(Instant.now());
         msg.setDeletedBy(userId);
         messages.saveAndFlush(msg);
+        if (!msg.getAuthorId().equals(userId) && ch.getCommunityId() != null) {
+            audit.record(ch.getCommunityId(), userId, "MESSAGE_DELETED_BY_MOD", "MESSAGE", msg.getId(), "Deleted a message by " + audit.userName(msg.getAuthorId()) + " in #" + ch.getName());
+        }
         transport.onMessageDeleted(ch.getCommunityId(), ch.getId(), msg.getId());
     }
 

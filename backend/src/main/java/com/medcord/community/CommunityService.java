@@ -31,14 +31,15 @@ public class CommunityService {
     private final ChannelService channels;
     private final PermissionService perms;
     private final ChannelTransport transport;
+    private final com.medcord.audit.AuditService audit;
 
     public CommunityService(CommunityRepository communities, MembershipRepository memberships, InviteRepository invites,
                             BanRepository bans, RoleRepository roleRepo, UserRepository users,
                             ProfessionalProfileRepository profiles, RoleService roles, ChannelService channels,
-                            PermissionService perms, ChannelTransport transport) {
+                            PermissionService perms, ChannelTransport transport, com.medcord.audit.AuditService audit) {
         this.communities = communities; this.memberships = memberships; this.invites = invites; this.bans = bans;
         this.roleRepo = roleRepo; this.users = users; this.profiles = profiles; this.roles = roles;
-        this.channels = channels; this.perms = perms; this.transport = transport;
+        this.channels = channels; this.perms = perms; this.transport = transport; this.audit = audit;
     }
 
     // ---- communities ----
@@ -70,6 +71,7 @@ public class CommunityService {
         channels.createUnchecked(c.getId(), "general", "General discussion", Channel.Type.TEXT);
         channels.createUnchecked(c.getId(), "announcements", "Official announcements", Channel.Type.ANNOUNCEMENT);
         transport.onMemberJoined(c.getId(), userId);
+        audit.record(c.getId(), userId, "COMMUNITY_CREATED", "COMMUNITY", c.getId(), "Created community \"" + c.getName() + "\"");
         return dto(c, userId);
     }
 
@@ -99,6 +101,7 @@ public class CommunityService {
         if (r.description() != null) c.setDescription(r.description());
         if (r.specialtyTag() != null) c.setSpecialtyTag(r.specialtyTag());
         if (r.visibility() != null) c.setVisibility(r.visibility());
+        audit.record(id, userId, "COMMUNITY_UPDATED", "COMMUNITY", id, "Updated community settings");
         return dto(communities.save(c), userId);
     }
 
@@ -106,6 +109,7 @@ public class CommunityService {
     public void delete(UUID id, UUID userId) {
         Community c = communities.findById(id).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Community not found"));
         if (!c.getOwnerId().equals(userId)) throw new ApiException(HttpStatus.FORBIDDEN, "Only the owner can delete a community");
+        audit.record(id, userId, "COMMUNITY_DELETED", "COMMUNITY", id, "Deleted community \"" + c.getName() + "\"");
         communities.delete(c);
         transport.onCommunityDeleted(id);
     }
@@ -172,12 +176,16 @@ public class CommunityService {
 
     @Transactional
     public void kick(UUID id, UUID actorId, UUID targetId) {
+        String name = audit.userName(targetId);
         removeMember(id, actorId, targetId);
+        audit.record(id, actorId, "MEMBER_REMOVED", "USER", targetId, "Removed member " + name);
     }
 
     @Transactional
     public void ban(UUID id, UUID actorId, UUID targetId, String reason) {
+        String name = audit.userName(targetId);
         removeMember(id, actorId, targetId);
+        audit.record(id, actorId, "MEMBER_BANNED", "USER", targetId, "Banned " + name + (reason == null || reason.isBlank() ? "" : ": " + reason));
         if (!bans.existsByCommunityIdAndUserId(id, targetId)) {
             Ban b = new Ban();
             b.setCommunityId(id);
@@ -193,6 +201,7 @@ public class CommunityService {
         perms.require(id, actorId, Permission.MANAGE_MEMBERS);
         bans.findByCommunityIdAndUserId(id, targetId).ifPresentOrElse(bans::delete,
             () -> { throw new ApiException(HttpStatus.NOT_FOUND, "User is not banned"); });
+        audit.record(id, actorId, "MEMBER_UNBANNED", "USER", targetId, "Unbanned " + audit.userName(targetId));
     }
 
     private void removeMember(UUID id, UUID actorId, UUID targetId) {
@@ -216,7 +225,9 @@ public class CommunityService {
         inv.setCode(newCode());
         inv.setMaxUses(r.maxUses());
         if (r.expiresInHours() != null) inv.setExpiresAt(Instant.now().plus(Duration.ofHours(r.expiresInHours())));
-        return invDto(invites.save(inv));
+        Invite saved = invites.save(inv);
+        audit.record(id, userId, "INVITE_CREATED", "INVITE", saved.getId(), "Created invite " + saved.getCode());
+        return invDto(saved);
     }
 
     @Transactional(readOnly = true)
@@ -230,7 +241,10 @@ public class CommunityService {
         perms.require(id, userId, Permission.CREATE_INVITE);
         Invite inv = invites.findById(inviteId).filter(i -> i.getCommunityId().equals(id))
             .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Invite not found"));
-        if (inv.getRevokedAt() == null) inv.setRevokedAt(Instant.now());
+        if (inv.getRevokedAt() == null) {
+            inv.setRevokedAt(Instant.now());
+            audit.record(id, userId, "INVITE_REVOKED", "INVITE", inv.getId(), "Revoked invite " + inv.getCode());
+        }
     }
 
     @Transactional(readOnly = true)

@@ -20,9 +20,11 @@ public class ReactionService {
     private final ChannelRepository channels;
     private final ChannelAccess access;
     private final MessageService messageService;
+    private final com.medcord.audit.AuditService audit;
 
     public ReactionService(MessageRepository messages, ReactionRepository reactions, ChannelRepository channels,
-                           ChannelAccess access, MessageService messageService) {
+                           ChannelAccess access, MessageService messageService, com.medcord.audit.AuditService audit) {
+        this.audit = audit;
         this.messages = messages; this.reactions = reactions; this.channels = channels;
         this.access = access; this.messageService = messageService;
     }
@@ -70,6 +72,7 @@ public class ReactionService {
             m.setPinnedBy(null);
         }
         messages.saveAndFlush(m);
+        audit.record(ch.getCommunityId(), userId, pin ? "MESSAGE_PINNED" : "MESSAGE_UNPINNED", "MESSAGE", m.getId(), (pin ? "Pinned" : "Unpinned") + " a message in #" + ch.getName());
         return messageService.dto(m, userId);
     }
 
