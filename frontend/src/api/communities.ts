@@ -12,7 +12,7 @@ export interface Community {
 export interface Channel { id: string; name: string; topic: string | null; type: 'TEXT' | 'ANNOUNCEMENT'; position: number; archived: boolean }
 export interface Role { id: string; name: string; position: number; system: boolean; permissions: Permission[] }
 export interface RoleRef { id: string; name: string }
-export interface Member { userId: string; displayName: string; specialty: string | null; verified: boolean; roles: RoleRef[]; joinedAt: string }
+export interface Member { userId: string; displayName: string; specialty: string | null; verified: boolean; roles: RoleRef[]; joinedAt: string; online: boolean }
 export interface Invite { id: string; code: string; expiresAt: string | null; maxUses: number | null; uses: number; revoked: boolean }
 export interface InvitePreview { communityName: string; description: string | null; memberCount: number; valid: boolean }
 

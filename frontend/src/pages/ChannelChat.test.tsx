@@ -5,9 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ChannelChat from './ChannelChat'
 import * as comm from '../api/communities'
 import * as msgs from '../api/messages'
+import * as dms from '../api/dms'
 
 vi.mock('../api/communities')
 vi.mock('../api/messages')
+vi.mock('../api/dms')
 vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', displayName: 'Me' } }) }))
 
 const community = (perms: comm.Permission[]): comm.Community => ({
@@ -168,3 +170,49 @@ describe('ChannelChat', () => {
     expect(await screen.findByRole('alert')).toBeInTheDocument()
   })
 })
+
+describe('ChannelChat in DM mode', () => {
+  const conv = (o: Partial<dms.Conversation> = {}): dms.Conversation => ({
+    id: 'dm1', group: false, name: 'Dr Sara', blockedByMe: false, blockedByThem: false, lastMessage: null,
+    participants: [{ id: 'me', displayName: 'Me', specialty: null, verified: false, online: true }, { id: 'u2', displayName: 'Dr Sara', specialty: 'Pediatrics', verified: true, online: true }], ...o,
+  })
+  const setupDm = (path = '/messages/dm1') => render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes><Route path="/messages" element={<ChannelChat />} /><Route path="/messages/:channelId" element={<ChannelChat />} /></Routes>
+    </MemoryRouter>,
+  )
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    vi.mocked(dms.listDms).mockResolvedValue([conv()])
+    vi.mocked(dms.getDm).mockResolvedValue(conv())
+    vi.mocked(msgs.listMessages).mockResolvedValue({ hasMore: false, items: [] })
+    window.HTMLElement.prototype.scrollIntoView = vi.fn()
+  })
+
+  it('lists conversations, shows the person and sends a message', async () => {
+    vi.mocked(msgs.sendMessage).mockResolvedValue(message({ id: 'n1', body: 'hi sara' }))
+    setupDm()
+    expect(await screen.findByRole('heading', { name: 'Direct messages' })).toBeInTheDocument()
+    expect((await screen.findAllByText('Dr Sara')).length).toBeGreaterThan(0)
+    await userEvent.type(await screen.findByLabelText('Message'), 'hi sara{Enter}')
+    await waitFor(() => expect(msgs.sendMessage).toHaveBeenCalledWith('dm1', 'hi sara', undefined))
+  })
+
+  it('blocks the other person from the header', async () => {
+    vi.mocked(dms.blockUser).mockResolvedValue()
+    vi.mocked(dms.getDm).mockResolvedValueOnce(conv()).mockResolvedValueOnce(conv({ blockedByMe: true }))
+    setupDm()
+    await userEvent.click(await screen.findByRole('button', { name: /Block/ }))
+    await waitFor(() => expect(dms.blockUser).toHaveBeenCalledWith('u2'))
+    expect(await screen.findByText(/You blocked this person/)).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Unblock/ })).toBeInTheDocument()
+  })
+
+  it('shows a placeholder when no conversation is selected', async () => {
+    setupDm('/messages')
+    expect(await screen.findByText('Select a conversation')).toBeInTheDocument()
+    expect(msgs.listMessages).not.toHaveBeenCalled()
+  })
+})
+

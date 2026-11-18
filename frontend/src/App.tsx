@@ -22,6 +22,8 @@ export default function App() {
           <Route path="/communities" element={<Communities />} />
           <Route path="/communities/:id" element={<CommunityDetail />} />
           <Route path="/communities/:id/channels/:channelId" element={<ChannelChat />} />
+          <Route path="/messages" element={<ChannelChat />} />
+          <Route path="/messages/:channelId" element={<ChannelChat />} />
           <Route path="/invite/:code" element={<JoinInvite />} />
           <Route element={<AdminRoute />}>
             <Route path="/admin/verifications" element={<Verifications />} />

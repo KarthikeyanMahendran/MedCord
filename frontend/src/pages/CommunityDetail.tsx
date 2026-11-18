@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Archive, Copy, Hash, Megaphone, Trash2 } from 'lucide-react'
+import { Archive, Copy, Hash, Megaphone, MessageCircle, Trash2 } from 'lucide-react'
 import { Alert, Badge, Button, Card, CardBody, EmptyState, FormGroup, Input, Modal, Tabs } from '../components/ui'
 import * as api from '../api/communities'
 import type { Channel, Community, Invite, Member, Permission, Role } from '../api/communities'
 import { ALL_PERMISSIONS } from '../api/communities'
+import { startDm } from '../api/dms'
+import { PresenceDot } from '../components/chat/PresenceDot'
 import { fieldErrors, problemMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 
@@ -133,9 +135,11 @@ export default function CommunityDetail() {
                 <thead><tr><th>Member</th><th>Roles</th><th /></tr></thead>
                 <tbody>{members.map((m) => (
                   <tr key={m.userId}>
-                    <td><strong>{m.displayName}</strong> {m.verified && <Badge tone="success">verified</Badge>}<div className="mc-muted-sub">{m.specialty}</div></td>
+                    <td><div className="mc-row" style={{ gap: 8 }}><PresenceDot online={m.online} /><strong>{m.displayName}</strong></div> {m.verified && <Badge tone="success">verified</Badge>}<div className="mc-muted-sub">{m.specialty}</div></td>
                     <td><div className="mc-row" style={{ flexWrap: 'wrap', gap: 4 }}>{m.roles.map((r) => <Badge key={r.id} tone={r.name === 'Owner' ? 'warning' : 'neutral'}>{r.name}</Badge>)}</div></td>
                     <td style={{ textAlign: 'right' }}>
+                      {m.userId !== user?.id && (
+                        <Button variant="ghost" size="sm" aria-label={`Message ${m.displayName}`} onClick={async () => { try { const c = await startDm([m.userId]); navigate(`/messages/${c.id}`) } catch (e) { fail(e) } }}><MessageCircle size={14} /> Message</Button>)}
                       {can('MANAGE_ROLES') && m.userId !== user?.id && (
                         <Button variant="ghost" size="sm" onClick={() => { setAssignFor(m); setAssignIds(new Set(m.roles.map((r) => r.id))); setErrors({}); setModal('assign') }}>Roles</Button>)}
                       {can('MANAGE_MEMBERS') && m.userId !== user?.id && (

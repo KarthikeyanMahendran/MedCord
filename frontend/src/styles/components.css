@@ -147,3 +147,7 @@
 .mc-picker { position: absolute; top: 100%; right: 0; z-index: 20; display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 6px; background: var(--mc-surface); border: 1px solid var(--mc-border); border-radius: var(--mc-radius); box-shadow: var(--mc-shadow-md); }
 .mc-picker button { border: 0; background: transparent; font-size: 20px; padding: 4px 6px; border-radius: 6px; cursor: pointer; }
 .mc-picker button:hover { background: var(--mc-surface-2); }
+
+/* Presence */
+.mc-presence { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--mc-border); border: 2px solid var(--mc-surface); box-shadow: 0 0 0 1px var(--mc-border); flex: none; }
+.mc-presence.is-online { background: #22c55e; box-shadow: 0 0 0 1px #16a34a; }

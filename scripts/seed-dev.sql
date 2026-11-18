@@ -151,3 +151,38 @@ BEGIN
       SELECT mid, u.id, '👀' FROM users u WHERE u.email IN ('arjun.mehta@medcord.dev','liam.oconnor@medcord.dev','meera.nair@medcord.dev') ON CONFLICT DO NOTHING;
   END IF;
 END $$;
+
+-- Direct messages (DEV ONLY, idempotent via dm_key).
+CREATE OR REPLACE FUNCTION pg_temp.seed_dm(p_emails text[]) RETURNS uuid LANGUAGE plpgsql AS $$
+DECLARE key text; ch uuid; uid uuid;
+BEGIN
+  SELECT string_agg(id::text, ',' ORDER BY id) INTO key FROM users WHERE email = ANY(p_emails);
+  SELECT id INTO ch FROM channels WHERE dm_key = key;
+  IF ch IS NOT NULL THEN RETURN NULL; END IF;
+  INSERT INTO channels (name, type, dm_key) VALUES ('dm', 'DM', key) RETURNING id INTO ch;
+  FOR uid IN SELECT id FROM users WHERE email = ANY(p_emails) LOOP
+    INSERT INTO dm_participants (channel_id, user_id) VALUES (ch, uid);
+  END LOOP;
+  RETURN ch;
+END $$;
+
+DO $$
+DECLARE ch uuid; priya uuid; arjun uuid; sara uuid; t timestamptz := now() - interval '50 minutes';
+BEGIN
+  SELECT id INTO priya FROM users WHERE email = 'priya.raman@medcord.dev';
+  SELECT id INTO arjun FROM users WHERE email = 'arjun.mehta@medcord.dev';
+  SELECT id INTO sara  FROM users WHERE email = 'sara.ahmed@medcord.dev';
+  ch := pg_temp.seed_dm(ARRAY['priya.raman@medcord.dev','arjun.mehta@medcord.dev']);
+  IF ch IS NOT NULL THEN
+    INSERT INTO messages (channel_id, author_id, body, created_at) VALUES
+      (ch, arjun, 'Hi Priya, do you have 10 minutes this week to talk through the cardio-embolic stroke pathway?', t),
+      (ch, priya, 'Absolutely. Thursday after the journal club works?', t + interval '4 min'),
+      (ch, arjun, 'Perfect, see you then. 👍', t + interval '6 min');
+  END IF;
+  ch := pg_temp.seed_dm(ARRAY['priya.raman@medcord.dev','sara.ahmed@medcord.dev','arjun.mehta@medcord.dev']);
+  IF ch IS NOT NULL THEN
+    INSERT INTO messages (channel_id, author_id, body, created_at) VALUES
+      (ch, sara, 'Group chat for planning the HFpEF journal club on Friday.', t + interval '20 min'),
+      (ch, priya, 'I will present the SGLT2 data; Arjun, can you cover the cognitive outcomes?', t + interval '24 min');
+  END IF;
+END $$;

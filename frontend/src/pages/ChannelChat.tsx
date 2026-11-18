@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Hash, Megaphone, Pin, Send, X } from 'lucide-react'
+import { Hash, Megaphone, Pin, Send, ShieldOff, UserX, X } from 'lucide-react'
 import { Alert, Badge, Button, Modal } from '../components/ui'
 import { getCommunity, listChannels } from '../api/communities'
 import type { Channel, Community } from '../api/communities'
+import { PresenceDot } from '../components/chat/PresenceDot'
+import { blockUser, getDm, listDms, unblockUser } from '../api/dms'
+import type { Conversation } from '../api/dms'
 import { MessageItem } from '../components/chat/MessageItem'
 import { ThreadPanel } from '../components/chat/ThreadPanel'
 import { deleteMessage, editMessage, listMessages, listPins, messageHistory, pinMessage, react, sendMessage, startThread, unpinMessage, unreact } from '../api/messages'
@@ -18,6 +21,7 @@ const dayLabel = (iso: string) => new Date(iso).toLocaleDateString(undefined, { 
 
 export default function ChannelChat() {
   const { id = '', channelId = '' } = useParams()
+  const dmMode = !id
   const { user } = useAuth()
   const [community, setCommunity] = useState<Community | null>(null)
   const [channels, setChannels] = useState<Channel[]>([])
@@ -32,19 +36,46 @@ export default function ChannelChat() {
   const [confirmDelete, setConfirmDelete] = useState<Message | null>(null)
   const [openThread, setOpenThread] = useState<string | null>(null)
   const [pins, setPins] = useState<Message[] | null>(null)
+  const [convs, setConvs] = useState<Conversation[]>([])
+  const [conv, setConv] = useState<Conversation | null>(null)
   const [history, setHistory] = useState<{ msg: Message; revs: Revision[] } | null>(null)
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
 
   const channel = channels.find((c) => c.id === channelId)
-  const perms = community?.myPermissions ?? []
-  const canPost = !!channel && !channel.archived && perms.includes('SEND_MESSAGES')
-    && (channel.type !== 'ANNOUNCEMENT' || perms.includes('POST_ANNOUNCEMENTS'))
-  const moderator = perms.includes('MODERATE_MESSAGES')
+  const perms = dmMode ? ['SEND_MESSAGES'] : (community?.myPermissions ?? [])
+  const canPost = dmMode
+    ? !!conv && !conv.blockedByMe && !conv.blockedByThem
+    : !!channel && !channel.archived && perms.includes('SEND_MESSAGES') && (channel.type !== 'ANNOUNCEMENT' || perms.includes('POST_ANNOUNCEMENTS'))
+  const moderator = !dmMode && perms.includes('MODERATE_MESSAGES')
+  const otherPerson = conv && !conv.group ? conv.participants.find((p) => p.id !== user?.id) : undefined
+  const title = dmMode ? (conv?.name ?? '…') : `# ${channel?.name ?? '…'}`
 
   useEffect(() => {
+    if (dmMode) return
     Promise.all([getCommunity(id), listChannels(id)]).then(([c, ch]) => { setCommunity(c); setChannels(ch) }).catch((e) => setError(problemMessage(e)))
-  }, [id])
+  }, [id, dmMode])
+
+  useEffect(() => {
+    if (!dmMode) return
+    const load = () => listDms().then(setConvs).catch(() => undefined)
+    void load()
+    const t = setInterval(() => { if (document.visibilityState !== 'hidden') void load() }, 15000)
+    return () => clearInterval(t)
+  }, [dmMode])
+
+  useEffect(() => {
+    if (!dmMode || !channelId) { setConv(null); return }
+    getDm(channelId).then(setConv).catch((e) => setError(problemMessage(e)))
+  }, [dmMode, channelId])
+
+  async function toggleBlock() {
+    if (!otherPerson || !conv) return
+    try {
+      await (conv.blockedByMe ? unblockUser(otherPerson.id) : blockUser(otherPerson.id))
+      setConv(await getDm(conv.id)); setError(null)
+    } catch (e) { setError(problemMessage(e)) }
+  }
 
   /** Merge a fresh page into state by id (new messages append; edits/deletes replace). */
   const merge = useCallback((incoming: Message[]) => {
@@ -56,7 +87,8 @@ export default function ChannelChat() {
   }, [])
 
   useEffect(() => {
-    setMessages([]); setLoading(true); setReplyTo(null); setEditing(null); setOpenThread(null); setText(''); stick.current = true
+    setMessages([]); setLoading(!!channelId); setReplyTo(null); setEditing(null); setOpenThread(null); setText(''); stick.current = true
+    if (!channelId) return
     let alive = true
     listMessages(channelId).then((p) => { if (alive) { setMessages(p.items); setHasMore(p.hasMore); setError(null) } })
       .catch((e) => alive && setError(problemMessage(e))).finally(() => alive && setLoading(false))
@@ -151,26 +183,52 @@ export default function ChannelChat() {
 
   return (
     <div className={`mc-chat ${openThread ? 'has-thread' : ''}`}>
-      <aside className="mc-chat-side" aria-label="Channels">
-        <Link to={`/communities/${id}`} className="mc-muted-sub" style={{ padding: '4px 8px' }}>← {community?.name ?? 'Community'}</Link>
-        <h2>Channels</h2>
-        {channels.map((c) => (
-          <Link key={c.id} to={`/communities/${id}/channels/${c.id}`} className={`mc-chan ${c.id === channelId ? 'active' : ''}`} aria-current={c.id === channelId ? 'page' : undefined}>
-            {c.type === 'ANNOUNCEMENT' ? <Megaphone size={15} /> : <Hash size={15} />}{c.name}{c.archived && <Badge tone="neutral">archived</Badge>}
-          </Link>
-        ))}
+      <aside className="mc-chat-side" aria-label={dmMode ? 'Conversations' : 'Channels'}>
+        {dmMode ? (<>
+          <h2>Direct messages</h2>
+          {convs.length === 0 && <span className="mc-hint" style={{ padding: '4px 8px' }}>No conversations yet. Open a community and message a member.</span>}
+          {convs.map((c) => {
+            const other = c.group ? undefined : c.participants.find((p) => p.id !== user?.id)
+            return (
+              <Link key={c.id} to={`/messages/${c.id}`} className={`mc-chan ${c.id === channelId ? 'active' : ''}`} aria-current={c.id === channelId ? 'page' : undefined}>
+                {other ? <PresenceDot online={other.online} /> : <span className="mc-muted-sub">👥</span>}
+                <span style={{ minWidth: 0 }}>
+                  <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+                  {c.lastMessage && <span className="mc-muted-sub" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 400 }}>{c.lastMessage.excerpt}</span>}
+                </span>
+              </Link>
+            )
+          })}
+        </>) : (<>
+          <Link to={`/communities/${id}`} className="mc-muted-sub" style={{ padding: '4px 8px' }}>← {community?.name ?? 'Community'}</Link>
+          <h2>Channels</h2>
+          {channels.map((c) => (
+            <Link key={c.id} to={`/communities/${id}/channels/${c.id}`} className={`mc-chan ${c.id === channelId ? 'active' : ''}`} aria-current={c.id === channelId ? 'page' : undefined}>
+              {c.type === 'ANNOUNCEMENT' ? <Megaphone size={15} /> : <Hash size={15} />}{c.name}{c.archived && <Badge tone="neutral">archived</Badge>}
+            </Link>
+          ))}
+        </>)}
       </aside>
 
       <section className="mc-chat-main">
         <div className="mc-chat-head">
-          <div><strong># {channel?.name ?? '…'}</strong>{channel?.topic && <span className="mc-muted-sub" style={{ marginLeft: 10 }}>{channel.topic}</span>}</div>
-          <Button variant="ghost" size="sm" onClick={showPins}><Pin size={14} /> Pinned</Button>
+          <div className="mc-row">
+            {dmMode && otherPerson && <PresenceDot online={otherPerson.online} />}
+            <strong>{title}</strong>
+            {!dmMode && channel?.topic && <span className="mc-muted-sub" style={{ marginLeft: 10 }}>{channel.topic}</span>}
+            {dmMode && otherPerson && <span className="mc-muted-sub">{otherPerson.specialty}{otherPerson.verified ? ' · verified' : ''}</span>}
+          </div>
+          <div className="mc-row">
+            {dmMode && otherPerson && <Button variant="ghost" size="sm" onClick={toggleBlock}>{conv?.blockedByMe ? <><ShieldOff size={14} /> Unblock</> : <><UserX size={14} /> Block</>}</Button>}
+            {!dmMode && <Button variant="ghost" size="sm" onClick={showPins}><Pin size={14} /> Pinned</Button>}
+          </div>
         </div>
 
         <div className="mc-msgs" ref={scroller} onScroll={(e) => { const el = e.currentTarget; stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80 }} role="log" aria-live="polite" aria-label="Messages">
           {hasMore && <div style={{ textAlign: 'center' }}><Button variant="ghost" size="sm" onClick={loadOlder}>Load earlier messages</Button></div>}
           {loading && <div className="mc-skeleton" style={{ height: 48, margin: 8 }} />}
-          {!loading && messages.length === 0 && <div className="mc-empty"><strong>This is the start of #{channel?.name}</strong><p className="mc-hint">Say hello 👋</p></div>}
+          {!channelId && dmMode && <div className="mc-empty"><strong>Select a conversation</strong><p className="mc-hint">Or message someone from a community's member list.</p></div>}
+          {!loading && channelId && messages.length === 0 && <div className="mc-empty"><strong>{dmMode ? `This is the start of your conversation with ${conv?.name ?? ''}` : `This is the start of #${channel?.name}`}</strong><p className="mc-hint">Say hello 👋</p></div>}
           {rows.map(({ m, header }) => (
             <div key={m.id}>
               {header && <div className="mc-day">{dayLabel(m.createdAt)}</div>}
@@ -185,11 +243,12 @@ export default function ChannelChat() {
           {error && <Alert tone="danger">{error}</Alert>}
           {replyTo && <div className="mc-composer-bar"><span>Replying to <strong>{replyTo.author.displayName}</strong></span><Button variant="icon" size="sm" aria-label="Cancel reply" onClick={() => setReplyTo(null)}><X size={14} /></Button></div>}
           {editing && <div className="mc-composer-bar"><span>Editing message · Esc to cancel</span><Button variant="icon" size="sm" aria-label="Cancel edit" onClick={() => { setEditing(null); setText('') }}><X size={14} /></Button></div>}
-          {channel && !canPost
+          {dmMode && conv && !canPost && <Alert tone="info">{conv.blockedByMe ? 'You blocked this person. Unblock to send messages.' : 'You can no longer message this person.'}</Alert>}
+          {!dmMode && channel && !canPost
             ? <Alert tone="info">{channel.archived ? 'This channel is archived and read-only.' : channel.type === 'ANNOUNCEMENT' ? 'Only members with announcement permission can post here.' : 'You do not have permission to send messages.'}</Alert>
             : (
-              <div className="mc-composer-row">
-                <textarea className="mc-input" rows={1} aria-label="Message" placeholder={channel ? `Message #${channel.name}` : 'Message'} value={text}
+              <div className="mc-composer-row" hidden={!channelId || (dmMode && !canPost)}>
+                <textarea className="mc-input" rows={1} aria-label="Message" placeholder={dmMode ? `Message ${conv?.name ?? ''}` : channel ? `Message #${channel.name}` : 'Message'} value={text}
                   onChange={(e) => setText(e.target.value)} onKeyDown={onKey} maxLength={4000} />
                 <Button onClick={submit} loading={sending} disabled={!text.trim()} aria-label={editing ? 'Save edit' : 'Send'}><Send size={16} /></Button>
               </div>
