@@ -230,6 +230,20 @@ describe('ChannelChat in DM mode', () => {
     expect(await screen.findByRole('button', { name: /Unblock/ })).toBeInTheDocument()
   })
 
+  it('renders call records as call rows, not editable messages', async () => {
+    vi.mocked(msgs.listMessages).mockResolvedValue({ hasMore: false, items: [message({ id: 'cr', kind: 'CALL', body: 'Video call · 12:34', author: { id: 'me', displayName: 'Me', specialty: null, verified: false } }), message({ id: 'mc', kind: 'CALL', body: 'Missed voice call' })] })
+    setupDm()
+    expect(await screen.findByRole('article', { name: 'Call record: Video call · 12:34' })).toBeInTheDocument()
+    expect(screen.getByRole('article', { name: 'Call record: Missed voice call' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
+  })
+
+  it('offers voice and video call buttons in a one-to-one DM (disabled until calling is ready)', async () => {
+    setupDm()
+    expect(await screen.findByRole('button', { name: 'Start voice call' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Start video call' })).toBeDisabled()
+  })
+
   it('shows a placeholder when no conversation is selected', async () => {
     setupDm('/messages')
     expect(await screen.findByText('No conversation selected')).toBeInTheDocument()

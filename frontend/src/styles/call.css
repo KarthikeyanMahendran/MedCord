@@ -1,0 +1,40 @@
+/* ==========================================================================
+   Calls: incoming prompt, floating call window, notices
+   ========================================================================== */
+.mc-call-backdrop { position: fixed; inset: 0; z-index: 1100; display: grid; place-items: center; background: var(--mc-overlay); animation: mc-fade 140ms ease; }
+.mc-call-incoming { width: 320px; display: grid; justify-items: center; gap: 16px; padding: 28px 24px 24px; background: var(--mc-surface); border-radius: 14px; box-shadow: var(--mc-shadow-lg); animation: mc-scale-in 160ms var(--mc-ease); }
+.mc-call-pulse { position: relative; display: inline-flex; border-radius: 50%; }
+.mc-call-pulse::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--mc-success); opacity: 0; animation: mc-ring 1.6s ease-out infinite; }
+@keyframes mc-ring { 0% { transform: scale(0.9); opacity: 0.8; } 100% { transform: scale(1.35); opacity: 0; } }
+.mc-call-actions { display: flex; gap: 32px; margin-top: 4px; }
+.mc-call-btn { width: 52px; height: 52px; border-radius: 50%; border: 0; display: grid; place-items: center; color: #fff; cursor: pointer; transition: filter var(--mc-transition), transform var(--mc-transition); }
+.mc-call-btn:hover { filter: brightness(1.08); }
+.mc-call-btn:active { transform: scale(0.96); }
+.mc-call-btn.is-accept { background: #23a55a; }
+.mc-call-btn.is-decline { background: #e5484d; }
+
+/* Floating in-call window: bottom-right, stays put while you navigate. */
+.mc-call-window { position: fixed; right: 20px; bottom: 20px; z-index: 1050; width: 340px; display: flex; flex-direction: column; background: var(--mc-rail); border-radius: 12px; box-shadow: var(--mc-shadow-lg); overflow: hidden; animation: mc-rise 180ms var(--mc-ease); }
+.mc-call-window.is-expanded { right: 50%; bottom: 50%; transform: translate(50%, 50%); width: min(960px, calc(100vw - 48px)); }
+.mc-call-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 40px; padding: 0 6px 0 12px; color: var(--mc-text); font-size: 13px; border-bottom: 1px solid var(--mc-border); }
+.mc-call-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mc-warning); flex: none; }
+.mc-call-dot.is-live { background: #23a55a; }
+.mc-call-stage { position: relative; aspect-ratio: 16 / 10; background: #0b0c0f; display: grid; place-items: center; }
+.mc-call-window.is-audio .mc-call-stage { aspect-ratio: auto; height: 132px; }
+.mc-call-remote { width: 100%; height: 100%; object-fit: cover; background: #0b0c0f; }
+.mc-call-placeholder { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 8px; color: #c4c6d0; }
+.mc-call-local { position: absolute; right: 10px; bottom: 10px; width: 28%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.18); background: #15161b; transform: scaleX(-1); }
+.mc-call-controls { display: flex; justify-content: center; gap: 10px; padding: 10px; border-top: 1px solid var(--mc-border); }
+.mc-call-ctl { width: 40px; height: 40px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; background: var(--mc-surface-3); color: var(--mc-text); transition: background var(--mc-transition); }
+.mc-call-ctl:hover { background: var(--mc-active); }
+.mc-call-ctl.is-off { background: var(--mc-text); color: var(--mc-rail); }
+.mc-call-ctl.is-hangup { width: 52px; border-radius: 20px; background: #e5484d; color: #fff; }
+.mc-call-ctl.is-hangup:hover { filter: brightness(1.08); }
+
+.mc-call-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 1060; display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 14px; border-radius: 10px; background: var(--mc-surface-3); color: var(--mc-text); font-size: 13px; box-shadow: var(--mc-shadow-md); animation: mc-rise 160ms var(--mc-ease); }
+.mc-call-toast.is-error { background: var(--mc-danger-bg); color: var(--mc-danger); border: 1px solid var(--mc-danger-border); }
+
+/* Call records inside the conversation. */
+.mc-call-record { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--mc-border); background: var(--mc-surface); font-size: 13px; color: var(--mc-text-2); }
+.mc-call-record svg { color: var(--mc-success); }
+.mc-call-record.is-missed svg { color: var(--mc-danger); }

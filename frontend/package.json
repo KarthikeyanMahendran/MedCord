@@ -11,6 +11,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@nexconn/call": "26.2.1",
+    "@nexconn/chat": "26.2.0",
+    "@nexconn/engine": "26.2.0",
     "axios": "^1.21.1",
     "lucide-react": "^1.75.0",
     "react": "^19.3.1",

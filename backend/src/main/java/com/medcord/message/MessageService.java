@@ -133,6 +133,7 @@ public class MessageService {
         access.permissions(ch, userId);
         if (msg.isDeleted()) throw new ApiException(HttpStatus.CONFLICT, "Message was deleted");
         if (!msg.getAuthorId().equals(userId)) throw new ApiException(HttpStatus.FORBIDDEN, "Only the author can edit a message");
+        if (!"TEXT".equals(msg.getKind())) throw new ApiException(HttpStatus.CONFLICT, "Call records cannot be edited");
         if (ch.isArchived()) throw new ApiException(HttpStatus.CONFLICT, "This channel is archived and read-only");
         if (msg.getCreatedAt().plus(editWindow).isBefore(Instant.now())) throw new ApiException(HttpStatus.CONFLICT, "The edit window has passed");
         String body = newBody.trim();
@@ -242,7 +243,8 @@ public class MessageService {
             }
             return new MessageDto(m.getId(), m.getChannelId(), author, m.isDeleted() ? null : m.getBody(),
                 m.getCreatedAt(), m.getEditedAt(), m.isDeleted(), preview, summary, m.getThreadId(),
-                m.isDeleted() ? List.of() : reactionMap.getOrDefault(m.getId(), List.of()), m.getPinnedAt() != null && !m.isDeleted());
+                m.isDeleted() ? List.of() : reactionMap.getOrDefault(m.getId(), List.of()), m.getPinnedAt() != null && !m.isDeleted(),
+                m.getKind(), m.getCallId());
         }).toList();
     }
 

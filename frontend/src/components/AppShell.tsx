@@ -3,6 +3,8 @@ import { Outlet } from 'react-router-dom'
 import { heartbeat } from '../api/dms'
 import { ServerRail } from './shell/ServerRail'
 import { SideColumn } from './shell/SideColumn'
+import { CallOverlay } from './call/CallOverlay'
+import { CallProvider } from '../context/CallContext'
 
 /** Discord-style frame: server rail | contextual sidebar | content. */
 export function AppShell() {
@@ -16,10 +18,13 @@ export function AppShell() {
   }, [])
 
   return (
-    <div className="mc-shell">
-      <ServerRail />
-      <SideColumn />
-      <div className="mc-content"><Outlet /></div>
-    </div>
+    <CallProvider>
+      <div className="mc-shell">
+        <ServerRail />
+        <SideColumn />
+        <div className="mc-content"><Outlet /></div>
+      </div>
+      <CallOverlay />
+    </CallProvider>
   )
 }

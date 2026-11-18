@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CornerUpLeft, Flag, History, MessageSquareText, Pencil, Pin, PinOff, SmilePlus, Trash2 } from 'lucide-react'
+import { CornerUpLeft, Flag, History, MessageSquareText, Pencil, Phone, PhoneMissed, Pin, PinOff, SmilePlus, Trash2, Video } from 'lucide-react'
 import { Avatar, Badge, Button, VerifiedMark } from '../ui'
 import type { Message } from '../../api/messages'
 
@@ -43,6 +43,24 @@ export function MessageItem({ m, userId, canPost, moderator, compact, onReply, o
   }, [picker])
 
   const destructive = (mine || moderator)
+
+  if (m.kind === 'CALL' && !m.deleted) {
+    const missed = /^missed|declined|failed/i.test(m.body ?? '')
+    const Icon = missed ? PhoneMissed : /video/i.test(m.body ?? '') ? Video : Phone
+    return (
+      <article className="mc-msg" aria-label={`Call record: ${m.body}`}>
+        <div className="mc-msg-gutter"><Avatar name={m.author.displayName} size="md" /></div>
+        <div>
+          <div className="mc-msg-meta">
+            <span className="mc-msg-name">{m.author.displayName}</span>
+            <time className="mc-msg-time" dateTime={m.createdAt} title={full(m.createdAt)}>{time(m.createdAt)}</time>
+          </div>
+          <span className={`mc-call-record ${missed ? 'is-missed' : ''}`}><Icon size={14} />{m.body}</span>
+        </div>
+      </article>
+    )
+  }
+
   return (
     <article className={`mc-msg ${compact && !m.replyTo ? 'is-compact' : ''}`} aria-label={`Message from ${m.author.displayName}`}>
       <div className="mc-msg-gutter">
