@@ -1,0 +1,65 @@
+.bf { margin: 0; width: 100%; max-width: 560px; }
+.bf-stage { position: relative; aspect-ratio: 8 / 5; border-radius: 22px; overflow: hidden; background: linear-gradient(160deg, #0a2a63, #1456d6); box-shadow: 0 30px 70px rgba(10, 30, 90, .35), 0 0 0 1px rgba(255, 255, 255, .12); isolation: isolate; }
+.bf-scene { position: absolute; inset: 0; opacity: 0; transform: scale(1.04); transition: opacity .8s ease, transform 4.6s ease-out; display: grid; place-items: center; }
+.bf-scene.is-on { opacity: 1; transform: scale(1); }
+.bf-svg { width: 100%; height: 100%; display: block; }
+.bf-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .5s; z-index: 2; pointer-events: none; }
+.bf-video.is-on { opacity: 1; }
+.bf-live { position: absolute; top: 12px; left: 12px; z-index: 3; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; background: rgba(5, 15, 45, .55); color: #fff; font-size: 11px; backdrop-filter: blur(6px); }
+.bf-live i, .bf-dot { width: 7px; height: 7px; border-radius: 50%; background: #1fc77f; display: inline-block; animation: bf-pulse 1.6s infinite; }
+
+.bf-center { position: relative; display: grid; place-items: center; gap: 14px; width: 100%; height: 100%; background: radial-gradient(circle at 50% 30%, #2f7bff, #0a2a63 70%); }
+.bf-phone { width: 62%; max-width: 270px; padding: 14px; border-radius: 22px; background: #fff; color: #0b1b3a; box-shadow: 0 20px 50px rgba(0, 10, 40, .5); z-index: 1; font-size: 13px; }
+.bf-phone-bar { display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 10px; } .bf-phone-bar span { width: 8px; height: 8px; border-radius: 50%; background: #2f7bff; }
+.bf-line { margin: 2px 0; } .bf-dim { color: #5a6a8c; }
+.bf-redcard { display: flex; gap: 10px; align-items: center; margin-top: 12px; padding: 10px; border-radius: 12px; background: #fff1f2; border: 1px solid #ffc9cf; color: #b3162f; transform: translateY(14px); opacity: 0; }
+.bf-redcard strong { display: block; font-size: 13px; } .bf-redcard small { font-size: 11px; color: #7e1a2a; }
+.is-on .bf-redcard { animation: bf-slide .6s .9s forwards cubic-bezier(.2, .9, .3, 1.2); }
+.bf-ring { position: absolute; width: 120px; height: 120px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .5); animation: bf-ring 2.4s infinite; }
+.bf-ring2 { animation-delay: 1.2s; }
+
+.bf-duo { display: grid; grid-template-columns: 1fr 1.2fr 1fr; align-items: center; gap: 10px; width: 100%; height: 100%; padding: 22px; background: radial-gradient(circle at 50% 40%, #2f7bff, #0a2a63 75%); }
+.bf-tile { display: grid; justify-items: center; gap: 8px; color: #e6f0ff; font-size: 11px; }
+.bf-tile svg { width: min(100%, 130px); height: auto; border-radius: 28px; box-shadow: 0 14px 34px rgba(0, 10, 40, .45); animation: bf-bob 5s ease-in-out infinite; }
+.bf-tile-r svg { animation-delay: -2s; }
+.bf-tile span { display: inline-flex; align-items: center; gap: 6px; }
+.bf-bubbles { display: grid; gap: 8px; }
+.bf-b { margin: 0; padding: 8px 10px; border-radius: 12px 12px 12px 3px; background: #fff; color: #0b1b3a; font-size: 11.5px; line-height: 1.35; opacity: 0; transform: translateY(8px); }
+.bf-b.is-me { background: #0d3a8c; color: #fff; border-radius: 12px 12px 3px 12px; justify-self: end; }
+.is-on .bf-b1 { animation: bf-slide .5s .3s forwards; } .is-on .bf-b2 { animation: bf-slide .5s 1.3s forwards; } .is-on .bf-b3 { animation: bf-slide .5s 2.3s forwards; }
+
+.bf-saved { gap: 18px; }
+.bf-card { width: 76%; padding: 16px; border-radius: 18px; background: #fff; color: #0b1b3a; box-shadow: 0 20px 50px rgba(0, 10, 40, .45); font-size: 12.5px; transform: translateY(16px); opacity: 0; }
+.is-on .bf-card { animation: bf-slide .6s .2s forwards cubic-bezier(.2, .9, .3, 1.2); }
+.bf-card-h { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #0f8a5c; margin-bottom: 8px; font-size: 14px; }
+.bf-card p { margin: 0; color: #33466e; }
+.bf-tags { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; } .bf-tags span { padding: 3px 9px; border-radius: 99px; background: #e6f0ff; color: #1456d6; font-size: 11px; font-weight: 600; }
+.bf-follow { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 99px; background: rgba(255, 255, 255, .14); color: #fff; font-size: 12px; opacity: 0; }
+.bf-follow i { width: 9px; height: 9px; border-radius: 50%; border: 2px solid #7fd1ff; border-top-color: transparent; animation: bf-spin 1.2s linear infinite; }
+.is-on .bf-follow { animation: bf-slide .5s 1.1s forwards; }
+
+.bf-breathe { animation: bf-bob 3.2s ease-in-out infinite; }
+.bf-sun { animation: bf-pulse-sun 4s ease-in-out infinite; transform-origin: 400px 70px; }
+.bf-blink { animation: bf-blink 1.4s infinite; }
+
+.bf > figcaption { margin-top: 14px; display: grid; gap: 10px; }
+.bf-cap { font-size: 15px; font-weight: 500; color: var(--mc-text, inherit); animation: bf-fade .6s; }
+.bf-dots { display: flex; gap: 6px; }
+.bf-dots i { flex: 1; height: 3px; border-radius: 3px; background: var(--mc-border-strong, rgba(0, 0, 0, .15)); position: relative; overflow: hidden; }
+.bf-dots i.is-done::after, .bf-dots i.is-on::after { content: ''; position: absolute; inset: 0; background: var(--mc-brand, #4f6bff); }
+.bf-dots i.is-on::after { transform-origin: left; animation: bf-fill linear forwards; }
+
+@keyframes bf-slide { to { opacity: 1; transform: none; } }
+@keyframes bf-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes bf-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes bf-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes bf-blink { 50% { opacity: .4; } }
+@keyframes bf-spin { to { transform: rotate(360deg); } }
+@keyframes bf-ring { from { transform: scale(.6); opacity: .7; } to { transform: scale(2.4); opacity: 0; } }
+@keyframes bf-pulse { 0% { box-shadow: 0 0 0 0 rgba(31, 199, 127, .55); } 100% { box-shadow: 0 0 0 8px rgba(31, 199, 127, 0); } }
+@keyframes bf-pulse-sun { 50% { transform: scale(1.12); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bf *, .bf *::before, .bf *::after { animation: none !important; transition: none !important; }
+  .bf-redcard, .bf-b, .bf-card, .bf-follow { opacity: 1; transform: none; }
+}

@@ -12,8 +12,8 @@
 .mc-auth-brand > * { position: relative; z-index: 1; }
 .mc-logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px; letter-spacing: -0.01em; color: var(--mc-text); }
 .mc-logo-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--mc-brand); color: #fff; display: grid; place-items: center; }
-.mc-auth-copy { max-width: 520px; }
-.mc-auth-copy h1 { font-size: 40px; line-height: 1.1; letter-spacing: -0.03em; font-weight: 600; }
+.mc-auth-copy { max-width: 560px; }
+.mc-auth-copy h1 { font-size: 36px; line-height: 1.1; letter-spacing: -0.03em; font-weight: 600; }
 .mc-auth-copy h1 em { font-style: normal; color: var(--mc-brand-text); }
 .mc-auth-copy p { margin-top: 16px; font-size: 15px; line-height: 1.6; color: var(--mc-text-muted); max-width: 46ch; }
 .mc-features { list-style: none; padding: 0; margin: 32px 0 0; display: grid; gap: 14px; }
@@ -29,3 +29,5 @@
 .mc-auth-divider { display: flex; align-items: center; gap: 12px; color: var(--mc-text-faint); font-size: 12px; }
 .mc-auth-divider::before, .mc-auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--mc-border); }
 @media (max-width: 960px) { .mc-auth { grid-template-columns: 1fr; } .mc-auth-brand { display: none; } }
+.mc-auth-copy .bf { margin-top: 28px; }
+.mc-auth-copy p { max-width: 52ch; }
