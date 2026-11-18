@@ -6,6 +6,11 @@ updates:
   - package-ecosystem: npm
     directory: /frontend
     schedule: { interval: weekly }
+    ignore:
+      # @types/node must match the Node runtime we ship on (.nvmrc = 24), not the newest Node release.
+      # Bump it together with .nvmrc and CI when we move to the next LTS.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
