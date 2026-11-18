@@ -1,0 +1,38 @@
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { AdminRoute } from './components/AdminRoute'
+import { AppShell } from './components/AppShell'
+import { ProtectedRoute } from './components/ProtectedRoute'
+import Verifications from './pages/admin/Verifications'
+import ChannelChat from './pages/ChannelChat'
+import CommunityDetail from './pages/CommunityDetail'
+import Communities from './pages/Communities'
+import Home from './pages/Home'
+import JoinInvite from './pages/JoinInvite'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Search from './pages/Search'
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppShell />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/communities" element={<Communities />} />
+          <Route path="/communities/:id" element={<CommunityDetail />} />
+          <Route path="/communities/:id/channels/:channelId" element={<ChannelChat />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/messages" element={<ChannelChat />} />
+          <Route path="/messages/:channelId" element={<ChannelChat />} />
+          <Route path="/invite/:code" element={<JoinInvite />} />
+          <Route element={<AdminRoute />}>
+            <Route path="/admin/verifications" element={<Verifications />} />
+          </Route>
+        </Route>
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
