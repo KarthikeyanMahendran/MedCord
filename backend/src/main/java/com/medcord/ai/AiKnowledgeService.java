@@ -21,11 +21,14 @@ public class AiKnowledgeService {
     private final AiKnowledgeChunkRepository chunkRepo;
     private final SarvamAiClient sarvam;
     private final NamedParameterJdbcTemplate jdbc;
+    private final AiKnowledgeService self;
 
-    public AiKnowledgeService(AiKnowledgeChunkRepository chunkRepo, SarvamAiClient sarvam, NamedParameterJdbcTemplate jdbc) {
+    public AiKnowledgeService(AiKnowledgeChunkRepository chunkRepo, SarvamAiClient sarvam, NamedParameterJdbcTemplate jdbc,
+                              @org.springframework.context.annotation.Lazy AiKnowledgeService self) {
         this.chunkRepo = chunkRepo;
         this.sarvam = sarvam;
         this.jdbc = jdbc;
+        this.self = self;
     }
 
     /**
@@ -172,12 +175,15 @@ public class AiKnowledgeService {
      * - Uses PostgreSQL Full-Text Search and keyword matching to find relevant discussions.
      * - Synthesizes accurate clinical responses using Sarvam AI (sarvam-105b) with citations.
      */
-    @Transactional
     public AiQueryResponse query(UUID userId, String question, UUID communityIdFilter) {
         return query(userId, question, communityIdFilter, null);
     }
 
-    @Transactional
+    /**
+     * Not {@code @Transactional}: each DB lookup borrows and returns a pooled connection immediately, so the
+     * slow Sarvam HTTP call below never holds a connection open. Writes (the on-empty ingest) run in their own
+     * transaction via {@link #self}.
+     */
     public AiQueryResponse query(UUID userId, String question, UUID communityIdFilter, UUID channelIdFilter) {
         String q = question == null ? "" : question.trim();
         if (q.length() < 2) {
@@ -222,7 +228,7 @@ public class AiKnowledgeService {
         // 2. Ensure initial ingestion has occurred if chunks table is empty
         long chunkCount = chunkRepo.count();
         if (chunkCount == 0) {
-            ingestKnowledge(null);
+            self.ingestKnowledge(null);
         }
 
         // 3. Search for relevant discussion chunks (prioritizing current channel if viewing one)
