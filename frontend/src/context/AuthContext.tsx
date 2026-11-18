@@ -10,6 +10,7 @@ interface AuthState {
   signIn: (email: string, password: string) => Promise<void>
   signUp: (input: RegisterInput) => Promise<void>
   signOut: () => Promise<void>
+  setUser: (u: Me) => void
 }
 
 const Ctx = createContext<AuthState | undefined>(undefined)
@@ -43,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
-  const value = useMemo(() => ({ user, loading, signIn, signUp, signOut }), [user, loading, signIn, signUp, signOut])
+  const value = useMemo(() => ({ user, loading, signIn, signUp, signOut, setUser }), [user, loading, signIn, signUp, signOut])
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 

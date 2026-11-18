@@ -4,7 +4,7 @@ export interface TokenResponse { accessToken: string; refreshToken: string; toke
 export interface Me {
   id: string; email: string; displayName: string; status: 'PENDING' | 'ACTIVE' | 'SUSPENDED'
   platformRole: 'USER' | 'ADMIN'; specialty: string | null; licenseCountry: string | null
-  verificationStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | null
+  verificationStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | null; bio: string | null; rejectionReason: string | null
 }
 export interface RegisterInput {
   email: string; password: string; displayName: string; specialty: string; licenseNumber: string; licenseCountry: string
@@ -25,5 +25,13 @@ export async function logout() {
 }
 export async function fetchMe() {
   const { data } = await api.get<Me>('/me')
+  return data
+}
+export async function updateProfile(input: { displayName?: string; bio?: string; specialty?: string }) {
+  const { data } = await api.patch<Me>('/me', input)
+  return data
+}
+export async function resubmitVerification(licenseNumber: string, licenseCountry: string) {
+  const { data } = await api.post<Me>('/me/verification', { licenseNumber, licenseCountry })
   return data
 }

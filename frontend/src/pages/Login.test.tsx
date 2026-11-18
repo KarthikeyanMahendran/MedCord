@@ -28,7 +28,7 @@ describe('Login page', () => {
     vi.mocked(authApi.login).mockResolvedValue()
     vi.mocked(authApi.fetchMe).mockResolvedValue({
       id: '1', email: 'a@b.c', displayName: 'Dr A', status: 'ACTIVE', platformRole: 'USER',
-      specialty: 'X', licenseCountry: 'IN', verificationStatus: 'APPROVED',
+      specialty: 'X', licenseCountry: 'IN', verificationStatus: 'APPROVED', bio: null, rejectionReason: null,
     })
     setup()
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.c')

@@ -71,3 +71,26 @@
 .mc-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--mc-brand-soft); color: var(--mc-brand); display: grid; place-items: center; font-weight: 800; font-size: 20px; }
 .mc-dl { display: grid; grid-template-columns: 140px 1fr; gap: 10px var(--mc-space-4); margin: 0; }
 .mc-dl dt { color: var(--mc-text-muted); } .mc-dl dd { margin: 0; font-weight: 500; }
+
+/* Tabs / Table / misc */
+.mc-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--mc-border); }
+.mc-tab { background: none; border: 0; padding: 10px 14px; font: 600 14px var(--mc-font); color: var(--mc-text-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.mc-tab:hover { color: var(--mc-text); }
+.mc-tab.is-active { color: var(--mc-brand); border-bottom-color: var(--mc-brand); }
+.mc-tab-count { margin-left: 6px; background: var(--mc-surface-2); border-radius: var(--mc-radius-full); padding: 0 7px; font-size: 12px; }
+.mc-table-wrap { overflow-x: auto; }
+.mc-table { width: 100%; border-collapse: collapse; }
+.mc-table th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--mc-text-muted); padding: 10px 14px; border-bottom: 1px solid var(--mc-border); white-space: nowrap; }
+.mc-table td { padding: 12px 14px; border-bottom: 1px solid var(--mc-border); vertical-align: middle; }
+.mc-table tbody tr:hover { background: var(--mc-surface-2); }
+.mc-skeleton { display: block; height: 14px; border-radius: 4px; background: linear-gradient(90deg, var(--mc-surface-2), var(--mc-border), var(--mc-surface-2)); background-size: 200% 100%; animation: mc-shimmer 1.2s infinite; }
+@keyframes mc-shimmer { to { background-position: -200% 0; } }
+.mc-empty { text-align: center; padding: var(--mc-space-7) var(--mc-space-4); display: grid; gap: 4px; }
+.mc-pagination { display: flex; align-items: center; justify-content: flex-end; gap: var(--mc-space-3); padding: var(--mc-space-3) 0 0; }
+.mc-textarea { height: auto; padding: 10px var(--mc-space-3); resize: vertical; }
+.mc-nav { display: flex; gap: 4px; margin-left: var(--mc-space-5); }
+.mc-nav a { padding: 6px 12px; border-radius: var(--mc-radius); color: var(--mc-text-muted); font-weight: 600; }
+.mc-nav a:hover { background: var(--mc-surface-2); text-decoration: none; }
+.mc-nav a.active { color: var(--mc-brand); background: var(--mc-brand-soft); }
+.mc-page-wide { max-width: 1100px; }
+.mc-muted-sub { color: var(--mc-text-muted); font-size: 12px; }

@@ -18,7 +18,7 @@ Next up = first unchecked task. Update in every PR.
 ## M2
 
 - [x] T-007 Auth API and JWT — `docs/tasks/T-007-auth-api-and-jwt.md`
-- [ ] T-008 Profile and verification workflow — `docs/tasks/T-008-profile-and-verification-workflow.md`
+- [x] T-008 Profile and verification workflow — `docs/tasks/T-008-profile-and-verification-workflow.md`
 
 ## M3
 

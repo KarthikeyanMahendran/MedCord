@@ -23,5 +23,11 @@ public final class AuthDtos {
 
     public record MeResponse(
         String id, String email, String displayName, String status, String platformRole,
-        String specialty, String licenseCountry, String verificationStatus) {}
+        String specialty, String licenseCountry, String verificationStatus, String bio, String rejectionReason) {}
+
+    public record UpdateProfileRequest(@Size(min = 1, max = 100) String displayName, @Size(max = 2000) String bio, @Size(min = 1, max = 100) String specialty) {}
+
+    public record ResubmitRequest(
+        @NotBlank @Size(max = 64) String licenseNumber,
+        @NotBlank @Pattern(regexp = "^[A-Za-z]{2}$", message = "must be ISO 3166 alpha-2") String licenseCountry) {}
 }
