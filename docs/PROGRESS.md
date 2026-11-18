@@ -2,6 +2,33 @@
 
 Next up = first unchecked task. Update in every PR.
 
+## Built so far (as of 2026-11-18)
+
+**Product (works end to end locally, see `docs/dev-accounts.md` to sign in)**
+| Area | What exists | Use cases |
+|---|---|---|
+| Accounts | Register, login, JWT + rotating refresh tokens (reuse revokes all sessions), profile edit, rate-limited auth | UC-001, UC-002 |
+| Verification | Licence submission, admin approve/reject queue with reasons and audit, resubmission | UC-001, UC-017 |
+| Communities | Create (verified only), public/private, discover, invites (expiry, max uses), join/leave, bans | UC-003, UC-005 |
+| Channels & roles | Text/announcement channels, archive, Owner/Admin/Moderator/Member + custom roles, rank rules, 8 permissions | UC-004 |
+| Messaging | Send, history with cursor paging, replies, edit with revision snapshots, soft delete with tombstones, pins | UC-006–UC-009 |
+| Threads | Threads on any message, side panel, live reply counts, archive | UC-010 |
+| Reactions | Emoji reactions with per-viewer state | UC-011 |
+| DMs & presence | 1:1 and group DMs (≤10, shared-community rule), blocking, online presence via heartbeat | UC-013, UC-019 |
+| Search | Postgres full-text across channels and DMs you can access, highlighted snippets | UC-015 |
+| Moderation & audit | Timed mutes, message reports (incl. PHI) with moderator queue, owner-only append-only audit log | UC-016, UC-020 |
+| UI | "Clinical Graphite" design system (Lexend, one cobalt accent, dark + light), Discord-style shell: server rail, contextual sidebar, chat with members/thread panels | — |
+
+**Platform**
+- Backend: Spring Boot 4 / Java 21, Flyway V1–V10, 75 integration tests. Frontend: React 19 / Vite 8 / TypeScript, Node 24 LTS, 53 tests.
+- CI (GitHub Actions): backend + Postgres, frontend lint/types/tests/build, gitleaks secret scan (checksum-verified CLI). Dependabot for Maven, npm and Actions.
+- Nexconn gateway built and unit-tested; live use blocked by the dev network's DNS filter (`docs/nexconn-notes.md`). Messages flow through the backend (ADR 0004); the UI polls.
+- Dev seed: 11 users, 3 communities, conversations, a thread, reactions, DMs. Admin login is set via `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` in `.env`.
+
+**Not built yet:** attachments (T-020), notifications/push and unread counts (T-023), remaining hardening (T-024: httpOnly refresh cookie, Redis rate limiter, Dockerfiles, observability). Deferred: paid surveys (admins author, INR first). Idea backlog: PHI detection before sending.
+
+**Where to read more:** `README.md` (setup) · `docs/architecture.md` (how it fits together) · `docs/adr/` (decisions) · `docs/use-cases/` (20 specs) · `docs/runbook.md` (operations) · `docs/ui-ux-guide.md` (design system).
+
 
 ## M0
 
