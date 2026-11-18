@@ -17,5 +17,7 @@
 - User ids: letters/digits only, max 64 -> we use the UUID without hyphens. `name` required (<=64 chars).
 - Token response: `{"code":0,"result":{"userId":"..","accessToken":".."}}`.
 - Official Java SDK: `ai.nexconn:nexconn-sdk-java:0.1.2` (GitHub only, `./gradlew publishToMavenLocal`; not on Maven Central as far as we could verify). We use our own thin `NexconnGateway` (RestClient + signer) instead, to avoid an unpublished dependency.
-- **Network note (2026-11-18):** on the dev network all three `api.*-light-api.com` hosts are intercepted by a Fortinet DNS filter ("FortiGuard SDNS Blocked Page", self-signed cert), so live calls fail TLS verification. Allow-list the domains or use another network. Never disable certificate verification.
+- **Verified live (2026-11-18, outside the office network):** our app is in the **Singapore** region (`NEXCONN_API_BASE_URL=https://api.sg-light-api.com`). App key + secret are valid; `POST /v4/auth/access-token/issue` returns `code 0`; MedCord's `GET /api/v1/chat/token` (NexconnGateway) registers the user and returns a token whose connect servers are `*.sg.rongnav.com`. Operator per the TLS certificate: 北京云中融信网络科技股份有限公司 (RongCloud, Beijing); CA TrustAsia.
+- **Office network:** the FortiGate there blocks the domains (DNS block page) or **intercepts TLS** (certificate re-signed by the firewall's CA). Never disable verification; test from another network. Expect similar firewalls at customer hospitals: a deployment risk for any third-party realtime domain.
+- **Console setting to change:** token validity is set to *Permanent*. Set an expiry (e.g. 7 days) and re-issue tokens via `/api/v1/chat/token` on expiry.
 - Open: webhook signature format; group/community create request bodies (verify when live access works).
