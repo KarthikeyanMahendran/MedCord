@@ -109,3 +109,21 @@ BEGIN
     INSERT INTO messages (channel_id, author_id, body, created_at) VALUES (ch, priya, 'Journal club this Friday 18:00 IST: updates in HFpEF therapy. Link will be shared here.', t + interval '2 hours');
   END IF;
 END $$;
+
+-- Thread on the first case-discussion message (DEV ONLY, idempotent).
+DO $$
+DECLARE ch uuid; root uuid; th uuid; priya uuid; sara uuid; arjun uuid; t timestamptz := now() - interval '90 minutes';
+BEGIN
+  SELECT id INTO ch FROM channels WHERE name = 'case-discussions' AND community_id = (SELECT id FROM communities WHERE slug = 'cardiology-collective');
+  IF ch IS NULL THEN RETURN; END IF;
+  SELECT id INTO root FROM messages WHERE channel_id = ch AND thread_id IS NULL AND body LIKE 'Anonymised case: 58M%' LIMIT 1;
+  IF root IS NULL OR EXISTS (SELECT 1 FROM threads WHERE root_message_id = root) THEN RETURN; END IF;
+  SELECT id INTO priya FROM users WHERE email = 'priya.raman@medcord.dev';
+  SELECT id INTO sara  FROM users WHERE email = 'sara.ahmed@medcord.dev';
+  SELECT id INTO arjun FROM users WHERE email = 'arjun.mehta@medcord.dev';
+  INSERT INTO threads (channel_id, root_message_id, title, created_by, created_at) VALUES (ch, root, 'PCI vs medical therapy', sara, t) RETURNING id INTO th;
+  INSERT INTO messages (channel_id, author_id, body, created_at, thread_id) VALUES
+    (ch, sara,  'Starting a thread so the main channel stays readable. ISCHEMIA excluded left-main and recent ACS, so applicability here is reasonable.', t + interval '2 min', th),
+    (ch, arjun, 'From the neuro side: if there is any AF history, factor in anticoagulation before choosing DAPT duration.', t + interval '6 min', th),
+    (ch, priya, 'Good point — no AF so far. Planning 6 months of DAPT given low bleeding risk.', t + interval '11 min', th);
+END $$;

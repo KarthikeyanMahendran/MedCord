@@ -2,9 +2,10 @@ import { api } from './client'
 
 export interface Author { id: string; displayName: string; specialty: string | null; verified: boolean }
 export interface ReplyPreview { id: string; authorName: string; excerpt: string | null; deleted: boolean }
+export interface ThreadSummary { id: string; title: string | null; replyCount: number; lastReplyAt: string | null; archived: boolean }
 export interface Message {
   id: string; channelId: string; author: Author; body: string | null; createdAt: string
-  editedAt: string | null; deleted: boolean; replyTo: ReplyPreview | null
+  editedAt: string | null; deleted: boolean; replyTo: ReplyPreview | null; thread: ThreadSummary | null; threadId: string | null
 }
 export interface MessagePage { items: Message[]; hasMore: boolean }
 export interface Revision { revisionNo: number; kind: 'EDIT' | 'DELETE'; body: string; actorId: string; actorName: string; createdAt: string }
@@ -16,3 +17,15 @@ export const sendMessage = async (channelId: string, body: string, replyToId?: s
 export const editMessage = async (id: string, body: string) => (await api.patch<Message>(`/messages/${id}`, { body })).data
 export const deleteMessage = async (id: string) => { await api.delete(`/messages/${id}`) }
 export const messageHistory = async (id: string) => (await api.get<Revision[]>(`/messages/${id}/revisions`)).data
+
+export interface Thread {
+  id: string; channelId: string; rootMessageId: string; title: string | null; archived: boolean
+  replyCount: number; lastReplyAt: string | null; createdBy: string; createdAt: string; root: Message
+}
+export const startThread = async (messageId: string, title?: string) => (await api.post<Thread>(`/messages/${messageId}/thread`, { title })).data
+export const getThread = async (id: string) => (await api.get<Thread>(`/threads/${id}`)).data
+export const updateThread = async (id: string, b: { title?: string; archived?: boolean }) => (await api.patch<Thread>(`/threads/${id}`, b)).data
+export const listThreadMessages = async (id: string, before?: string, limit = 50) =>
+  (await api.get<MessagePage>(`/threads/${id}/messages`, { params: { before, limit } })).data
+export const replyInThread = async (id: string, body: string, replyToId?: string) =>
+  (await api.post<Message>(`/threads/${id}/messages`, { body, replyToId })).data

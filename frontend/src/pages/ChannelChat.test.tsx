@@ -16,7 +16,7 @@ const community = (perms: comm.Permission[]): comm.Community => ({
 const channel = (o: Partial<comm.Channel> = {}): comm.Channel => ({ id: 'ch', name: 'general', topic: 'Chat', type: 'TEXT', position: 0, archived: false, ...o })
 const message = (o: Partial<msgs.Message> = {}): msgs.Message => ({
   id: 'm1', channelId: 'ch', author: { id: 'u2', displayName: 'Dr Sara', specialty: 'Pediatrics', verified: true },
-  body: 'Hello team', createdAt: '2026-11-18T10:00:00Z', editedAt: null, deleted: false, replyTo: null, ...o,
+  body: 'Hello team', createdAt: '2026-11-18T10:00:00Z', editedAt: null, deleted: false, replyTo: null, thread: null, threadId: null, ...o,
 })
 const setup = () => render(
   <MemoryRouter initialEntries={['/communities/c/channels/ch']}>
@@ -96,6 +96,28 @@ describe('ChannelChat', () => {
     setup()
     expect(await screen.findByText('This channel is archived and read-only.')).toBeInTheDocument()
     expect(screen.queryByLabelText('Message')).toBeNull()
+  })
+
+  it('shows a reply-count chip and opens the thread panel', async () => {
+    vi.mocked(msgs.listMessages).mockResolvedValue({ hasMore: false, items: [message({ thread: { id: 't1', title: null, replyCount: 3, lastReplyAt: '2026-11-18T11:00:00Z', archived: false } })] })
+    vi.mocked(msgs.getThread).mockResolvedValue({ id: 't1', channelId: 'ch', rootMessageId: 'm1', title: null, archived: false, replyCount: 3, lastReplyAt: null, createdBy: 'o', createdAt: '2026-11-18T10:00:00Z', root: message() })
+    vi.mocked(msgs.listThreadMessages).mockResolvedValue({ hasMore: false, items: [] })
+    setup()
+    await userEvent.click(await screen.findByRole('button', { name: /Open thread, 3 replies/ }))
+    expect(await screen.findByLabelText('Reply in thread')).toBeInTheDocument()
+    expect(msgs.getThread).toHaveBeenCalledWith('t1')
+  })
+
+  it('starts a thread from a message', async () => {
+    vi.mocked(msgs.listMessages).mockResolvedValue({ hasMore: false, items: [message()] })
+    vi.mocked(msgs.startThread).mockResolvedValue({ id: 'tNew', channelId: 'ch', rootMessageId: 'm1', title: null, archived: false, replyCount: 0, lastReplyAt: null, createdBy: 'me', createdAt: '2026-11-18T10:00:00Z', root: message() })
+    vi.mocked(msgs.getThread).mockResolvedValue({ id: 'tNew', channelId: 'ch', rootMessageId: 'm1', title: null, archived: false, replyCount: 0, lastReplyAt: null, createdBy: 'me', createdAt: '2026-11-18T10:00:00Z', root: message() })
+    vi.mocked(msgs.listThreadMessages).mockResolvedValue({ hasMore: false, items: [] })
+    setup()
+    await screen.findByText('Hello team')
+    await userEvent.click(screen.getByRole('button', { name: 'Start thread' }))
+    await waitFor(() => expect(msgs.startThread).toHaveBeenCalledWith('m1'))
+    expect(await screen.findByLabelText('Reply in thread')).toBeInTheDocument()
   })
 
   it('shows an error when sending fails', async () => {

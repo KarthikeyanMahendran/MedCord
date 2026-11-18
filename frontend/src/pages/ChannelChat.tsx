@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { CornerUpLeft, Hash, History, Megaphone, Pencil, Send, Trash2, X } from 'lucide-react'
+import { Hash, Megaphone, Send, X } from 'lucide-react'
 import { Alert, Badge, Button, Modal } from '../components/ui'
 import { getCommunity, listChannels } from '../api/communities'
 import type { Channel, Community } from '../api/communities'
-import { deleteMessage, editMessage, listMessages, messageHistory, sendMessage } from '../api/messages'
+import { MessageItem } from '../components/chat/MessageItem'
+import { ThreadPanel } from '../components/chat/ThreadPanel'
+import { deleteMessage, editMessage, listMessages, messageHistory, sendMessage, startThread } from '../api/messages'
 import type { Message, Revision } from '../api/messages'
 import { problemMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 
 const POLL_MS = 4000
-const time = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 const dayKey = (iso: string) => new Date(iso).toDateString()
 const dayLabel = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })
-const initials = (n: string) => n.split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase()
 
 export default function ChannelChat() {
   const { id = '', channelId = '' } = useParams()
@@ -30,6 +30,7 @@ export default function ChannelChat() {
   const [editing, setEditing] = useState<Message | null>(null)
   const [sending, setSending] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<Message | null>(null)
+  const [openThread, setOpenThread] = useState<string | null>(null)
   const [history, setHistory] = useState<{ msg: Message; revs: Revision[] } | null>(null)
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
@@ -54,7 +55,7 @@ export default function ChannelChat() {
   }, [])
 
   useEffect(() => {
-    setMessages([]); setLoading(true); setReplyTo(null); setEditing(null); setText(''); stick.current = true
+    setMessages([]); setLoading(true); setReplyTo(null); setEditing(null); setOpenThread(null); setText(''); stick.current = true
     let alive = true
     listMessages(channelId).then((p) => { if (alive) { setMessages(p.items); setHasMore(p.hasMore); setError(null) } })
       .catch((e) => alive && setError(problemMessage(e))).finally(() => alive && setLoading(false))
@@ -118,13 +119,24 @@ export default function ChannelChat() {
     try { setHistory({ msg: m, revs: await messageHistory(m.id) }) } catch (e) { setError(problemMessage(e)) }
   }
 
+  const refreshTimeline = useCallback(() => { listMessages(channelId).then((p) => merge(p.items)).catch(() => undefined) }, [channelId, merge])
+
+  async function openOrStartThread(m: Message) {
+    if (m.thread) { setOpenThread(m.thread.id); return }
+    try {
+      const t = await startThread(m.id)
+      merge([{ ...m, thread: { id: t.id, title: t.title, replyCount: 0, lastReplyAt: null, archived: false } }])
+      setOpenThread(t.id)
+    } catch (e) { setError(problemMessage(e)) }
+  }
+
   const rows = useMemo(() => {
     let last = ''
     return messages.map((m) => { const k = dayKey(m.createdAt); const header = k !== last; last = k; return { m, header } })
   }, [messages])
 
   return (
-    <div className="mc-chat">
+    <div className={`mc-chat ${openThread ? 'has-thread' : ''}`}>
       <aside className="mc-chat-side" aria-label="Channels">
         <Link to={`/communities/${id}`} className="mc-muted-sub" style={{ padding: '4px 8px' }}>← {community?.name ?? 'Community'}</Link>
         <h2>Channels</h2>
@@ -147,31 +159,9 @@ export default function ChannelChat() {
           {rows.map(({ m, header }) => (
             <div key={m.id}>
               {header && <div className="mc-day">{dayLabel(m.createdAt)}</div>}
-              <article className="mc-msg" aria-label={`Message from ${m.author.displayName}`}>
-                <div className="mc-msg-avatar" aria-hidden="true">{initials(m.author.displayName)}</div>
-                <div>
-                  {m.replyTo && (
-                    <div className="mc-quote"><CornerUpLeft size={12} /><strong>{m.replyTo.authorName}</strong><span>{m.replyTo.deleted ? 'Original message was deleted' : m.replyTo.excerpt}</span></div>
-                  )}
-                  <div className="mc-msg-meta">
-                    <span className="mc-msg-name">{m.author.displayName}</span>
-                    {m.author.verified && <Badge tone="success">verified</Badge>}
-                    {m.author.specialty && <span className="mc-muted-sub">{m.author.specialty}</span>}
-                    <span className="mc-msg-time">{time(m.createdAt)}</span>
-                  </div>
-                  {m.deleted
-                    ? <div className="mc-msg-body mc-msg-deleted">This message was deleted.</div>
-                    : <div className="mc-msg-body">{m.body}{m.editedAt && <span className="mc-edited" title={new Date(m.editedAt).toLocaleString()}>(edited)</span>}</div>}
-                </div>
-                {!m.deleted && (
-                  <div className="mc-msg-tools" role="toolbar" aria-label="Message actions">
-                    {canPost && <Button variant="icon" size="sm" aria-label="Reply" onClick={() => { setReplyTo(m); setEditing(null) }}><CornerUpLeft size={15} /></Button>}
-                    {m.author.id === user?.id && canPost && <Button variant="icon" size="sm" aria-label="Edit" onClick={() => startEdit(m)}><Pencil size={15} /></Button>}
-                    {m.editedAt && (m.author.id === user?.id || moderator) && <Button variant="icon" size="sm" aria-label="Edit history" onClick={() => showHistory(m)}><History size={15} /></Button>}
-                    {(m.author.id === user?.id || moderator) && <Button variant="icon" size="sm" aria-label="Delete" onClick={() => setConfirmDelete(m)}><Trash2 size={15} /></Button>}
-                  </div>
-                )}
-              </article>
+              <MessageItem m={m} userId={user?.id} canPost={canPost} moderator={moderator}
+                onReply={(x) => { setReplyTo(x); setEditing(null) }} onEdit={startEdit} onDelete={setConfirmDelete}
+                onHistory={showHistory} onThread={openOrStartThread} />
             </div>
           ))}
         </div>
@@ -191,6 +181,8 @@ export default function ChannelChat() {
             )}
         </div>
       </section>
+
+      {openThread && <ThreadPanel threadId={openThread} userId={user?.id} canPost={canPost} moderator={moderator} onClose={() => setOpenThread(null)} onChanged={refreshTimeline} />}
 
       <Modal isOpen={confirmDelete !== null} onClose={() => setConfirmDelete(null)} title="Delete message?" size="sm"
         footer={<><Button variant="secondary" onClick={() => setConfirmDelete(null)}>Cancel</Button><Button variant="danger" onClick={doDelete}>Delete</Button></>}>
