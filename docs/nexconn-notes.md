@@ -12,4 +12,10 @@
 - **Not available natively:** threads, edit history, full-text message search → built in MedCord (see ADR 0003).
 - Typing indicator: direct channels only. Group member cap 300 default (1,000 Starter, 3,000 Pro).
 - Plan: Chat Free trial expires 2026-12-16; "Free Chat Plan" (10K MAU, 1 year) must be activated in console.
-- Open: data-center/base URL, Java server SDK Maven coordinates (`nexconn-server-sdk-java`), webhook signature format.
+- **API base URLs (region of your console app decides):** Singapore `https://api.sg-light-api.com` (backup `api-b.sg-light-api.com`), North America `https://api.us-light-api.com`, Saudi Arabia `https://api.sau-light-api.com`. Set `NEXCONN_API_BASE_URL` accordingly.
+- **Signature (verified in docs):** lowercase hex `SHA1(AppSecret + Nonce + Timestamp_ms)`; headers `App-Key`, `Nonce` (<=18 chars), `Timestamp`, `Signature`, optional `X-Request-ID`. 401 on failure. Token issue rate limit 200 rps. Regenerating the App Secret invalidates all issued tokens.
+- User ids: letters/digits only, max 64 -> we use the UUID without hyphens. `name` required (<=64 chars).
+- Token response: `{"code":0,"result":{"userId":"..","accessToken":".."}}`.
+- Official Java SDK: `ai.nexconn:nexconn-sdk-java:0.1.2` (GitHub only, `./gradlew publishToMavenLocal`; not on Maven Central as far as we could verify). We use our own thin `NexconnGateway` (RestClient + signer) instead, to avoid an unpublished dependency.
+- **Network note (2026-11-18):** on the dev network all three `api.*-light-api.com` hosts are intercepted by a Fortinet DNS filter ("FortiGuard SDNS Blocked Page", self-signed cert), so live calls fail TLS verification. Allow-list the domains or use another network. Never disable certificate verification.
+- Open: webhook signature format; group/community create request bodies (verify when live access works).
