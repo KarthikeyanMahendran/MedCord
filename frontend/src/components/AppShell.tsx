@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import { heartbeat } from '../api/dms'
 import { ServerRail } from './shell/ServerRail'
 import { SideColumn } from './shell/SideColumn'
+import { MedCordAiWidget } from './ai/MedCordAiWidget'
 
 /** Discord-style frame: server rail | contextual sidebar | content. */
 export function AppShell() {
@@ -20,6 +21,7 @@ export function AppShell() {
       <ServerRail />
       <SideColumn />
       <div className="mc-content"><Outlet /></div>
+      <MedCordAiWidget />
     </div>
   )
 }

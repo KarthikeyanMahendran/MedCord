@@ -7,6 +7,9 @@ spring:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:medcord}
     username: ${DB_USER:medcord_app}
     password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
   jpa:
     open-in-view: false
     hibernate:
@@ -16,6 +19,7 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    validate-on-migrate: false
 
 server:
   port: 8080
@@ -42,3 +46,7 @@ medcord:
     app-key: ${NEXCONN_APP_KEY:}
     app-secret: ${NEXCONN_APP_SECRET:}
     api-base-url: ${NEXCONN_API_BASE_URL:}
+  ai:
+    sarvam-api-key: ${SARVAM_AI_API_KEY:}
+    sarvam-base-url: ${SARVAM_API_BASE_URL:https://api.sarvam.ai/v1}
+    chat-model: ${SARVAM_CHAT_MODEL:sarvam-105b}

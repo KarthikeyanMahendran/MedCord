@@ -10,6 +10,7 @@ import './styles/components.css'
 import './styles/shell.css'
 import './styles/chat.css'
 import './styles/auth.css'
+import './styles/ai.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
