@@ -5,6 +5,7 @@ export function ProtectedRoute() {
   const { user, loading } = useAuth()
   const location = useLocation()
   if (loading) return <div role="status" style={{ padding: 32 }}>Loading…</div>
+  if (!user && location.pathname === '/') return <Navigate to="/welcome" replace />
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />
   return <Outlet />
 }
