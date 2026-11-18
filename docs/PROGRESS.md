@@ -7,7 +7,7 @@ Next up = first unchecked task. Update in every PR.
 
 - [x] T-001 Repo bootstrap and conventions — `docs/tasks/T-001-repo-bootstrap-and-conventions.md`
 - [x] T-002 Makefile, docker-compose, env — `docs/tasks/T-002-makefile-docker-compose-env.md`
-- [ ] T-003 CI workflows — `docs/tasks/T-003-ci-workflows.md`
+- [x] T-003 CI workflows (GitHub Actions: backend+Postgres, frontend, gitleaks; dependabot) — `docs/tasks/T-003-ci-workflows.md`
 
 ## M1
 
