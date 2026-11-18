@@ -75,6 +75,12 @@ export default function Landing() {
   const [progress, setProgress] = useState(0)
   const [y, setY] = useState(0)
   useEffect(() => {
+    // The app shell locks page scroll; the landing page is a normal long page.
+    const root = document.documentElement
+    root.classList.add('lp-scroll')
+    return () => root.classList.remove('lp-scroll')
+  }, [])
+  useEffect(() => {
     const on = () => {
       const h = document.documentElement
       setScrolled(h.scrollTop > 20); setY(h.scrollTop)
