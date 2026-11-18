@@ -10,14 +10,17 @@ export function UserPanel() {
   return (
     <div className="mc-userpanel">
       <div className="mc-userpanel-who" title={user.email}>
-        <span className="mc-userpanel-avatar"><Avatar name={user.displayName} size="sm" /><span className="mc-presence is-online mc-userpanel-dot" role="img" aria-label="You are online" /></span>
+        <span className="mc-userpanel-avatar">
+          <Avatar name={user.displayName} size="sm" />
+          <span className="mc-presence is-online mc-userpanel-dot" role="img" aria-label="You are online" />
+        </span>
         <span style={{ minWidth: 0 }}>
           <span className="mc-userpanel-name">{user.displayName}</span>
           <span className="mc-userpanel-sub">{user.specialty ?? 'Member'}</span>
         </span>
       </div>
-      <Button variant="icon" aria-label="Toggle theme" onClick={toggle}>{theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}</Button>
-      <Button variant="icon" aria-label="Sign out" onClick={signOut}><LogOut size={17} /></Button>
+      <Button variant="icon" aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'} data-testid="theme-toggle" onClick={toggle}>{theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</Button>
+      <Button variant="icon" aria-label="Sign out" onClick={signOut}><LogOut size={16} /></Button>
     </div>
   )
 }

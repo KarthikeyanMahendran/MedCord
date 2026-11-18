@@ -5,6 +5,7 @@ import { Archive, Copy, Hash, Megaphone, MessageCircle, Trash2 } from 'lucide-re
 import { ModerationPanel } from '../components/community/ModerationPanel'
 import { AuditPanel } from '../components/community/AuditPanel'
 import { muteMember } from '../api/moderation'
+import { PageHeader } from '../components/ui'
 import { Alert, Avatar, Badge, Button, Card, CardBody, EmptyState, FormGroup, Input, Modal, Tabs } from '../components/ui'
 import * as api from '../api/communities'
 import type { Channel, Community, Invite, Member, Permission, Role } from '../api/communities'
@@ -92,26 +93,16 @@ export default function CommunityDetail() {
 
   return (
     <main className="mc-page mc-page-wide">
-      <div className="mc-row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div className="mc-row" style={{ alignItems: 'flex-start', gap: 16 }}>
-          <Avatar name={community.name} size="lg" />
-          <div>
-          <Link to="/communities" className="mc-muted-sub">← Communities</Link>
-          <h1 style={{ fontSize: 24, marginTop: 4 }}>{community.name}</h1>
-          <div className="mc-row" style={{ marginTop: 6 }}>
-            {community.specialtyTag && <Badge tone="info">{community.specialtyTag}</Badge>}
-            <Badge tone="neutral">{community.visibility.toLowerCase()}</Badge>
-            <span className="mc-muted-sub">{community.memberCount} members</span>
-          </div>
-          {community.description && <p className="mc-hint" style={{ margin: '8px 0 0' }}>{community.description}</p>}
-          </div>
-        </div>
-        <div className="mc-row">
-          {!isMember && <Button onClick={() => run(() => api.joinCommunity(id), 'Joined.')} loading={busy}>Join</Button>}
-          {isMember && !isOwner && <Button variant="secondary" size="sm" onClick={async () => { if (await run(() => api.leaveCommunity(id))) navigate('/communities') }}>Leave</Button>}
-          {isOwner && <Button variant="danger" size="sm" onClick={() => setModal('delete')}><Trash2 size={14} /> Delete</Button>}
-        </div>
-      </div>
+      <PageHeader
+        leading={<Avatar name={community.name} size="lg" square />}
+        eyebrow={<><Link to="/communities" className="mc-eyebrow">Communities</Link><span aria-hidden="true">/</span><span>{community.visibility === 'PRIVATE' ? 'Private' : 'Public'}</span></>}
+        title={community.name}
+        description={<>{community.memberCount} members{community.specialtyTag ? ` · ${community.specialtyTag}` : ''}{community.description ? ` — ${community.description}` : ''}</>}
+        actions={<>
+          {!isMember && <Button onClick={() => run(() => api.joinCommunity(id), 'Joined.')} loading={busy}>Join community</Button>}
+          {isMember && !isOwner && <Button variant="secondary" onClick={async () => { if (await run(() => api.leaveCommunity(id))) navigate('/communities') }}>Leave</Button>}
+          {isOwner && <Button variant="danger" onClick={() => setModal('delete')}><Trash2 size={14} /> Delete community</Button>}
+        </>} />
 
       {notice && <Alert tone="success">{notice}</Alert>}
       {error && <Alert tone="danger">{error}</Alert>}
@@ -129,7 +120,7 @@ export default function CommunityDetail() {
                     <li key={c.id} className="mc-row" style={{ justifyContent: 'space-between', padding: '8px 10px', border: '1px solid var(--mc-border)', borderRadius: 8, opacity: c.archived ? 0.6 : 1 }}>
                       <div className="mc-row">
                         {c.type === 'ANNOUNCEMENT' ? <Megaphone size={16} /> : <Hash size={16} />}
-                        <div><Link to={`/communities/${id}/channels/${c.id}`}><strong>{c.name}</strong></Link> {c.archived && <Badge tone="neutral">archived</Badge>}<div className="mc-muted-sub">{c.topic}</div></div>
+                        <div><Link to={`/communities/${id}/channels/${c.id}`} style={{ color: 'var(--mc-text)' }}><strong style={{ fontWeight: 500 }}>{c.name}</strong></Link> {c.archived && <Badge tone="neutral">archived</Badge>}<div className="mc-muted-sub">{c.topic}</div></div>
                       </div>
                       {can('MANAGE_CHANNELS') && <Button variant="ghost" size="sm" onClick={() => run(() => api.updateChannel(id, c.id, { archived: !c.archived }))}><Archive size={14} /> {c.archived ? 'Unarchive' : 'Archive'}</Button>}
                     </li>

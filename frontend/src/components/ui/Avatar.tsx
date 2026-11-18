@@ -1,7 +1,8 @@
-const PALETTE = [
-  ['#7c6cff', '#b05cff'], ['#2fd6f0', '#4f8cff'], ['#ff6bd6', '#ff8a5c'], ['#3ddc97', '#2fb8d6'],
-  ['#ffb454', '#ff6b7d'], ['#8a7dff', '#35d0e8'], ['#ff7ab8', '#a56bff'], ['#4fd1c5', '#7c6cff'],
-]
+/**
+ * Muted, evenly-weighted tones: distinguishable at a glance, never louder than content.
+ * All keep white initials at WCAG AA contrast.
+ */
+const TONES = ['#4c5a9e', '#3c7480', '#6d5794', '#467354', '#8a5f43', '#536894', '#80506a', '#4a6a80', '#6b6f3f', '#7a4f4f']
 
 export function hashOf(s: string) {
   let h = 0
@@ -9,18 +10,22 @@ export function hashOf(s: string) {
   return Math.abs(h)
 }
 
-export function gradientFor(seed: string) {
-  const [a, b] = PALETTE[hashOf(seed) % PALETTE.length]
-  return `linear-gradient(135deg, ${a}, ${b})`
+/** Stable colour per name (people and communities). */
+export function colorFor(seed: string) {
+  return TONES[hashOf(seed) % TONES.length]
 }
 
 export function initialsOf(name: string) {
-  return name.replace(/^(dr|mr|mrs|ms)\.?\s+/i, '').split(/[\s,]+/).filter(Boolean).map((p) => p[0]).slice(0, 2).join('').toUpperCase() || '?'
+  return name.replace(/^(dr|mr|mrs|ms|prof)\.?\s+/i, '').split(/[\s,]+/).filter(Boolean).map((p) => p[0]).slice(0, 2).join('').toUpperCase() || '?'
 }
 
-/** Gradient initials avatar; the colour is stable per name. */
-export function Avatar({ name, size, className = '' }: { name: string; size?: 'sm' | 'md' | 'lg'; className?: string }) {
+interface Props { name: string; size?: 'sm' | 'md' | 'lg'; square?: boolean; className?: string }
+
+/** Initials avatar. Decorative: the name is always rendered as text alongside it. */
+export function Avatar({ name, size, square, className = '' }: Props) {
   return (
-    <span className={`mc-avatar ${size ?? ''} ${className}`.trim()} style={{ background: gradientFor(name) }} aria-hidden="true">{initialsOf(name)}</span>
+    <span className={['mc-avatar', size, square && 'is-square', className].filter(Boolean).join(' ')} style={{ background: colorFor(name) }} aria-hidden="true">
+      {initialsOf(name)}
+    </span>
   )
 }

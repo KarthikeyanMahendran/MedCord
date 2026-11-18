@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ServerRail } from './ServerRail'
 import { SideColumn } from './SideColumn'
-import { Avatar, gradientFor, initialsOf } from '../ui'
+import { Avatar, colorFor, initialsOf } from '../ui'
 import * as comm from '../../api/communities'
 import * as dms from '../../api/dms'
 
@@ -21,11 +21,11 @@ const community = (o: Partial<comm.Community> = {}): comm.Community => ({
 const ch = (o: Partial<comm.Channel>): comm.Channel => ({ id: 'x', name: 'general', topic: null, type: 'TEXT', position: 0, archived: false, ...o })
 
 describe('Avatar helpers', () => {
-  it('derives stable initials and gradient per name', () => {
+  it('derives stable initials and colour per name', () => {
     expect(initialsOf('Dr. Priya Raman')).toBe('PR')
     expect(initialsOf('Nina Kapoor, RN')).toBe('NK')
-    expect(gradientFor('Cardio')).toBe(gradientFor('Cardio'))
-    expect(gradientFor('Cardio')).toMatch(/^linear-gradient/)
+    expect(colorFor('Cardio')).toBe(colorFor('Cardio'))
+    expect(colorFor('Cardio')).toMatch(/^#[0-9a-f]{6}$/)
   })
   it('renders initials hidden from assistive tech', () => {
     const { container } = render(<Avatar name="Sara Ahmed" size="sm" />)
@@ -102,6 +102,7 @@ describe('SideColumn', () => {
   it('shows plain navigation elsewhere, plus admin links only for admins', async () => {
     at('/')
     expect(screen.getByRole('link', { name: /Communities/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Overview/ })).toHaveAttribute('href', '/')
     expect(screen.queryByRole('link', { name: /Verifications/ })).toBeNull()
   })
 
@@ -110,6 +111,6 @@ describe('SideColumn', () => {
     expect(screen.getByText('Dr. Priya Raman')).toBeInTheDocument()
     expect(screen.getByText('Cardiology')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Toggle theme' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Switch to (light|dark) theme/ })).toBeInTheDocument()
   })
 })

@@ -43,7 +43,7 @@ describe('ChannelChat', () => {
     ] })
     setup()
     expect(await screen.findByText('Hello team')).toBeInTheDocument()
-    expect(screen.getAllByText(/verified/).length).toBeGreaterThan(0)
+    expect(screen.getAllByLabelText('Verified').length).toBeGreaterThan(0)
     expect(screen.getByText('(edited)')).toBeInTheDocument()
     expect(screen.getByText('This message was deleted.')).toBeInTheDocument()
   })
@@ -232,7 +232,7 @@ describe('ChannelChat in DM mode', () => {
 
   it('shows a placeholder when no conversation is selected', async () => {
     setupDm('/messages')
-    expect(await screen.findByText('Select a conversation')).toBeInTheDocument()
+    expect(await screen.findByText('No conversation selected')).toBeInTheDocument()
     expect(msgs.listMessages).not.toHaveBeenCalled()
   })
 })

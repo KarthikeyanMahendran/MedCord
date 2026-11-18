@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Check, X } from 'lucide-react'
-import { Alert, Badge, Button, Card, CardBody, EmptyState, FormGroup, Modal, Pagination, Table, Tabs, Textarea } from '../../components/ui'
+import { Alert, Badge, Button, Card, CardBody, EmptyState, FormGroup, Modal, PageHeader, Pagination, Table, Tabs, Textarea } from '../../components/ui'
 import type { Column, Tone } from '../../components/ui'
 import { decideVerification, listVerifications } from '../../api/admin'
 import type { Page, VerificationItem, VerificationStatus } from '../../api/admin'
@@ -70,10 +70,7 @@ export default function Verifications() {
 
   return (
     <main className="mc-page mc-page-wide">
-      <div>
-        <h1 style={{ fontSize: 22 }}>Verification queue</h1>
-        <p className="mc-hint" style={{ margin: '4px 0 0' }}>Review professional licences. Approving activates the account and grants the verified badge.</p>
-      </div>
+      <PageHeader eyebrow="Administration" title="Licence verification" description="Review submitted licences. Approving activates the account and shows the verified mark on the member's profile." />
       {notice && <Alert tone="success">{notice}</Alert>}
       {error && <Alert tone="danger">{error}</Alert>}
       <Card>

@@ -47,8 +47,8 @@ export default function Register() {
   return (
     <AuthLayout>
       <div>
-        <h2 style={{ fontSize: 24 }}>Create your account</h2>
-        <p className="mc-hint">Your license is reviewed before you get the verified badge.</p>
+        <h2>Create your account</h2>
+        <p className="mc-hint">We review your licence before your profile shows the verified mark. This usually takes under a day.</p>
       </div>
       {error && <Alert tone="danger">{error}</Alert>}
       <form onSubmit={onSubmit} style={{ display: 'grid', gap: 14 }} noValidate>

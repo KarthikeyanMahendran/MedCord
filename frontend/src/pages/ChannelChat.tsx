@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { useParams } from 'react-router-dom'
-import { Hash, Megaphone, Pin, Send, ShieldOff, UserX, Users, X } from 'lucide-react'
-import { Alert, Avatar, Button, FormGroup, Modal, Textarea } from '../components/ui'
+import { ArrowUp, Hash, Megaphone, MessageCircle, Pin, ShieldOff, UserX, Users, X } from 'lucide-react'
+import { Alert, Avatar, Button, EmptyState, FormGroup, Modal, Textarea, VerifiedMark } from '../components/ui'
 import { PresenceDot } from '../components/chat/PresenceDot'
 import { MessageItem } from '../components/chat/MessageItem'
 import { ThreadPanel } from '../components/chat/ThreadPanel'
@@ -216,8 +216,8 @@ export default function ChannelChat() {
     <div key={m.userId} className={`mc-member ${m.online ? '' : 'is-offline'}`}>
       <span className="mc-member-avatar"><Avatar name={m.displayName} size="sm" /><PresenceDot online={m.online} /></span>
       <span style={{ minWidth: 0 }}>
-        <span className="mc-member-name" style={{ display: 'block' }}>{m.displayName}{m.verified && <span title="Verified" style={{ color: 'var(--mc-verified)', marginLeft: 4 }}>✓</span>}</span>
-        <span className="mc-muted-sub" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.roles.find((r) => r.name !== 'Member')?.name ?? m.specialty ?? ''}</span>
+        <span className="mc-member-name"><span>{m.displayName}</span>{m.verified && <VerifiedMark size={13} />}</span>
+        <span className="mc-member-sub">{m.roles.find((r) => r.name !== 'Member')?.name ?? m.specialty ?? ''}</span>
       </span>
     </div>
   )
@@ -228,28 +228,41 @@ export default function ChannelChat() {
         <div className="mc-chat-head">
           <div className="mc-chat-title">
             {dmMode
-              ? (<>{otherPerson ? <><Avatar name={otherPerson.displayName} size="sm" /><PresenceDot online={otherPerson.online} /></> : conv ? <Users size={18} /> : null}
-                  <strong>{conv?.name ?? (channelId ? '…' : 'Messages')}</strong>
-                  {otherPerson && <span className="mc-chat-topic">{otherPerson.specialty}{otherPerson.verified ? ' · verified' : ''}</span>}</>)
+              ? (<>{otherPerson
+                    ? <span className="mc-member-avatar"><Avatar name={otherPerson.displayName} size="sm" /><PresenceDot online={otherPerson.online} /></span>
+                    : conv ? <Users size={18} /> : <MessageCircle size={18} />}
+                  <strong>{conv?.name ?? (channelId ? '…' : 'Direct messages')}</strong>
+                  {otherPerson?.verified && <VerifiedMark />}
+                  {otherPerson && <span className="mc-chat-topic">{otherPerson.specialty ?? ''}{otherPerson.online ? ' · Online' : ' · Offline'}</span>}
+                  {conv?.group && <span className="mc-chat-topic">{conv.participants.length} members</span>}</>)
               : (<>{channel?.type === 'ANNOUNCEMENT' ? <Megaphone size={18} /> : <Hash size={18} />}<strong>{channel?.name ?? '…'}</strong>
                   {channel?.topic && <span className="mc-chat-topic">{channel.topic}</span>}</>)}
           </div>
-          <div className="mc-row" style={{ gap: 4 }}>
+          <div className="mc-chat-actions">
             {dmMode && otherPerson && <Button variant="ghost" size="sm" onClick={toggleBlock}>{conv?.blockedByMe ? <><ShieldOff size={14} /> Unblock</> : <><UserX size={14} /> Block</>}</Button>}
-            {!dmMode && <Button variant="ghost" size="sm" onClick={showPins}><Pin size={14} /> Pinned</Button>}
-            {!dmMode && <Button variant="icon" aria-label={showMembers ? 'Hide member list' : 'Show member list'} aria-pressed={showMembers} onClick={() => setShowMembers((v) => !v)}><Users size={18} /></Button>}
+            {!dmMode && <Button variant="icon" aria-label="Pinned" onClick={showPins}><Pin size={17} /></Button>}
+            {!dmMode && <Button variant="icon" aria-label={showMembers ? 'Hide member list' : 'Show member list'} aria-pressed={showMembers} onClick={() => setShowMembers((v) => !v)}><Users size={17} /></Button>}
           </div>
         </div>
 
         <div className="mc-msgs" ref={scroller} onScroll={(e) => { const el = e.currentTarget; stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80 }} role="log" aria-live="polite" aria-label="Messages">
           {hasMore && <div style={{ textAlign: 'center' }}><Button variant="ghost" size="sm" onClick={loadOlder}>Load earlier messages</Button></div>}
-          {loading && <div className="mc-skeleton" style={{ height: 48, margin: 16 }} />}
-          {!channelId && dmMode && <div className="mc-empty" style={{ margin: 'auto' }}><div style={{ fontSize: 48 }}>💬</div><strong>Select a conversation</strong><p className="mc-hint">Or message someone from a community&apos;s member list.</p></div>}
-          {!loading && channelId && messages.length === 0 && (
-            <div className="mc-empty" style={{ margin: 'auto' }}>
-              <div style={{ fontSize: 48 }}>{dmMode ? '👋' : '#️⃣'}</div>
-              <strong>{dmMode ? `This is the start of your conversation with ${conv?.name ?? ''}` : `This is the start of #${channel?.name ?? ''}`}</strong>
-              <p className="mc-hint">Say hello 👋</p>
+          {loading && [0, 1, 2].map((i) => (
+            <div key={i} className="mc-msg-skel" aria-hidden="true">
+              <span className="mc-skeleton is-avatar" />
+              <span style={{ display: 'grid', gap: 8, paddingTop: 4 }}><span className="mc-skeleton" style={{ width: 140 }} /><span className="mc-skeleton" style={{ width: `${70 - i * 15}%` }} /></span>
+            </div>
+          ))}
+          {!channelId && dmMode && (
+            <div style={{ margin: 'auto' }}>
+              <EmptyState title="No conversation selected" icon={<MessageCircle size={18} />}>Pick a conversation on the left, or message a colleague from any community&apos;s member list.</EmptyState>
+            </div>
+          )}
+          {!loading && channelId && !hasMore && (dmMode ? conv : channel) && (
+            <div className="mc-intro">
+              <div className="mc-intro-icon">{dmMode ? <MessageCircle size={22} /> : channel?.type === 'ANNOUNCEMENT' ? <Megaphone size={22} /> : <Hash size={22} />}</div>
+              <h2>{dmMode ? conv?.name : `Welcome to #${channel?.name}`}</h2>
+              <p>{dmMode ? 'This is the beginning of your direct message history.' : `This is the start of the #${channel?.name} channel.${channel?.topic ? ` ${channel.topic}.` : ''}`}</p>
             </div>
           )}
           {rows.map(({ m, header, compact }) => (
@@ -274,17 +287,22 @@ export default function ChannelChat() {
               <div className="mc-composer-row" hidden={!channelId || (dmMode && !canPost)}>
                 <textarea ref={composer} rows={1} aria-label="Message" placeholder={dmMode ? `Message ${conv?.name ?? ''}` : channel ? `Message #${channel.name}` : 'Message'}
                   value={text} onChange={(e) => setText(e.target.value)} onKeyDown={onKey} maxLength={4000} />
-                <Button onClick={submit} loading={sending} disabled={!text.trim()} aria-label={editing ? 'Save edit' : 'Send'}><Send size={16} /></Button>
+                <Button onClick={submit} loading={sending} disabled={!text.trim()} aria-label={editing ? 'Save edit' : 'Send'}><ArrowUp size={16} /></Button>
               </div>
             )}
+          {channelId && canPost && (
+            <div className="mc-composer-hint" aria-hidden="true">
+              <span><b>Enter</b> to send</span><span><b>Shift + Enter</b> new line</span>{!editing && <span><b>↑</b> edit last</span>}<span><b>Esc</b> cancel</span>
+            </div>
+          )}
         </div>
       </section>
 
       {openThread && <ThreadPanel threadId={openThread} userId={user?.id} canPost={canPost} moderator={moderator} onClose={() => setOpenThread(null)} onChanged={refreshTimeline} />}
 
       {!dmMode && showMembers && !openThread && (
-        <aside className="mc-members" aria-label="Members">
-          <div className="mc-side-label" style={{ paddingTop: 0 }}>Online — {online.length}</div>
+        <aside className="mc-panel mc-members" aria-label="Members">
+          <div className="mc-side-label">Online — {online.length}</div>
           {online.map(memberRow)}
           <div className="mc-side-label">Offline — {offline.length}</div>
           {offline.map(memberRow)}

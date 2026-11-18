@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation, useMatch } from 'react-router-dom'
-import { Compass, Hash, Megaphone, MessageSquarePlus, Search, Settings, ShieldCheck, UserRound, Users } from 'lucide-react'
+import { ChevronDown, Compass, Hash, LayoutDashboard, Megaphone, Search, ShieldCheck, Users } from 'lucide-react'
 import { PresenceDot } from '../chat/PresenceDot'
 import { Avatar, Badge } from '../ui'
 import { getCommunity, listChannels } from '../../api/communities'
@@ -34,14 +34,14 @@ function CommunitySidebar({ id }: { id: string }) {
     <>
       <Link to={`/communities/${id}`} className="mc-side-head" aria-label="Community settings and members">
         <strong>{community?.name ?? '…'}</strong>
-        <Settings size={16} />
+        <ChevronDown size={16} />
       </Link>
       <div className="mc-side-scroll">
         {announcements.length > 0 && <><div className="mc-side-label">Announcements</div>{announcements.map(row)}</>}
         <div className="mc-side-label">Text channels</div>
         {text.map(row)}
-        <div className="mc-side-label">Community</div>
-        <NavLink to={`/communities/${id}`} end className="mc-chan"><Users size={16} /><span className="mc-chan-name">Members, roles and settings</span></NavLink>
+        <div className="mc-side-label">Manage</div>
+        <NavLink to={`/communities/${id}`} end className={({ isActive }) => `mc-chan ${isActive ? 'active' : ''}`}><Users size={16} /><span className="mc-chan-name">Members &amp; settings</span></NavLink>
       </div>
     </>
   )
@@ -59,17 +59,17 @@ function DmSidebar() {
   }, [channelId])
   return (
     <>
-      <div className="mc-side-head"><strong>Direct messages</strong><MessageSquarePlus size={16} /></div>
+      <div className="mc-side-head"><strong>Direct messages</strong></div>
       <div className="mc-side-scroll">
-        {convs.length === 0 && <p className="mc-hint" style={{ padding: '8px 10px' }}>No conversations yet. Open a community and message a member.</p>}
+        {convs.length === 0 && <p className="mc-hint" style={{ padding: '8px' }}>No conversations yet. Message a member from any community&apos;s member list.</p>}
         {convs.map((c) => {
           const other = c.group ? undefined : c.participants.find((p) => p.id !== user?.id)
           return (
             <Link key={c.id} to={`/messages/${c.id}`} className={`mc-chan mc-dm ${c.id === channelId ? 'active' : ''}`} aria-current={c.id === channelId ? 'page' : undefined}>
               <span className="mc-dm-avatar"><Avatar name={c.name} size="sm" />{other && <PresenceDot online={other.online} />}</span>
-              <span style={{ minWidth: 0 }}>
-                <span className="mc-chan-name" style={{ display: 'block' }}>{c.name}</span>
-                {c.lastMessage && <span className="mc-muted-sub mc-chan-name" style={{ display: 'block', fontWeight: 400 }}>{c.lastMessage.excerpt}</span>}
+              <span className="mc-dm-text">
+                <span className="mc-chan-name">{c.name}</span>
+                {c.lastMessage && <small>{c.lastMessage.excerpt}</small>}
               </span>
             </Link>
           )
@@ -88,7 +88,7 @@ function NavSidebar() {
     <>
       <div className="mc-side-head"><strong>MedCord</strong></div>
       <div className="mc-side-scroll">
-        {link('/', 'Profile', <UserRound size={16} />, true)}
+        {link('/', 'Overview', <LayoutDashboard size={16} />, true)}
         {link('/communities', 'Communities', <Compass size={16} />)}
         {link('/search', 'Search', <Search size={16} />)}
         {user?.platformRole === 'ADMIN' && <>{<div className="mc-side-label">Admin</div>}{link('/admin/verifications', 'Verifications', <ShieldCheck size={16} />)}</>}

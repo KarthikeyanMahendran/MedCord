@@ -11,12 +11,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = 'primary', size = 'md', full, loading, className = '', type = 'button', children, disabled, ...rest },
+  { variant = 'primary', size = 'md', full, loading, className = '', type = 'button', children, disabled, title, ...rest },
   ref,
 ) {
   const cls = ['mc-btn', `mc-btn-${variant}`, size === 'sm' && 'is-sm', full && 'is-full', className].filter(Boolean).join(' ')
   return (
-    <button ref={ref} type={type} className={cls} aria-busy={loading || undefined} disabled={loading || disabled} {...rest}>
+    <button ref={ref} type={type} className={cls} aria-busy={loading || undefined} disabled={loading || disabled}
+      title={title ?? (variant === 'icon' ? rest['aria-label'] : undefined)} {...rest}>
       {loading && <span className="mc-spinner" aria-hidden="true" />}
       {children}
     </button>

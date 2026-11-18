@@ -1,72 +1,101 @@
-/* MedCord design tokens (prefix --mc-). Default theme is dark "midnight indigo"; light via :root.light */
+/* ==========================================================================
+   MedCord design tokens — "Clinical Graphite"
+   One accent (cobalt). Neutrals carry the layout; colour only carries meaning.
+   Dark is the default; :root.light is a first-class alternative.
+   ========================================================================== */
 :root {
   color-scheme: dark;
-  --mc-brand: #7c6cff;
-  --mc-brand-hover: #8e80ff;
-  --mc-brand-active: #6a59f2;
-  --mc-brand-soft: rgba(124, 108, 255, 0.16);
-  --mc-brand-ring: rgba(124, 108, 255, 0.45);
-  --mc-accent: #2fd6f0;
-  --mc-pink: #ff6bd6;
-  --mc-grad: linear-gradient(135deg, #7c6cff 0%, #b05cff 55%, #2fd6f0 130%);
-  --mc-grad-soft: linear-gradient(135deg, rgba(124, 108, 255, 0.22), rgba(47, 214, 240, 0.12));
 
-  --mc-rail: #0f1019;
-  --mc-side: #171927;
-  --mc-bg: #1d1f2f;
-  --mc-surface: #242738;
-  --mc-surface-2: #2c3046;
-  --mc-surface-3: #363b58;
-  --mc-border: rgba(255, 255, 255, 0.08);
-  --mc-text: #eceefc;
-  --mc-text-muted: #a1a7cd;
+  /* Accent */
+  --mc-brand: #4f6bff;
+  --mc-brand-hover: #6680ff;
+  --mc-brand-active: #3f58e6;
+  --mc-brand-soft: rgba(79, 107, 255, 0.14);
+  --mc-brand-ring: rgba(79, 107, 255, 0.5);
+  --mc-brand-text: #8fa2ff;
   --mc-text-on-brand: #ffffff;
 
-  --mc-success: #3ddc97; --mc-success-bg: rgba(61, 220, 151, 0.14); --mc-success-border: rgba(61, 220, 151, 0.35);
-  --mc-warning: #ffb454; --mc-warning-bg: rgba(255, 180, 84, 0.15); --mc-warning-border: rgba(255, 180, 84, 0.38);
-  --mc-danger: #ff6b7d;  --mc-danger-bg: rgba(255, 107, 125, 0.14); --mc-danger-border: rgba(255, 107, 125, 0.38);
-  --mc-info: #62b7ff;    --mc-info-bg: rgba(98, 183, 255, 0.14);   --mc-info-border: rgba(98, 183, 255, 0.35);
+  /* Neutral elevation ladder: rail < side < bg < surface < surface-2 < surface-3 */
+  --mc-rail: #0f1013;
+  --mc-side: #15161b;
+  --mc-bg: #1a1b21;
+  --mc-surface: #1f2027;
+  --mc-surface-2: #25262e;
+  --mc-surface-3: #2e2f38;
+  --mc-hover: rgba(255, 255, 255, 0.04);
+  --mc-active: rgba(255, 255, 255, 0.07);
+  --mc-border: rgba(255, 255, 255, 0.07);
+  --mc-border-strong: rgba(255, 255, 255, 0.12);
 
-  --mc-verified: #2fd6f0;
-  --mc-overlay: rgba(6, 7, 14, 0.66);
-  --mc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --mc-shadow-md: 0 10px 30px rgba(0, 0, 0, 0.45);
-  --mc-shadow-modal: 0 24px 70px rgba(0, 0, 0, 0.6);
-  --mc-glow: 0 0 0 1px rgba(124, 108, 255, 0.5), 0 8px 24px rgba(124, 108, 255, 0.35);
+  /* Text */
+  --mc-text: #ececf1;
+  --mc-text-2: #c4c6d0;
+  --mc-text-muted: #8b8e9c;
+  --mc-text-faint: #646775;
 
+  /* Semantic (used for meaning only) */
+  --mc-success: #34c38f; --mc-success-bg: rgba(52, 195, 143, 0.12); --mc-success-border: rgba(52, 195, 143, 0.3);
+  --mc-warning: #e8a33d; --mc-warning-bg: rgba(232, 163, 61, 0.12); --mc-warning-border: rgba(232, 163, 61, 0.3);
+  --mc-danger: #ef5d6c;  --mc-danger-bg: rgba(239, 93, 108, 0.12);  --mc-danger-border: rgba(239, 93, 108, 0.32);
+  --mc-info: #5aa7f5;    --mc-info-bg: rgba(90, 167, 245, 0.12);    --mc-info-border: rgba(90, 167, 245, 0.3);
+  --mc-online: #34c38f;
+  --mc-offline: #5d606d;
+  --mc-verified: #4f6bff;
+
+  /* Elevation */
+  --mc-overlay: rgba(5, 6, 9, 0.62);
+  --mc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --mc-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.36), 0 0 0 1px var(--mc-border);
+  --mc-shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--mc-border);
+
+  /* Type — Lexend, shared with the ZenoHosp product family */
+  --mc-font: 'Lexend', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --mc-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --mc-fs-xs: 11px; --mc-fs-sm: 12px; --mc-fs-base: 14px; --mc-fs-md: 15px; --mc-fs-lg: 18px; --mc-fs-xl: 22px; --mc-fs-2xl: 28px;
+
+  /* Space / shape / motion */
   --mc-space-1: 4px; --mc-space-2: 8px; --mc-space-3: 12px; --mc-space-4: 16px;
   --mc-space-5: 24px; --mc-space-6: 32px; --mc-space-7: 48px;
-  --mc-radius-sm: 6px; --mc-radius: 10px; --mc-radius-lg: 16px; --mc-radius-full: 9999px;
-  --mc-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --mc-transition: 160ms var(--mc-ease);
-  --mc-font: 'Inter', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  --mc-radius-sm: 4px; --mc-radius: 6px; --mc-radius-md: 8px; --mc-radius-lg: 10px; --mc-radius-full: 9999px;
+  --mc-ease: cubic-bezier(0.2, 0, 0, 1);
+  --mc-transition: 120ms var(--mc-ease);
 }
 
 :root.light {
   color-scheme: light;
-  --mc-brand: #5b4bf0;
-  --mc-brand-hover: #4a3bdc;
-  --mc-brand-active: #3f31c4;
-  --mc-brand-soft: rgba(91, 75, 240, 0.1);
-  --mc-brand-ring: rgba(91, 75, 240, 0.35);
-  --mc-grad: linear-gradient(135deg, #5b4bf0 0%, #9a4dff 55%, #14b8d4 130%);
-  --mc-grad-soft: linear-gradient(135deg, rgba(91, 75, 240, 0.12), rgba(20, 184, 212, 0.08));
-  --mc-rail: #e4e6fb;
-  --mc-side: #eef0ff;
-  --mc-bg: #f7f8ff;
+  --mc-brand: #3d5afe;
+  --mc-brand-hover: #2f4bed;
+  --mc-brand-active: #263fd4;
+  --mc-brand-soft: rgba(61, 90, 254, 0.09);
+  --mc-brand-ring: rgba(61, 90, 254, 0.4);
+  --mc-brand-text: #2f4bed;
+
+  --mc-rail: #eceef2;
+  --mc-side: #f6f7f9;
+  --mc-bg: #ffffff;
   --mc-surface: #ffffff;
-  --mc-surface-2: #f0f1fc;
-  --mc-surface-3: #e3e5f7;
-  --mc-border: rgba(30, 32, 80, 0.12);
-  --mc-text: #1b1d3a;
-  --mc-text-muted: #5f6490;
-  --mc-success: #0f9d63; --mc-success-bg: #e3f8ee; --mc-success-border: #a6e6c8;
-  --mc-warning: #b86a00; --mc-warning-bg: #fff2dc; --mc-warning-border: #f4cf8f;
-  --mc-danger: #d3304a;  --mc-danger-bg: #ffe8ec; --mc-danger-border: #f5b0bd;
-  --mc-info: #1f6fd1;    --mc-info-bg: #e5f1ff;   --mc-info-border: #aed0f7;
-  --mc-overlay: rgba(20, 22, 50, 0.45);
-  --mc-shadow-sm: 0 1px 2px rgba(30, 32, 80, 0.1);
-  --mc-shadow-md: 0 10px 30px rgba(30, 32, 80, 0.15);
-  --mc-shadow-modal: 0 24px 70px rgba(30, 32, 80, 0.3);
-  --mc-glow: 0 0 0 1px rgba(91, 75, 240, 0.4), 0 8px 24px rgba(91, 75, 240, 0.25);
+  --mc-surface-2: #f6f7f9;
+  --mc-surface-3: #eceef2;
+  --mc-hover: rgba(16, 18, 27, 0.04);
+  --mc-active: rgba(16, 18, 27, 0.07);
+  --mc-border: #e6e8ed;
+  --mc-border-strong: #d6d9e0;
+
+  --mc-text: #15161c;
+  --mc-text-2: #3a3d4a;
+  --mc-text-muted: #6b6f7d;
+  --mc-text-faint: #9a9daa;
+
+  --mc-success: #0f9b6c; --mc-success-bg: #e7f6f0; --mc-success-border: #b7e3d2;
+  --mc-warning: #b26a00; --mc-warning-bg: #fdf3e2; --mc-warning-border: #f1d3a1;
+  --mc-danger: #d13a4b;  --mc-danger-bg: #fdecee; --mc-danger-border: #f4bcc3;
+  --mc-info: #1f6fd1;    --mc-info-bg: #e8f1fc;   --mc-info-border: #b9d3f3;
+  --mc-online: #12a873;
+  --mc-offline: #b4b7c2;
+  --mc-verified: #3d5afe;
+
+  --mc-overlay: rgba(16, 18, 27, 0.4);
+  --mc-shadow-sm: 0 1px 2px rgba(16, 18, 27, 0.06);
+  --mc-shadow-md: 0 8px 24px rgba(16, 18, 27, 0.1), 0 0 0 1px var(--mc-border);
+  --mc-shadow-lg: 0 18px 48px rgba(16, 18, 27, 0.16), 0 0 0 1px var(--mc-border);
 }

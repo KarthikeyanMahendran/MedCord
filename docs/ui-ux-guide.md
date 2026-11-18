@@ -2,12 +2,16 @@
 
 MedCord has its own standalone design system: TypeScript components with the `mc-` prefix and MedCord branding. It does not depend on or import from any other project.
 
-## Visual language (v2, Discord-inspired)
-- **Midnight indigo** dark theme by default (light available via the theme toggle). Vibrant violet to cyan gradient (`--mc-grad`) for primary actions, the logo and hero banners; cyan accent for active indicators; success green for presence.
-- **Shell:** `ServerRail` (76px, squircle community icons that morph on hover, glowing active pill, tooltips) | `SideColumn` (contextual: channels, DMs, or navigation, plus the user panel) | content. `ChannelChat` renders only the message pane, with optional thread and member panels.
-- **People and communities** get stable gradient initials avatars (`Avatar`, `gradientFor`); presence dots on avatars.
-- **Chat details:** consecutive messages by the same author collapse (5 min window), day dividers, hover toolbar, reaction pills with pop animation, rounded auto-growing composer, entrance animations (respects `prefers-reduced-motion`).
-- Styles are split: `tokens.css`, `base.css`, `components.css` (UI kit), `shell.css`, `chat.css`, `auth.css`.
+## Visual language (v3, "Clinical Graphite")
+- **Typeface:** Lexend (shared with the ZenoHosp product family), weights 400/500/600 only; tabular numerals for times and counts.
+- **Colour:** neutral graphite elevation ladder (`rail < side < bg < surface < surface-2 < surface-3`) and **one** accent (cobalt `--mc-brand`). Semantic colours (success/warning/danger/info, online) are used only to carry meaning — never decoration. No gradients, glows or emoji in product chrome.
+- **Shape and motion:** 6–10px radii; 120ms fades/scale-ins only; `prefers-reduced-motion` respected.
+- **Identity:** muted avatar tones with even luminance (white initials stay AA); a small `VerifiedMark` check replaces repeated "verified" pills.
+- **Shell:** `ServerRail` (40px square tiles, accent ring + indicator bar for the active item, tooltips) | `SideColumn` (contextual: channels, DMs or navigation; user panel) | content. One destination per rail item.
+- **Pages** use `PageHeader` (eyebrow/breadcrumb, title, description, actions); lists use card + `mc-list-row`; zero states use `EmptyState` with an icon, one line of guidance and at most one action.
+- **Chat:** Discord-grade density — author runs collapse within 5 minutes, day dividers, channel intro block, layout-matched skeletons, hover toolbar with destructive actions separated, keyboard hints under the composer, full timestamps on hover.
+- **Accessibility:** every icon-only button gets a tooltip from its accessible label automatically; focus-visible rings; disabled controls look inactive rather than dimmed.
+- Styles: `tokens.css`, `base.css`, `components.css` (kit), `shell.css`, `chat.css`, `auth.css`.
 
 ## Principles
 - Calm, clinical, high-contrast neutral palette; one accent colour. Dense but readable (chat apps are information-heavy).
