@@ -29,6 +29,7 @@ export function AppShell() {
           <nav className="mc-nav" aria-label="Main">
             <NavLink to="/communities">Communities</NavLink>
             <NavLink to="/messages">Messages</NavLink>
+            <NavLink to="/search">Search</NavLink>
             <NavLink to="/" end>Profile</NavLink>
             {user?.platformRole === 'ADMIN' && <NavLink to="/admin/verifications">Verifications</NavLink>}
           </nav>

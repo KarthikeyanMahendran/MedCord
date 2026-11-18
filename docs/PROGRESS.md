@@ -43,7 +43,7 @@ Next up = first unchecked task. Update in every PR.
 
 - [x] T-019 DMs, presence, block (1:1 + group DMs, shared-community rule, heartbeat presence) — `docs/tasks/T-019-dms-presence-block.md`
 - [ ] T-020 Attachments — `docs/tasks/T-020-attachments.md`
-- [ ] T-021 Search — `docs/tasks/T-021-search.md`
+- [x] T-021 Search (Postgres full-text, access-filtered, highlighted snippets) — `docs/tasks/T-021-search.md`
 - [ ] T-022 Moderation and audit log — `docs/tasks/T-022-moderation-and-audit-log.md`
 - [ ] T-023 Notifications and push — `docs/tasks/T-023-notifications-and-push.md`
 

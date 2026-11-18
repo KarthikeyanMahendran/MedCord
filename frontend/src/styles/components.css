@@ -151,3 +151,5 @@
 /* Presence */
 .mc-presence { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--mc-border); border: 2px solid var(--mc-surface); box-shadow: 0 0 0 1px var(--mc-border); flex: none; }
 .mc-presence.is-online { background: #22c55e; box-shadow: 0 0 0 1px #16a34a; }
+
+.mc-mark { background: var(--mc-warning-bg); color: inherit; border-radius: 3px; padding: 0 2px; font-weight: 600; }

@@ -10,6 +10,7 @@ import Home from './pages/Home'
 import JoinInvite from './pages/JoinInvite'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Search from './pages/Search'
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/communities" element={<Communities />} />
           <Route path="/communities/:id" element={<CommunityDetail />} />
           <Route path="/communities/:id/channels/:channelId" element={<ChannelChat />} />
+          <Route path="/search" element={<Search />} />
           <Route path="/messages" element={<ChannelChat />} />
           <Route path="/messages/:channelId" element={<ChannelChat />} />
           <Route path="/invite/:code" element={<JoinInvite />} />
