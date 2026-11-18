@@ -12,6 +12,7 @@ import ChannelChat from './pages/ChannelChat'
 import CommunityDetail from './pages/CommunityDetail'
 import Communities from './pages/Communities'
 import Home from './pages/Home'
+import Landing from './pages/landing/Landing'
 import JoinInvite from './pages/JoinInvite'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -20,6 +21,7 @@ import Search from './pages/Search'
 export default function App() {
   return (
     <Routes>
+      <Route path="/welcome" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route element={<ProtectedRoute />}>
