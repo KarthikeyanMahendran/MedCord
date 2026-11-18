@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Bot, Sparkles, X, Send, RotateCcw, Hash, ExternalLink, ChevronRight } from 'lucide-react'
 import { askMedCordAi, type AiCitation } from '../../api/ai'
+import { startDm } from '../../api/dms'
+import { useAuth } from '../../context/AuthContext'
 import { VerifiedMark } from '../ui'
 
 interface ChatMessage {
@@ -24,6 +26,18 @@ export function MedCordAiWidget() {
   const [loading, setLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+
+  const openDirectMessage = async (authorId: string) => {
+    try {
+      const convo = await startDm([authorId])
+      setIsOpen(false)
+      navigate(`/messages/${convo.id}`)
+    } catch {
+      // ignore: blocked, self, or transient error — citation card still links to the discussion
+    }
+  }
 
   // Detect if user is currently inside a specific community or channel
   const communityMatch = location.pathname.match(/\/communities\/([0-9a-fA-F-]+)/)
@@ -188,7 +202,23 @@ export function MedCordAiWidget() {
                               <ExternalLink size={12} />
                             </div>
                             <div className="mc-ai-citation-author">
-                              {authorDisplay} <VerifiedMark />
+                              {user?.id === cite.authorId ? (
+                                <span>{authorDisplay} <VerifiedMark /></span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="mc-ai-citation-author-btn"
+                                  aria-label={`Message ${authorDisplay}`}
+                                  title={`Message ${authorDisplay}`}
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    void openDirectMessage(cite.authorId)
+                                  }}
+                                >
+                                  {authorDisplay} <VerifiedMark />
+                                </button>
+                              )}
                             </div>
                             <div className="mc-ai-citation-snippet">&ldquo;{cite.snippet}&rdquo;</div>
                           </Link>

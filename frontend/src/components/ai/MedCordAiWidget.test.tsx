@@ -6,6 +6,8 @@ import { MedCordAiWidget } from './MedCordAiWidget'
 import * as aiApi from '../../api/ai'
 
 vi.mock('../../api/ai')
+vi.mock('../../api/dms', () => ({ startDm: vi.fn() }))
+vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me' } }) }))
 
 describe('MedCordAiWidget', () => {
   beforeEach(() => {
@@ -70,5 +72,37 @@ describe('MedCordAiWidget', () => {
     expect(await screen.findByText(/Doctors discussed initiating IV fluids/i)).toBeInTheDocument()
     expect(screen.getByText(/emergency · Cardiology Network/i)).toBeInTheDocument()
     expect(screen.getByText(/Dr. Arun/i)).toBeInTheDocument()
+  })
+
+  it('opens a direct message when the citation author name is clicked', async () => {
+    const { startDm } = await import('../../api/dms')
+    vi.mocked(startDm).mockResolvedValue({ id: 'dm-1' } as never)
+    vi.mocked(aiApi.askMedCordAi).mockResolvedValue({
+      answer: 'Discussion summary.',
+      citations: [
+        {
+          messageId: 'msg-1', channelId: 'ch-1', channelName: 'emergency',
+          communityId: 'comm-1', communityName: 'Cardiology Network',
+          authorId: 'user-1', authorName: 'Arun',
+          timestamp: '2026-11-18T10:00:00Z', snippet: 'IV fluids first.',
+        },
+      ],
+      aiGenerated: true,
+    })
+
+    render(
+      <MemoryRouter>
+        <MedCordAiWidget />
+      </MemoryRouter>
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /Open MedCord AI Assistant/i }))
+    await userEvent.type(screen.getByPlaceholderText('Ask anything about community discussions...'), 'protocols?')
+    await userEvent.click(screen.getByRole('button', { name: /Send query/i }))
+
+    const authorBtn = await screen.findByRole('button', { name: /Message Dr. Arun/i })
+    await userEvent.click(authorBtn)
+
+    await waitFor(() => expect(startDm).toHaveBeenCalledWith(['user-1']))
   })
 })
