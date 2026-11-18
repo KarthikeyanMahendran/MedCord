@@ -40,4 +40,8 @@ public class User {
 
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private Instant updatedAt;
+
+    /** Written only via UserRepository.touch (heartbeat), never by entity saves. */
+    @Column(name = "last_seen_at", insertable = false, updatable = false)
+    private Instant lastSeenAt;
 }

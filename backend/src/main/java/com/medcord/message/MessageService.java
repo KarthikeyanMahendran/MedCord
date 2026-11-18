@@ -25,16 +25,16 @@ public class MessageService {
     private final ChannelRepository channels;
     private final UserRepository users;
     private final ProfessionalProfileRepository profiles;
-    private final PermissionService perms;
+    private final ChannelAccess access;
     private final ChannelTransport transport;
     private final Duration editWindow;
 
     public MessageService(MessageRepository messages, MessageRevisionRepository revisions, ThreadRepository threads, ReactionRepository reactions, ChannelRepository channels,
-                          UserRepository users, ProfessionalProfileRepository profiles, PermissionService perms,
+                          UserRepository users, ProfessionalProfileRepository profiles, ChannelAccess access,
                           ChannelTransport transport,
                           @Value("${medcord.messages.edit-window-minutes:1440}") long editWindowMinutes) {
         this.messages = messages; this.revisions = revisions; this.threads = threads; this.reactions = reactions; this.channels = channels; this.users = users;
-        this.profiles = profiles; this.perms = perms; this.transport = transport;
+        this.profiles = profiles; this.access = access; this.transport = transport;
         this.editWindow = Duration.ofMinutes(editWindowMinutes);
     }
 
@@ -45,9 +45,9 @@ public class MessageService {
 
     /** Shared posting path for channel messages (threadId == null) and thread replies. */
     MessageDto post(Channel ch, UUID userId, String rawBody, UUID replyToId, MessageThread thread) {
-        Membership m = perms.membership(ch.getCommunityId(), userId);
-        Set<Permission> held = perms.permissions(m);
+        Set<Permission> held = access.permissions(ch, userId);
         if (ch.isArchived()) throw new ApiException(HttpStatus.CONFLICT, "This channel is archived and read-only");
+        access.assertCanPost(ch, userId);
         if (!held.contains(Permission.SEND_MESSAGES)) throw new ApiException(HttpStatus.FORBIDDEN, "Missing permission: SEND_MESSAGES");
         // Announcement channels restrict top-level posts; discussion in their threads stays open to members.
         if (thread == null && ch.getType() == Channel.Type.ANNOUNCEMENT && !held.contains(Permission.POST_ANNOUNCEMENTS)) {
@@ -79,7 +79,7 @@ public class MessageService {
     /** Page of a thread's replies (oldest to newest within the page). */
     @Transactional(readOnly = true)
     public MessagePage listThread(MessageThread t, UUID userId, UUID before, int limit) {
-        perms.membership(channel(t.getChannelId()).getCommunityId(), userId);
+        access.permissions(channel(t.getChannelId()), userId);
         int size = Math.min(Math.max(limit, 1), 100);
         List<Message> page;
         if (before == null) {
@@ -101,7 +101,7 @@ public class MessageService {
     @Transactional(readOnly = true)
     public MessagePage list(UUID channelId, UUID userId, UUID before, int limit) {
         Channel ch = channel(channelId);
-        perms.membership(ch.getCommunityId(), userId);
+        access.permissions(ch, userId);
         int size = Math.min(Math.max(limit, 1), 100);
         List<Message> page;
         if (before == null) {
@@ -122,7 +122,7 @@ public class MessageService {
     public MessageDto edit(UUID messageId, UUID userId, String newBody) {
         Message msg = message(messageId);
         Channel ch = channel(msg.getChannelId());
-        perms.membership(ch.getCommunityId(), userId);
+        access.permissions(ch, userId);
         if (msg.isDeleted()) throw new ApiException(HttpStatus.CONFLICT, "Message was deleted");
         if (!msg.getAuthorId().equals(userId)) throw new ApiException(HttpStatus.FORBIDDEN, "Only the author can edit a message");
         if (ch.isArchived()) throw new ApiException(HttpStatus.CONFLICT, "This channel is archived and read-only");
@@ -144,9 +144,9 @@ public class MessageService {
     public void delete(UUID messageId, UUID userId) {
         Message msg = message(messageId);
         Channel ch = channel(msg.getChannelId());
-        Membership m = perms.membership(ch.getCommunityId(), userId);
+        Set<Permission> held = access.permissions(ch, userId);
         if (msg.isDeleted()) return;
-        boolean moderator = perms.permissions(m).contains(Permission.MODERATE_MESSAGES);
+        boolean moderator = held.contains(Permission.MODERATE_MESSAGES);
         if (!msg.getAuthorId().equals(userId) && !moderator) throw new ApiException(HttpStatus.FORBIDDEN, "Not allowed to delete this message");
         snapshot(msg, "DELETE", userId);
         msg.setDeletedAt(Instant.now());
@@ -160,8 +160,8 @@ public class MessageService {
     public List<RevisionDto> history(UUID messageId, UUID userId) {
         Message msg = message(messageId);
         Channel ch = channel(msg.getChannelId());
-        Membership m = perms.membership(ch.getCommunityId(), userId);
-        if (!msg.getAuthorId().equals(userId) && !perms.permissions(m).contains(Permission.MODERATE_MESSAGES)) {
+        Set<Permission> held = access.permissions(ch, userId);
+        if (!msg.getAuthorId().equals(userId) && !held.contains(Permission.MODERATE_MESSAGES)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Not allowed to view this history");
         }
         List<MessageRevision> list = revisions.findByMessageIdOrderByRevisionNoAsc(messageId);

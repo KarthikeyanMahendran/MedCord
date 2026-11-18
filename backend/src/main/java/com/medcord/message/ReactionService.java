@@ -18,13 +18,13 @@ public class ReactionService {
     private final MessageRepository messages;
     private final ReactionRepository reactions;
     private final ChannelRepository channels;
-    private final PermissionService perms;
+    private final ChannelAccess access;
     private final MessageService messageService;
 
     public ReactionService(MessageRepository messages, ReactionRepository reactions, ChannelRepository channels,
-                           PermissionService perms, MessageService messageService) {
+                           ChannelAccess access, MessageService messageService) {
         this.messages = messages; this.reactions = reactions; this.channels = channels;
-        this.perms = perms; this.messageService = messageService;
+        this.access = access; this.messageService = messageService;
     }
 
     @Transactional
@@ -58,7 +58,7 @@ public class ReactionService {
     public MessageDto pin(UUID messageId, UUID userId, boolean pin) {
         Message m = messages.findById(messageId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Message not found"));
         Channel ch = channel(m.getChannelId());
-        perms.require(ch.getCommunityId(), userId, Permission.MODERATE_MESSAGES);
+        access.require(ch, userId, Permission.MODERATE_MESSAGES);
         if (m.isDeleted()) throw new ApiException(HttpStatus.CONFLICT, "Message was deleted");
         if (m.getThreadId() != null) throw new ApiException(HttpStatus.BAD_REQUEST, "Thread replies cannot be pinned");
         if (pin && m.getPinnedAt() == null) {
@@ -76,14 +76,14 @@ public class ReactionService {
     @Transactional(readOnly = true)
     public List<MessageDto> pinned(UUID channelId, UUID userId) {
         Channel ch = channel(channelId);
-        perms.membership(ch.getCommunityId(), userId);
+        access.permissions(ch, userId);
         return messageService.toDtos(messages.pinned(channelId), userId);
     }
 
     private Message writable(UUID messageId, UUID userId) {
         Message m = messages.findById(messageId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Message not found"));
         Channel ch = channel(m.getChannelId());
-        perms.membership(ch.getCommunityId(), userId);
+        access.permissions(ch, userId);
         if (m.isDeleted()) throw new ApiException(HttpStatus.CONFLICT, "Message was deleted");
         if (ch.isArchived()) throw new ApiException(HttpStatus.CONFLICT, "This channel is archived and read-only");
         return m;

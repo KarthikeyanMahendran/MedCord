@@ -11,4 +11,5 @@ public interface ChannelRepository extends JpaRepository<Channel, UUID> {
     List<Channel> findByCommunityIdOrderByPositionAscNameAsc(UUID communityId);
     boolean existsByCommunityIdAndNameIgnoreCase(UUID communityId, String name);
     int countByCommunityId(UUID communityId);
+    java.util.Optional<Channel> findByDmKey(String dmKey);
 }

@@ -44,7 +44,7 @@ public final class CommunityDtos {
     public record RoleRef(UUID id, String name) {}
 
     public record MemberDto(UUID userId, String displayName, String specialty, boolean verified,
-                            List<RoleRef> roles, Instant joinedAt) {}
+                            List<RoleRef> roles, Instant joinedAt, boolean online) {}
 
     public record CreateInviteRequest(@Min(1) @Max(10000) Integer maxUses, @Min(1) @Max(8760) Integer expiresInHours) {}
 

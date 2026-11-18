@@ -18,4 +18,7 @@ public interface MembershipRepository extends JpaRepository<Membership, UUID> {
 
     @Query("select count(m) from Membership m join m.roles r where r.id = ?1")
     long countWithRole(UUID roleId);
+
+    @Query("select count(a) > 0 from Membership a, Membership b where a.communityId = b.communityId and a.userId = ?1 and b.userId = ?2")
+    boolean shareCommunity(UUID userA, UUID userB);
 }

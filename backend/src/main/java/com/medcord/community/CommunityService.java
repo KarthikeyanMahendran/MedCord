@@ -164,7 +164,7 @@ public class CommunityService {
             out.add(new MemberDto(u.getId(), u.getDisplayName(), p == null ? null : p.getSpecialty(),
                 p != null && p.getVerificationStatus() == Verification.APPROVED,
                 m.getRoles().stream().sorted(Comparator.comparingInt(Role::getPosition)).map(r -> new RoleRef(r.getId(), r.getName())).toList(),
-                m.getJoinedAt()));
+                m.getJoinedAt(), com.medcord.user.Presence.online(u)));
         }
         out.sort(Comparator.comparing(MemberDto::displayName, String.CASE_INSENSITIVE_ORDER));
         return out;

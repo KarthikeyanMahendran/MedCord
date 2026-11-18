@@ -3,6 +3,7 @@ package com.medcord.message;
 import com.medcord.common.ApiException;
 import com.medcord.community.*;
 import com.medcord.message.MessageDtos.*;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -14,12 +15,12 @@ public class ThreadService {
     private final MessageRepository messages;
     private final ChannelRepository channels;
     private final MessageService messageService;
-    private final PermissionService perms;
+    private final ChannelAccess access;
 
     public ThreadService(ThreadRepository threads, MessageRepository messages, ChannelRepository channels,
-                         MessageService messageService, PermissionService perms) {
+                         MessageService messageService, ChannelAccess access) {
         this.threads = threads; this.messages = messages; this.channels = channels;
-        this.messageService = messageService; this.perms = perms;
+        this.messageService = messageService; this.access = access;
     }
 
     /** Idempotent: starting a thread on a message that already has one returns the existing thread. */
@@ -27,13 +28,13 @@ public class ThreadService {
     public ThreadDto start(UUID messageId, UUID userId, String title) {
         Message root = messages.findById(messageId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Message not found"));
         Channel ch = channel(root.getChannelId());
-        Membership m = perms.membership(ch.getCommunityId(), userId);
+        Set<Permission> held = access.permissions(ch, userId);
         var existing = threads.findByRootMessageId(messageId);
         if (existing.isPresent()) return dto(existing.get(), userId);
         if (root.getThreadId() != null) throw new ApiException(HttpStatus.BAD_REQUEST, "Threads cannot be nested");
         if (root.isDeleted()) throw new ApiException(HttpStatus.CONFLICT, "Cannot start a thread on a deleted message");
         if (ch.isArchived()) throw new ApiException(HttpStatus.CONFLICT, "This channel is archived and read-only");
-        if (!perms.permissions(m).contains(Permission.SEND_MESSAGES)) throw new ApiException(HttpStatus.FORBIDDEN, "Missing permission: SEND_MESSAGES");
+        if (!held.contains(Permission.SEND_MESSAGES)) throw new ApiException(HttpStatus.FORBIDDEN, "Missing permission: SEND_MESSAGES");
         MessageThread t = new MessageThread();
         t.setChannelId(ch.getId());
         t.setRootMessageId(messageId);
@@ -45,7 +46,7 @@ public class ThreadService {
     @Transactional(readOnly = true)
     public ThreadDto get(UUID threadId, UUID userId) {
         MessageThread t = thread(threadId);
-        perms.membership(channel(t.getChannelId()).getCommunityId(), userId);
+        access.permissions(channel(t.getChannelId()), userId);
         return dto(t, userId);
     }
 
@@ -65,8 +66,8 @@ public class ThreadService {
     @Transactional
     public ThreadDto update(UUID threadId, UUID userId, UpdateThreadRequest r) {
         MessageThread t = thread(threadId);
-        Membership m = perms.membership(channel(t.getChannelId()).getCommunityId(), userId);
-        if (!t.getCreatedBy().equals(userId) && !perms.permissions(m).contains(Permission.MODERATE_MESSAGES)) {
+        Set<Permission> held = access.permissions(channel(t.getChannelId()), userId);
+        if (!t.getCreatedBy().equals(userId) && !held.contains(Permission.MODERATE_MESSAGES)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Only the thread creator or a moderator can change this thread");
         }
         if (r.title() != null) t.setTitle(r.title().isBlank() ? null : r.title().trim());
