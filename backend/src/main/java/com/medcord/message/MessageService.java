@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MessageService {
     private final MessageRepository messages;
     private final MessageRevisionRepository revisions;
+    private final ThreadRepository threads;
     private final ChannelRepository channels;
     private final UserRepository users;
     private final ProfessionalProfileRepository profiles;
@@ -27,43 +28,73 @@ public class MessageService {
     private final ChannelTransport transport;
     private final Duration editWindow;
 
-    public MessageService(MessageRepository messages, MessageRevisionRepository revisions, ChannelRepository channels,
+    public MessageService(MessageRepository messages, MessageRevisionRepository revisions, ThreadRepository threads, ChannelRepository channels,
                           UserRepository users, ProfessionalProfileRepository profiles, PermissionService perms,
                           ChannelTransport transport,
                           @Value("${medcord.messages.edit-window-minutes:1440}") long editWindowMinutes) {
-        this.messages = messages; this.revisions = revisions; this.channels = channels; this.users = users;
+        this.messages = messages; this.revisions = revisions; this.threads = threads; this.channels = channels; this.users = users;
         this.profiles = profiles; this.perms = perms; this.transport = transport;
         this.editWindow = Duration.ofMinutes(editWindowMinutes);
     }
 
     @Transactional
     public MessageDto send(UUID channelId, UUID userId, SendRequest r) {
-        Channel ch = channel(channelId);
+        return post(channel(channelId), userId, r.body(), r.replyToId(), null);
+    }
+
+    /** Shared posting path for channel messages (threadId == null) and thread replies. */
+    MessageDto post(Channel ch, UUID userId, String rawBody, UUID replyToId, MessageThread thread) {
         Membership m = perms.membership(ch.getCommunityId(), userId);
         Set<Permission> held = perms.permissions(m);
         if (ch.isArchived()) throw new ApiException(HttpStatus.CONFLICT, "This channel is archived and read-only");
         if (!held.contains(Permission.SEND_MESSAGES)) throw new ApiException(HttpStatus.FORBIDDEN, "Missing permission: SEND_MESSAGES");
-        if (ch.getType() == Channel.Type.ANNOUNCEMENT && !held.contains(Permission.POST_ANNOUNCEMENTS)) {
+        // Announcement channels restrict top-level posts; discussion in their threads stays open to members.
+        if (thread == null && ch.getType() == Channel.Type.ANNOUNCEMENT && !held.contains(Permission.POST_ANNOUNCEMENTS)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Only members with POST_ANNOUNCEMENTS can post here");
         }
         User u = users.findById(userId).orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Unknown user"));
         if (u.getStatus() == User.Status.SUSPENDED) throw new ApiException(HttpStatus.FORBIDDEN, "Account suspended");
-        String body = r.body().trim();
+        String body = rawBody.trim();
         if (body.isEmpty()) throw new ApiException(HttpStatus.BAD_REQUEST, "Message cannot be empty");
 
         Message msg = new Message();
-        msg.setChannelId(channelId);
+        msg.setChannelId(ch.getId());
         msg.setAuthorId(userId);
         msg.setBody(body);
-        if (r.replyToId() != null) {
-            Message target = messages.findById(r.replyToId()).filter(t -> t.getChannelId().equals(channelId))
-                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Reply target not found in this channel"));
+        if (thread != null) msg.setThreadId(thread.getId());
+        if (replyToId != null) {
+            UUID scope = thread == null ? null : thread.getId();
+            Message target = messages.findById(replyToId)
+                .filter(t -> (t.getChannelId().equals(ch.getId()) && Objects.equals(t.getThreadId(), scope))
+                    || (thread != null && t.getId().equals(thread.getRootMessageId())))
+                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Reply target not found here"));
             msg.setReplyToId(target.getId());
         }
         msg = messages.saveAndFlush(msg);
-        transport.onMessageSent(ch.getCommunityId(), channelId, msg.getId());
+        transport.onMessageSent(ch.getCommunityId(), ch.getId(), msg.getId());
         return toDtos(List.of(msg)).get(0);
     }
+
+    /** Page of a thread's replies (oldest to newest within the page). */
+    @Transactional(readOnly = true)
+    public MessagePage listThread(MessageThread t, UUID userId, UUID before, int limit) {
+        perms.membership(channel(t.getChannelId()).getCommunityId(), userId);
+        int size = Math.min(Math.max(limit, 1), 100);
+        List<Message> page;
+        if (before == null) {
+            page = messages.latestInThread(t.getId(), PageRequest.of(0, size + 1));
+        } else {
+            Message cursor = messages.findById(before).filter(x -> t.getId().equals(x.getThreadId()))
+                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Unknown cursor"));
+            page = messages.beforeInThread(t.getId(), cursor.getCreatedAt(), cursor.getId(), PageRequest.of(0, size + 1));
+        }
+        boolean hasMore = page.size() > size;
+        List<Message> slice = new ArrayList<>(hasMore ? page.subList(0, size) : page);
+        Collections.reverse(slice);
+        return new MessagePage(toDtos(slice), hasMore);
+    }
+
+    MessageDto dto(Message m) { return toDtos(List.of(m)).get(0); }
 
     /** Newest page first in storage order; returned oldest-to-newest for display. Cursor = id of the oldest message already loaded. */
     @Transactional(readOnly = true)
@@ -167,6 +198,10 @@ public class MessageService {
         list.forEach(m -> authorIds.add(m.getAuthorId()));
         replies.values().forEach(m -> authorIds.add(m.getAuthorId()));
         Map<UUID, User> authors = users.findAllById(authorIds).stream().collect(Collectors.toMap(User::getId, x -> x));
+        Map<UUID, MessageThread> threadByRoot = threads.findByRootMessageIdIn(list.stream().map(Message::getId).toList())
+            .stream().collect(Collectors.toMap(MessageThread::getRootMessageId, x -> x));
+        Map<UUID, ThreadRepository.Stats> stats = threadByRoot.isEmpty() ? Map.of()
+            : threads.stats(threadByRoot.values().stream().map(MessageThread::getId).toList()).stream().collect(Collectors.toMap(ThreadRepository.Stats::getThreadId, x -> x));
         Map<UUID, ProfessionalProfile> profs = profiles.findAllById(authorIds).stream().collect(Collectors.toMap(ProfessionalProfile::getUserId, x -> x));
 
         return list.stream().map(m -> {
@@ -183,8 +218,15 @@ public class MessageService {
                         t.isDeleted() ? null : excerpt(t.getBody()), t.isDeleted());
                 }
             }
+            MessageThread th = threadByRoot.get(m.getId());
+            ThreadSummary summary = null;
+            if (th != null) {
+                ThreadRepository.Stats st = stats.get(th.getId());
+                summary = new ThreadSummary(th.getId(), th.getTitle(), st == null ? 0 : st.getReplyCount(),
+                    st == null ? null : st.getLastReplyAt(), th.isArchived());
+            }
             return new MessageDto(m.getId(), m.getChannelId(), author, m.isDeleted() ? null : m.getBody(),
-                m.getCreatedAt(), m.getEditedAt(), m.isDeleted(), preview);
+                m.getCreatedAt(), m.getEditedAt(), m.isDeleted(), preview, summary, m.getThreadId());
         }).toList();
     }
 

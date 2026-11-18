@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1")
 public class MessageController {
     private final MessageService service;
+    private final ThreadService threads;
 
-    public MessageController(MessageService service) {
+    public MessageController(MessageService service, ThreadService threads) {
         this.service = service;
+        this.threads = threads;
     }
 
     private static UUID me(Jwt jwt) { return UUID.fromString(jwt.getSubject()); }
@@ -41,4 +43,27 @@ public class MessageController {
 
     @GetMapping("/messages/{id}/revisions")
     List<RevisionDto> history(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) { return service.history(id, me(jwt)); }
+
+    // threads
+    @PostMapping("/messages/{id}/thread")
+    ThreadDto startThread(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody(required = false) CreateThreadRequest r) {
+        return threads.start(id, me(jwt), r == null ? null : r.title());
+    }
+
+    @GetMapping("/threads/{id}")
+    ThreadDto thread(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) { return threads.get(id, me(jwt)); }
+
+    @PatchMapping("/threads/{id}")
+    ThreadDto updateThread(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody UpdateThreadRequest r) { return threads.update(id, me(jwt), r); }
+
+    @GetMapping("/threads/{id}/messages")
+    MessagePage threadMessages(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+                               @RequestParam(required = false) UUID before, @RequestParam(defaultValue = "50") int limit) {
+        return threads.replies(id, me(jwt), before, limit);
+    }
+
+    @PostMapping("/threads/{id}/messages") @ResponseStatus(HttpStatus.CREATED)
+    MessageDto replyInThread(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody SendRequest r) {
+        return threads.reply(id, me(jwt), r);
+    }
 }
