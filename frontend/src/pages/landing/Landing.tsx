@@ -6,6 +6,7 @@ import {
   Stethoscope, Wifi, WifiOff, Zap,
 } from 'lucide-react'
 import { Person } from './People'
+import { VillageScene } from './Scenes'
 import { useCount, useReveal } from './useReveal'
 import './landing.css'
 
@@ -136,6 +137,14 @@ export default function Landing() {
             <Reveal delay={160}><Stat to={10} label="built-in red-flag rules" /></Reveal>
             <Reveal delay={240}><Stat to={24} suffix=" h" label="patient follow-up check" /></Reveal>
           </div>
+        </div>
+      </section>
+
+      <section className="lp-scene" aria-label="From village to doctor">
+        <VillageScene className="lp-scene-art" />
+        <div className="lp-scene-cap lp-wrap">
+          <Reveal><h2>The village sends the case. The doctor answers live.</h2>
+            <p>No travel, no lost phone calls. Every case gets its own room, its own record, and a verified answer.</p></Reveal>
         </div>
       </section>
 
