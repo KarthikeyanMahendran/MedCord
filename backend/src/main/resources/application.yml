@@ -37,6 +37,7 @@ medcord:
     jwt-secret: ${JWT_SECRET}
     access-ttl-minutes: ${JWT_ACCESS_TTL_MINUTES:15}
     refresh-ttl-days: ${JWT_REFRESH_TTL_DAYS:14}
+    auth-rate-limit-per-minute: ${AUTH_RATE_LIMIT_PER_MINUTE:30}
   nexconn:
     app-key: ${NEXCONN_APP_KEY:}
     app-secret: ${NEXCONN_APP_SECRET:}

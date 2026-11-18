@@ -108,6 +108,16 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<environmentVariables>
+						<!-- The suite makes hundreds of logins from one address; production default is 30/min. -->
+						<MEDCORD_SECURITY_AUTH_RATE_LIMIT_PER_MINUTE>100000</MEDCORD_SECURITY_AUTH_RATE_LIMIT_PER_MINUTE>
+					</environmentVariables>
+				</configuration>
+			</plugin>
+			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>

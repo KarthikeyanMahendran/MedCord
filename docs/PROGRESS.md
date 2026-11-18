@@ -42,11 +42,11 @@ Next up = first unchecked task. Update in every PR.
 ## M6
 
 - [x] T-019 DMs, presence, block (1:1 + group DMs, shared-community rule, heartbeat presence) — `docs/tasks/T-019-dms-presence-block.md`
-- [ ] T-020 Attachments — `docs/tasks/T-020-attachments.md`
+- [ ] T-020 Attachments (open: needs file storage decision, size/type limits and PHI warning) — `docs/tasks/T-020-attachments.md`
 - [x] T-021 Search (Postgres full-text, access-filtered, highlighted snippets) — `docs/tasks/T-021-search.md`
 - [x] T-022 Moderation and audit log (mutes, reports queue, owner-only audit trail) — `docs/tasks/T-022-moderation-and-audit-log.md`
-- [ ] T-023 Notifications and push — `docs/tasks/T-023-notifications-and-push.md`
+- [ ] T-023 Notifications and push (blocked on Nexconn reachability for push; in-app unread counts still open) — `docs/tasks/T-023-notifications-and-push.md`
 
 ## M7
 
-- [ ] T-024 Hardening and deploy — `docs/tasks/T-024-hardening-and-deploy.md`
+- [~] T-024 Hardening and deploy (done: auth rate limiting, CI, architecture/runbook/security docs; open: httpOnly refresh cookie, Redis limiter, Dockerfiles, observability) — `docs/tasks/T-024-hardening-and-deploy.md`
