@@ -1,0 +1,628 @@
+/* ==========================================================================
+   MedCord AI Assistant Floating Widget - Impressive Typography & Modern UI
+   Theme: Full support for both Clinical Graphite (Dark) and Clinical Light
+   Fonts: Outfit (Display & Headings) + Plus Jakarta Sans (Interface & Body)
+   ========================================================================== */
+
+/* Floating Launcher Button - Impressive Pill Design */
+.mc-ai-launcher {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  height: 48px;
+  padding: 0 18px 0 14px;
+  border-radius: var(--mc-radius-full);
+  background: linear-gradient(135deg, var(--mc-brand) 0%, var(--mc-brand-hover) 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(61, 90, 254, 0.35), 0 0 0 1px rgba(61, 90, 254, 0.2), var(--mc-shadow-md);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 99;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.mc-ai-launcher:hover {
+  transform: translateY(-3px) scale(1.03);
+  background: linear-gradient(135deg, var(--mc-brand-hover) 0%, var(--mc-brand) 100%);
+  box-shadow: 0 8px 28px rgba(61, 90, 254, 0.5), 0 0 0 2px var(--mc-brand-ring);
+}
+
+.mc-ai-launcher:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.mc-ai-launcher.is-active {
+  background: var(--mc-surface-3);
+  border-color: var(--mc-brand);
+  color: var(--mc-text);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.mc-ai-launcher-icon-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--mc-radius-full);
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.mc-ai-sparkle-anim {
+  animation: mcAiPulse 3s ease-in-out infinite;
+}
+
+@keyframes mcAiPulse {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: scale(1.15) rotate(15deg); opacity: 0.9; }
+}
+
+.mc-ai-launcher-text {
+  font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: inherit;
+}
+
+.mc-ai-launcher-badge {
+  width: 8px;
+  height: 8px;
+  background: var(--mc-success);
+  border-radius: var(--mc-radius-full);
+  box-shadow: 0 0 8px var(--mc-success);
+  animation: mcDotGlow 2s infinite;
+}
+
+@keyframes mcDotGlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.2); }
+}
+
+/* Floating Chat Window */
+.mc-ai-window {
+  position: fixed;
+  right: 24px;
+  bottom: 86px;
+  width: 430px;
+  max-width: calc(100vw - 36px);
+  height: 610px;
+  max-height: calc(100vh - 110px);
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border-strong);
+  border-radius: 14px;
+  box-shadow: var(--mc-shadow-lg), 0 20px 50px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 100;
+  animation: mcAiSlideIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: 'Plus Jakarta Sans', var(--mc-font);
+}
+
+@keyframes mcAiSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header */
+.mc-ai-header {
+  padding: 13px 18px;
+  background: var(--mc-surface-2);
+  border-bottom: 1px solid var(--mc-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mc-ai-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mc-ai-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--mc-brand-soft);
+  color: var(--mc-brand);
+  border: 1px solid var(--mc-brand-ring);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mc-ai-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mc-ai-title strong {
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--mc-text);
+  line-height: 1.2;
+}
+
+.mc-ai-title span {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mc-brand-text);
+}
+
+:root.light .mc-ai-title span {
+  color: var(--mc-brand);
+}
+
+.mc-ai-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mc-ai-btn-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--mc-text-muted);
+  border-radius: var(--mc-radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mc-ai-btn-icon:hover {
+  background: var(--mc-hover);
+  color: var(--mc-text);
+}
+
+/* Chat Messages Area */
+.mc-ai-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--mc-bg);
+}
+
+/* Welcome Card */
+.mc-ai-welcome {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  background: var(--mc-surface);
+  border-radius: 12px;
+  border: 1px solid var(--mc-border);
+  box-shadow: var(--mc-shadow-sm);
+}
+
+.mc-ai-welcome h4 {
+  margin: 0;
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  font-size: 18.5px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--mc-text);
+}
+
+.mc-ai-welcome p {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13.5px;
+  color: var(--mc-text-2);
+  line-height: 1.5;
+}
+
+/* Suggestions */
+.mc-ai-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.mc-ai-suggestion-chip {
+  text-align: left;
+  background: var(--mc-surface-2);
+  border: 1px solid var(--mc-border);
+  color: var(--mc-text-2);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mc-ai-suggestion-chip:hover {
+  background: var(--mc-brand-soft);
+  border-color: var(--mc-brand-ring);
+  color: var(--mc-brand-text);
+  transform: translateX(3px);
+  box-shadow: 0 2px 8px rgba(61, 90, 254, 0.15);
+}
+
+:root.light .mc-ai-suggestion-chip:hover {
+  color: var(--mc-brand);
+}
+
+/* Message Item */
+.mc-ai-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 90%;
+}
+
+.mc-ai-msg.user {
+  align-self: flex-end;
+}
+
+.mc-ai-msg.assistant {
+  align-self: flex-start;
+  max-width: 95%;
+}
+
+.mc-ai-bubble {
+  padding: 11px 15px;
+  border-radius: 12px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.mc-ai-msg.user .mc-ai-bubble {
+  background: linear-gradient(135deg, var(--mc-brand) 0%, var(--mc-brand-active) 100%);
+  color: var(--mc-text-on-brand);
+  font-weight: 500;
+  border-bottom-right-radius: 3px;
+  box-shadow: 0 2px 8px rgba(61, 90, 254, 0.25);
+}
+
+.mc-ai-msg.assistant .mc-ai-bubble {
+  background: var(--mc-surface);
+  color: var(--mc-text);
+  border: 1px solid var(--mc-border);
+  border-bottom-left-radius: 3px;
+  box-shadow: var(--mc-shadow-sm);
+}
+
+/* Themed Clinical Loading Indicator */
+.mc-ai-loading-bubble {
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  padding: 12px 16px;
+  border-radius: 12px;
+  border-bottom-left-radius: 3px;
+  box-shadow: var(--mc-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 270px;
+}
+
+.mc-ai-loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.mc-ai-loading-icon-pulse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--mc-radius-full);
+  background: var(--mc-brand-soft);
+  color: var(--mc-brand);
+  flex-shrink: 0;
+}
+
+.mc-ai-sparkle-spin {
+  animation: mcSpinSlow 3.5s linear infinite;
+}
+
+@keyframes mcSpinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.mc-ai-loading-text {
+  font-family: 'Plus Jakarta Sans', var(--mc-font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mc-text);
+  letter-spacing: -0.01em;
+}
+
+.mc-ai-typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3.5px;
+  margin-left: 2px;
+}
+
+.mc-ai-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--mc-radius-full);
+  background: var(--mc-brand);
+  opacity: 0.3;
+  animation: mcTypingWave 1.4s infinite ease-in-out;
+}
+
+.mc-ai-dot:nth-child(1) { animation-delay: 0s; }
+.mc-ai-dot:nth-child(2) { animation-delay: 0.2s; }
+.mc-ai-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes mcTypingWave {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.3;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+    background: var(--mc-brand-hover);
+  }
+}
+
+.mc-ai-loading-bar {
+  width: 100%;
+  height: 3px;
+  background: var(--mc-border);
+  border-radius: var(--mc-radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.mc-ai-loading-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 45%;
+  background: linear-gradient(90deg, transparent 0%, var(--mc-brand) 50%, transparent 100%);
+  border-radius: var(--mc-radius-full);
+  animation: mcShimmerMove 1.6s infinite ease-in-out;
+}
+
+@keyframes mcShimmerMove {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+/* Citations */
+.mc-ai-citations {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--mc-border);
+}
+
+.mc-ai-citation-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mc-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mc-ai-citation-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 13px;
+  background: var(--mc-surface-2);
+  border: 1px solid var(--mc-border);
+  border-radius: 9px;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.mc-ai-citation-card:hover {
+  background: var(--mc-surface-3);
+  border-color: var(--mc-brand);
+  transform: translateY(-1px);
+}
+
+.mc-ai-citation-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+}
+
+.mc-ai-citation-chan {
+  color: var(--mc-brand-text);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+:root.light .mc-ai-citation-chan {
+  color: var(--mc-brand);
+}
+
+.mc-ai-citation-author {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--mc-text-2);
+}
+
+.mc-ai-citation-snippet {
+  font-size: 12px;
+  color: var(--mc-text-muted);
+  line-height: 1.45;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Footer & Input */
+.mc-ai-footer {
+  padding: 12px 16px 14px 16px;
+  background: var(--mc-surface);
+  border-top: 1px solid var(--mc-border);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.mc-ai-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.mc-ai-input {
+  flex: 1;
+  background: var(--mc-surface-2);
+  border: 1px solid var(--mc-border);
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13.5px;
+  color: var(--mc-text);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mc-ai-input::placeholder {
+  color: var(--mc-text-faint);
+}
+
+.mc-ai-input:focus {
+  border-color: var(--mc-brand);
+  box-shadow: 0 0 0 3px var(--mc-brand-ring);
+}
+
+.mc-ai-send-btn {
+  background: linear-gradient(135deg, var(--mc-brand) 0%, var(--mc-brand-active) 100%);
+  color: var(--mc-text-on-brand);
+  border: none;
+  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 2px 8px rgba(61, 90, 254, 0.25);
+}
+
+.mc-ai-send-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--mc-brand-hover) 0%, var(--mc-brand) 100%);
+  transform: scale(1.04);
+}
+
+.mc-ai-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.mc-ai-disclaimer {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--mc-text-faint);
+  text-align: center;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+}
+
+/* Light Theme Explicit Overrides for Maximum Legibility */
+:root.light .mc-ai-window {
+  box-shadow: 0 16px 40px rgba(16, 18, 27, 0.12), 0 0 0 1px var(--mc-border);
+}
+
+:root.light .mc-ai-header {
+  background: var(--mc-surface-2);
+  border-bottom: 1px solid var(--mc-border);
+}
+
+:root.light .mc-ai-title strong {
+  color: var(--mc-text);
+}
+
+:root.light .mc-ai-title span {
+  color: var(--mc-brand);
+}
+
+:root.light .mc-ai-welcome h4 {
+  color: var(--mc-text);
+}
+
+:root.light .mc-ai-welcome {
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  box-shadow: var(--mc-shadow-sm);
+}
+
+:root.light .mc-ai-suggestion-chip {
+  background: var(--mc-surface-2);
+  border-color: var(--mc-border);
+  color: var(--mc-text-2);
+}
+
+:root.light .mc-ai-suggestion-chip:hover {
+  background: var(--mc-brand-soft);
+  border-color: var(--mc-brand-ring);
+  color: var(--mc-brand);
+}
+
+:root.light .mc-ai-citation-card {
+  background: var(--mc-surface-2);
+  border-color: var(--mc-border);
+}
+
+:root.light .mc-ai-citation-card:hover {
+  background: var(--mc-surface-3);
+  border-color: var(--mc-brand);
+}
+
+:root.light .mc-ai-loading-text {
+  color: var(--mc-text-2);
+}
