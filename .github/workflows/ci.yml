@@ -73,14 +73,20 @@ jobs:
   secrets:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-latest
-    # gitleaks lists a PR's commits via the API to scan only those; that call needs pull-requests: read.
-    permissions:
-      contents: read
-      pull-requests: read
+    env:
+      GITLEAKS_VERSION: "8.24.3"
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # The gitleaks CLI scans the checked-out git history locally: no GitHub API calls,
+      # no token permissions and no licence needed. The pinned release is checksum-verified.
+      - name: Install gitleaks
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          curl -sSfLO "${base}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfLO "${base}/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          sha256sum --check --ignore-missing "gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          tar -xzf "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" gitleaks
+      - name: Scan git history for secrets
+        run: ./gitleaks git --redact --no-banner --exit-code 1 .
