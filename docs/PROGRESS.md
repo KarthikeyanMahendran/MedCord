@@ -27,15 +27,15 @@ Next up = first unchecked task. Update in every PR.
 ## M4
 
 - [x] T-010 Nexconn spike and gateway (code + tests done; live verification blocked by network DNS filter, see docs/nexconn-notes.md) — `docs/tasks/T-010-nexconn-spike-and-gateway.md`
-- [x] T-011 Messages API (send, history, reply, edit snapshots, delete) — see ADR 0004 — `docs/tasks/T-011-chat-token-chatprovider.md`
-- [ ] T-012 App shell and channel sidebar — `docs/tasks/T-012-app-shell-and-channel-sidebar.md`
-- [ ] T-013 Send/receive/history/reply UI — `docs/tasks/T-013-send-receive-history-reply-ui.md`
+- [x] T-011 Messages API (send, history, reply, edit snapshots, delete) — see ADR 0004 — `docs/tasks/T-011-messages-api.md`
+- [x] T-012 App shell and channel sidebar (AppShell + chat channel sidebar) — `docs/tasks/T-012-app-shell-and-channel-sidebar.md`
+- [x] T-013 Send/receive/history/reply UI (chat UI: send, history, reply, unread-free polling) — `docs/tasks/T-013-send-receive-history-reply-ui.md`
 
 ## M5
 
-- [ ] T-014 Webhook mirror — `docs/tasks/T-014-webhook-mirror.md`
-- [ ] T-015 Edit with revisions — `docs/tasks/T-015-edit-with-revisions.md`
-- [ ] T-016 Delete/recall with tombstones — `docs/tasks/T-016-delete-recall-with-tombstones.md`
+- [~] T-014 Webhook mirror — superseded by ADR 0004 (backend persists messages directly); Nexconn event ingestion revisited when reachable — `docs/tasks/T-014-webhook-mirror.md`
+- [x] T-015 Edit with revisions (backend + UI incl. history modal) — `docs/tasks/T-015-edit-with-revisions.md`
+- [x] T-016 Delete/recall with tombstones (soft delete + tombstones, backend + UI) — `docs/tasks/T-016-delete-recall-with-tombstones.md`
 - [ ] T-017 Threads — `docs/tasks/T-017-threads.md`
 - [ ] T-018 Reactions and pins — `docs/tasks/T-018-reactions-and-pins.md`
 

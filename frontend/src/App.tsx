@@ -3,6 +3,7 @@ import { AdminRoute } from './components/AdminRoute'
 import { AppShell } from './components/AppShell'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import Verifications from './pages/admin/Verifications'
+import ChannelChat from './pages/ChannelChat'
 import CommunityDetail from './pages/CommunityDetail'
 import Communities from './pages/Communities'
 import Home from './pages/Home'
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/communities" element={<Communities />} />
           <Route path="/communities/:id" element={<CommunityDetail />} />
+          <Route path="/communities/:id/channels/:channelId" element={<ChannelChat />} />
           <Route path="/invite/:code" element={<JoinInvite />} />
           <Route element={<AdminRoute />}>
             <Route path="/admin/verifications" element={<Verifications />} />

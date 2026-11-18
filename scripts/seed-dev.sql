@@ -67,3 +67,45 @@ SELECT pg_temp.seed_community('emergency-medicine-hub','Emergency Medicine Hub',
   ARRAY['priya.raman@medcord.dev','carlos.vega@medcord.dev:mod','arjun.mehta@medcord.dev']);
 SELECT pg_temp.seed_community('radiology-readers-private','Radiology Readers','Private reading group for radiologists.','Radiology','PRIVATE','liam.oconnor@medcord.dev',
   ARRAY['priya.raman@medcord.dev']);
+
+-- ---------------------------------------------------------------------------
+-- Messages (DEV ONLY): fictional conversations, no patient data. Idempotent per channel.
+-- ---------------------------------------------------------------------------
+DO $$
+DECLARE cid uuid; ch uuid; priya uuid; arjun uuid; sara uuid; liam uuid; meera uuid;
+        m1 uuid; m2 uuid; m3 uuid; m4 uuid; m5 uuid; t timestamptz := now() - interval '3 hours';
+BEGIN
+  SELECT id INTO cid FROM communities WHERE slug = 'cardiology-collective';
+  IF cid IS NULL THEN RETURN; END IF;
+  SELECT id INTO priya FROM users WHERE email = 'priya.raman@medcord.dev';
+  SELECT id INTO arjun FROM users WHERE email = 'arjun.mehta@medcord.dev';
+  SELECT id INTO sara  FROM users WHERE email = 'sara.ahmed@medcord.dev';
+  SELECT id INTO liam  FROM users WHERE email = 'liam.oconnor@medcord.dev';
+  SELECT id INTO meera FROM users WHERE email = 'meera.nair@medcord.dev';
+
+  SELECT id INTO ch FROM channels WHERE community_id = cid AND name = 'general';
+  IF NOT EXISTS (SELECT 1 FROM messages WHERE channel_id = ch) THEN
+    INSERT INTO messages (channel_id, author_id, body, created_at) VALUES (ch, priya, 'Welcome to the Cardiology Collective! Introduce yourself and your sub-specialty. 👋', t) RETURNING id INTO m1;
+    INSERT INTO messages (channel_id, author_id, body, created_at, reply_to_id) VALUES (ch, arjun, 'Neurologist here, mostly stroke. Happy to join the cardio-embolic stroke discussions.', t + interval '4 min', m1);
+    INSERT INTO messages (channel_id, author_id, body, created_at) VALUES (ch, liam, 'Radiologist, cardiac MRI and CT angiography. Glad to help with imaging questions.', t + interval '9 min');
+    INSERT INTO messages (channel_id, author_id, body, created_at, edited_at) VALUES (ch, meera, 'Dermatology — curious about cutaneous signs of endocarditis and amyloid.', t + interval '15 min', t + interval '20 min') RETURNING id INTO m2;
+    INSERT INTO message_revisions (message_id, revision_no, kind, body, actor_id, created_at) VALUES (m2, 1, 'EDIT', 'Dermatology - curious about skin signs of endocarditis.', meera, t + interval '20 min');
+    INSERT INTO messages (channel_id, author_id, body, created_at, deleted_at, deleted_by) VALUES (ch, sara, 'Oops wrong channel', t + interval '25 min', t + interval '26 min', sara) RETURNING id INTO m3;
+    INSERT INTO message_revisions (message_id, revision_no, kind, body, actor_id, created_at) VALUES (m3, 1, 'DELETE', 'Oops wrong channel', sara, t + interval '26 min');
+    INSERT INTO messages (channel_id, author_id, body, created_at, reply_to_id) VALUES (ch, priya, 'Welcome all. Please keep cases anonymised — no names, dates of birth or record numbers.', t + interval '40 min', m2);
+  END IF;
+
+  SELECT id INTO ch FROM channels WHERE community_id = cid AND name = 'case-discussions';
+  IF NOT EXISTS (SELECT 1 FROM messages WHERE channel_id = ch) THEN
+    INSERT INTO messages (channel_id, author_id, body, created_at) VALUES (ch, priya, E'Anonymised case: 58M, exertional chest tightness, normal resting ECG, positive stress test. LAD proximal stenosis ~80% on CT-FFR.\nWould you go PCI or optimal medical therapy first?', t + interval '1 hour') RETURNING id INTO m4;
+    INSERT INTO messages (channel_id, author_id, body, created_at, reply_to_id) VALUES (ch, sara, 'With a proximal LAD lesion and a positive functional test, I lean towards revascularisation. ISCHEMIA subgroup data is worth a look.', t + interval '1 hour 8 min', m4);
+    INSERT INTO messages (channel_id, author_id, body, created_at, reply_to_id) VALUES (ch, liam, 'Plaque morphology on CTA matters too — any high-risk features (low attenuation, positive remodelling)?', t + interval '1 hour 14 min', m4);
+    INSERT INTO messages (channel_id, author_id, body, created_at, edited_at) VALUES (ch, priya, 'Yes, positive remodelling and a napkin-ring sign. Leaning PCI plus DAPT.', t + interval '1 hour 22 min', t + interval '1 hour 23 min') RETURNING id INTO m5;
+    INSERT INTO message_revisions (message_id, revision_no, kind, body, actor_id, created_at) VALUES (m5, 1, 'EDIT', 'Yes, positive remodelling. Leaning PCI.', priya, t + interval '1 hour 23 min');
+  END IF;
+
+  SELECT id INTO ch FROM channels WHERE community_id = cid AND name = 'announcements';
+  IF NOT EXISTS (SELECT 1 FROM messages WHERE channel_id = ch) THEN
+    INSERT INTO messages (channel_id, author_id, body, created_at) VALUES (ch, priya, 'Journal club this Friday 18:00 IST: updates in HFpEF therapy. Link will be shared here.', t + interval '2 hours');
+  END IF;
+END $$;

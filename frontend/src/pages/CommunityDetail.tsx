@@ -119,7 +119,7 @@ export default function CommunityDetail() {
                     <li key={c.id} className="mc-row" style={{ justifyContent: 'space-between', padding: '8px 10px', border: '1px solid var(--mc-border)', borderRadius: 8, opacity: c.archived ? 0.6 : 1 }}>
                       <div className="mc-row">
                         {c.type === 'ANNOUNCEMENT' ? <Megaphone size={16} /> : <Hash size={16} />}
-                        <div><strong>{c.name}</strong> {c.archived && <Badge tone="neutral">archived</Badge>}<div className="mc-muted-sub">{c.topic}</div></div>
+                        <div><Link to={`/communities/${id}/channels/${c.id}`}><strong>{c.name}</strong></Link> {c.archived && <Badge tone="neutral">archived</Badge>}<div className="mc-muted-sub">{c.topic}</div></div>
                       </div>
                       {can('MANAGE_CHANNELS') && <Button variant="ghost" size="sm" onClick={() => run(() => api.updateChannel(id, c.id, { archived: !c.archived }))}><Archive size={14} /> {c.archived ? 'Unarchive' : 'Archive'}</Button>}
                     </li>
