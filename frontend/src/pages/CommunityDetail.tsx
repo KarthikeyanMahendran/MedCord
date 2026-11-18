@@ -5,7 +5,7 @@ import { Archive, Copy, Hash, Megaphone, MessageCircle, Trash2 } from 'lucide-re
 import { ModerationPanel } from '../components/community/ModerationPanel'
 import { AuditPanel } from '../components/community/AuditPanel'
 import { muteMember } from '../api/moderation'
-import { Alert, Badge, Button, Card, CardBody, EmptyState, FormGroup, Input, Modal, Tabs } from '../components/ui'
+import { Alert, Avatar, Badge, Button, Card, CardBody, EmptyState, FormGroup, Input, Modal, Tabs } from '../components/ui'
 import * as api from '../api/communities'
 import type { Channel, Community, Invite, Member, Permission, Role } from '../api/communities'
 import { ALL_PERMISSIONS } from '../api/communities'
@@ -93,15 +93,18 @@ export default function CommunityDetail() {
   return (
     <main className="mc-page mc-page-wide">
       <div className="mc-row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
+        <div className="mc-row" style={{ alignItems: 'flex-start', gap: 16 }}>
+          <Avatar name={community.name} size="lg" />
+          <div>
           <Link to="/communities" className="mc-muted-sub">← Communities</Link>
-          <h1 style={{ fontSize: 22, marginTop: 4 }}>{community.name}</h1>
+          <h1 style={{ fontSize: 24, marginTop: 4 }}>{community.name}</h1>
           <div className="mc-row" style={{ marginTop: 6 }}>
             {community.specialtyTag && <Badge tone="info">{community.specialtyTag}</Badge>}
             <Badge tone="neutral">{community.visibility.toLowerCase()}</Badge>
             <span className="mc-muted-sub">{community.memberCount} members</span>
           </div>
           {community.description && <p className="mc-hint" style={{ margin: '8px 0 0' }}>{community.description}</p>}
+          </div>
         </div>
         <div className="mc-row">
           {!isMember && <Button onClick={() => run(() => api.joinCommunity(id), 'Joined.')} loading={busy}>Join</Button>}

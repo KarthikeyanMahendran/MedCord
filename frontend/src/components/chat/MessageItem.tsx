@@ -1,16 +1,19 @@
 import { useState } from 'react'
 import { CornerUpLeft, Flag, History, MessageSquare, Pencil, Pin, PinOff, SmilePlus, Trash2 } from 'lucide-react'
-import { Badge, Button } from '../ui'
+import { Avatar, Badge, Button } from '../ui'
 import type { Message } from '../../api/messages'
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-const initials = (n: string) => n.split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+
+export const QUICK_EMOJIS = ['👍', '❤️', '🎉', '🙏', '👀', '✅', '🩺', '😂']
 
 export interface MessageItemProps {
   m: Message
   userId?: string
   canPost: boolean
   moderator: boolean
+  /** Continues the previous author's run: hides avatar and name. */
+  compact?: boolean
   onReply?: (m: Message) => void
   onEdit: (m: Message) => void
   onDelete: (m: Message) => void
@@ -21,26 +24,30 @@ export interface MessageItemProps {
   onReport?: (m: Message) => void
 }
 
-export const QUICK_EMOJIS = ['👍', '❤️', '🎉', '🙏', '👀', '✅', '🩺', '😂']
-
 /** One message row with hover actions. Shared by the channel timeline and the thread panel. */
-export function MessageItem({ m, userId, canPost, moderator, onReply, onEdit, onDelete, onHistory, onThread, onReact, onPin, onReport }: MessageItemProps) {
+export function MessageItem({ m, userId, canPost, moderator, compact, onReply, onEdit, onDelete, onHistory, onThread, onReact, onPin, onReport }: MessageItemProps) {
   const [picker, setPicker] = useState(false)
   const mine = m.author.id === userId
+  const showHead = !compact || !!m.replyTo
   return (
-    <article className="mc-msg" aria-label={`Message from ${m.author.displayName}`}>
-      <div className="mc-msg-avatar" aria-hidden="true">{initials(m.author.displayName)}</div>
-      <div>
+    <article className={`mc-msg ${compact && !m.replyTo ? 'is-compact' : ''}`} aria-label={`Message from ${m.author.displayName}`}>
+      <div className="mc-msg-gutter">
+        {showHead ? <Avatar name={m.author.displayName} size="md" /> : <span className="mc-msg-hovertime" aria-hidden="true">{time(m.createdAt)}</span>}
+      </div>
+      <div style={{ minWidth: 0 }}>
         {m.replyTo && (
           <div className="mc-quote"><CornerUpLeft size={12} /><strong>{m.replyTo.authorName}</strong><span>{m.replyTo.deleted ? 'Original message was deleted' : m.replyTo.excerpt}</span></div>
         )}
-        <div className="mc-msg-meta">
-          <span className="mc-msg-name">{m.author.displayName}</span>
-          {m.author.verified && <Badge tone="success">verified</Badge>}
-          {m.author.specialty && <span className="mc-muted-sub">{m.author.specialty}</span>}
-          <span className="mc-msg-time">{time(m.createdAt)}</span>
-          {m.pinned && <Badge tone="warning"><Pin size={11} /> pinned</Badge>}
-        </div>
+        {showHead && (
+          <div className="mc-msg-meta">
+            <span className="mc-msg-name">{m.author.displayName}</span>
+            {m.author.verified && <Badge tone="success">✓ verified</Badge>}
+            {m.author.specialty && <span className="mc-muted-sub">{m.author.specialty}</span>}
+            <span className="mc-msg-time">{time(m.createdAt)}</span>
+            {m.pinned && <Badge tone="warning"><Pin size={11} /> pinned</Badge>}
+          </div>
+        )}
+        {!showHead && m.pinned && <Badge tone="warning"><Pin size={11} /> pinned</Badge>}
         {m.deleted
           ? <div className="mc-msg-body mc-msg-deleted">This message was deleted.</div>
           : <div className="mc-msg-body">{m.body}{m.editedAt && <span className="mc-edited" title={new Date(m.editedAt).toLocaleString()}>(edited)</span>}</div>}

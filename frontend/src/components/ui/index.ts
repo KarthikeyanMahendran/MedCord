@@ -1,4 +1,5 @@
 export { Alert } from './Alert'
+export { Avatar, gradientFor, initialsOf } from './Avatar'
 export { Badge } from './Badge'
 export type { Tone } from './Badge'
 export { Button } from './Button'

@@ -2,6 +2,13 @@
 
 MedCord has its own standalone design system: TypeScript components with the `mc-` prefix and MedCord branding. It does not depend on or import from any other project.
 
+## Visual language (v2, Discord-inspired)
+- **Midnight indigo** dark theme by default (light available via the theme toggle). Vibrant violet to cyan gradient (`--mc-grad`) for primary actions, the logo and hero banners; cyan accent for active indicators; success green for presence.
+- **Shell:** `ServerRail` (76px, squircle community icons that morph on hover, glowing active pill, tooltips) | `SideColumn` (contextual: channels, DMs, or navigation, plus the user panel) | content. `ChannelChat` renders only the message pane, with optional thread and member panels.
+- **People and communities** get stable gradient initials avatars (`Avatar`, `gradientFor`); presence dots on avatars.
+- **Chat details:** consecutive messages by the same author collapse (5 min window), day dividers, hover toolbar, reaction pills with pop animation, rounded auto-growing composer, entrance animations (respects `prefers-reduced-motion`).
+- Styles are split: `tokens.css`, `base.css`, `components.css` (UI kit), `shell.css`, `chat.css`, `auth.css`.
+
 ## Principles
 - Calm, clinical, high-contrast neutral palette; one accent colour. Dense but readable (chat apps are information-heavy).
 - Keyboard-first (Esc closes, Enter sends, ↑ edits last message, `/` focuses search). WCAG AA contrast, visible focus rings, ARIA roles on lists/dialogs.

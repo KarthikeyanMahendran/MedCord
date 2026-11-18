@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Pencil } from 'lucide-react'
-import { Alert, Badge, Button, Card, CardBody, FormGroup, Input, Modal, Textarea } from '../components/ui'
+import { Link } from 'react-router-dom'
+import { Compass, MessageCircle, Pencil, Search } from 'lucide-react'
+import { Alert, Avatar, Badge, Button, Card, CardBody, FormGroup, Input, Modal, Textarea, gradientFor } from '../components/ui'
 import type { Tone } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { resubmitVerification, updateProfile } from '../api/auth'
+import { listMine } from '../api/communities'
+import type { Community } from '../api/communities'
 import { fieldErrors, problemMessage } from '../api/client'
 
 const verifyTone: Record<string, Tone> = { APPROVED: 'success', PENDING: 'warning', REJECTED: 'danger' }
@@ -12,6 +15,7 @@ const statusTone: Record<string, Tone> = { ACTIVE: 'success', PENDING: 'warning'
 
 export default function Home() {
   const { user, setUser } = useAuth()
+  const [mine, setMine] = useState<Community[]>([])
   const [editing, setEditing] = useState(false)
   const [resubmitting, setResubmitting] = useState(false)
   const [form, setForm] = useState({ displayName: '', specialty: '', bio: '' })
@@ -20,8 +24,9 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+
+  useEffect(() => { listMine().then(setMine).catch(() => undefined) }, [])
   if (!user) return null
-  const initials = user.displayName.split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase()
 
   function openEdit() {
     setForm({ displayName: user!.displayName, specialty: user!.specialty ?? '', bio: user!.bio ?? '' })
@@ -52,6 +57,8 @@ export default function Home() {
     } finally { setBusy(false) }
   }
 
+  const first = user.displayName.replace(/^(dr|mr|mrs|ms)\.?\s+/i, '').split(' ')[0]
+
   return (
     <main className="mc-page">
       {notice && <Alert tone="success">{notice}</Alert>}
@@ -64,37 +71,53 @@ export default function Home() {
         </Alert>
       )}
       {user.verificationStatus === 'PENDING' && <Alert tone="info">Your licence is awaiting review. You will get the verified badge once approved.</Alert>}
+
       <Card>
-        <CardBody>
-          <div className="mc-row" style={{ marginBottom: 20, justifyContent: 'space-between' }}>
-            <div className="mc-row">
-              <div className="mc-avatar" aria-hidden="true">{initials}</div>
-              <div>
-                <h1 style={{ fontSize: 22 }}>{user.displayName}</h1>
-                <div className="mc-row" style={{ marginTop: 6 }}>
-                  <Badge tone={statusTone[user.status] ?? 'neutral'}>{user.status}</Badge>
-                  {user.platformRole === 'ADMIN' && <Badge tone="info">Platform admin</Badge>}
-                  {user.verificationStatus && <Badge tone={verifyTone[user.verificationStatus] ?? 'neutral'}>License {user.verificationStatus.toLowerCase()}</Badge>}
-                </div>
-              </div>
-            </div>
+        <div className="mc-hero" style={{ background: gradientFor(user.displayName) }}>
+          <div className="mc-hero-glow" aria-hidden="true" />
+          <h1>Welcome back, {first} 👋</h1>
+          <p>Here&apos;s what&apos;s happening in your communities.</p>
+        </div>
+        <CardBody style={{ position: 'relative' }}>
+          <div className="mc-row" style={{ marginTop: -64, justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <Avatar name={user.displayName} size="lg" className="mc-ring" />
             <Button variant="secondary" size="sm" onClick={openEdit}><Pencil size={14} /> Edit profile</Button>
           </div>
-          <dl className="mc-dl">
+          <div style={{ marginTop: 12 }}>
+            <h2 style={{ fontSize: 24 }}>{user.displayName}</h2>
+            <div className="mc-row" style={{ marginTop: 8, flexWrap: 'wrap', gap: 6 }}>
+              <Badge tone={statusTone[user.status] ?? 'neutral'}>{user.status}</Badge>
+              {user.platformRole === 'ADMIN' && <Badge tone="info">Platform admin</Badge>}
+              {user.verificationStatus && <Badge tone={verifyTone[user.verificationStatus] ?? 'neutral'}>License {user.verificationStatus.toLowerCase()}</Badge>}
+            </div>
+          </div>
+          <dl className="mc-dl" style={{ marginTop: 20 }}>
             <dt>Email</dt><dd>{user.email}</dd>
             <dt>Specialty</dt><dd>{user.specialty ?? '—'}</dd>
             <dt>License country</dt><dd>{user.licenseCountry ?? '—'}</dd>
             <dt>About</dt><dd>{user.bio ?? '—'}</dd>
-            <dt>Account ID</dt><dd style={{ fontFamily: 'monospace', fontSize: 12 }}>{user.id}</dd>
           </dl>
         </CardBody>
       </Card>
-      <Card>
-        <CardBody>
-          <strong>Communities are coming next.</strong>
-          <p className="mc-hint" style={{ margin: '6px 0 0' }}>Channels, threads and messaging arrive in the upcoming milestones.</p>
-        </CardBody>
-      </Card>
+
+      <div className="mc-tiles">
+        <Link to="/communities" className="mc-tile"><Compass size={22} /><strong>Discover</strong><span>Find specialty communities</span></Link>
+        <Link to="/messages" className="mc-tile"><MessageCircle size={22} /><strong>Messages</strong><span>Direct and group chats</span></Link>
+        <Link to="/search" className="mc-tile"><Search size={22} /><strong>Search</strong><span>Find any conversation</span></Link>
+      </div>
+
+      {mine.length > 0 && (
+        <section aria-label="Your communities" style={{ display: 'grid', gap: 10 }}>
+          <h2 style={{ fontSize: 16 }}>Your communities</h2>
+          <div className="mc-grid-2">
+            {mine.map((c) => (
+              <Link key={c.id} to={`/communities/${c.id}`} className="mc-tile mc-tile-row">
+                <Avatar name={c.name} size="md" /><span><strong>{c.name}</strong><span>{c.memberCount} members{c.specialtyTag ? ` · ${c.specialtyTag}` : ''}</span></span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <Modal isOpen={editing} onClose={() => setEditing(false)} title="Edit profile" size="sm">
         <form onSubmit={saveProfile} style={{ display: 'grid', gap: 14 }}>

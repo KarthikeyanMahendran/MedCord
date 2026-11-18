@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Globe, Lock, Plus, Search, Users } from 'lucide-react'
-import { Alert, Badge, Button, Card, CardBody, EmptyState, FormGroup, Input, Modal, Textarea } from '../components/ui'
+import { Alert, Avatar, Badge, Button, Card, CardBody, EmptyState, FormGroup, Input, Modal, Textarea } from '../components/ui'
 import { createCommunity, discover, joinCommunity, listMine } from '../api/communities'
 import type { Community } from '../api/communities'
 import { fieldErrors, problemMessage } from '../api/client'
@@ -13,8 +13,9 @@ function CommunityCard({ c, action }: { c: Community; action?: React.ReactNode }
     <Card>
       <CardBody>
         <div className="mc-row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <Link to={`/communities/${c.id}`} style={{ fontWeight: 700, fontSize: 16 }}>{c.name}</Link>
+          <Avatar name={c.name} size="md" />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Link to={`/communities/${c.id}`} style={{ fontWeight: 800, fontSize: 16 }}>{c.name}</Link>
             <div className="mc-row" style={{ marginTop: 6, flexWrap: 'wrap' }}>
               {c.specialtyTag && <Badge tone="info">{c.specialtyTag}</Badge>}
               <Badge tone="neutral">{c.visibility === 'PRIVATE' ? <><Lock size={11} /> Private</> : <><Globe size={11} /> Public</>}</Badge>
