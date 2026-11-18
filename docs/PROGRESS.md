@@ -77,3 +77,16 @@ Next up = first unchecked task. Update in every PR.
 ## M7
 
 - [~] T-024 Hardening and deploy (done: auth rate limiting, CI, architecture/runbook/security docs; open: httpOnly refresh cookie, Redis limiter, Dockerfiles, observability) — `docs/tasks/T-024-hardening-and-deploy.md`
+
+## M8 – Rural Case Rooms (Nexconn Build Challenge 2026)
+
+Health workers send a case; verified specialists answer in a per-case chat room. All data is synthetic (ADR 0005).
+
+- [x] T-025 Case room schema: cases, attachments, answers, follow-ups, availability, regions, specialties, red-flag rules, timeline, AI audit log, notifications, impact views; RLS on every table (V12–V14)
+- [x] T-026 Case API: submit with rule-based triage (red flags, vitals, specialty), routing to on-duty doctors, accept/answer/follow-up, escalation job, Verified Answer Library, impact, notifications
+- [x] T-027 Case UI: new case (symptom tiles, voice dictation in 7 languages, offline queue), doctor queue, case room with chat and read-aloud, library, impact dashboard
+- [ ] T-028 Wire the case chat to the Nexconn Chat SDK (currently backend polling every 4s)
+- [ ] T-029 Translate replies for the health worker (needs an LLM key); non-English red-flag detection
+- [ ] T-030 Case photo and voice-note attachments (builds on T-020)
+
+Notes: migrations V12/V13 were renumbered after `V11__calls.sql` landed on main. Seed demo data with `scripts/seed-cases.sql` after `seed-dev.sql`.
