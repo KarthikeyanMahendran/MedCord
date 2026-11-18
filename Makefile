@@ -15,8 +15,11 @@ setup: ## install backend + frontend deps
 db: ## create local medcord db + role on localhost:5432 (idempotent, uses DB_PASSWORD)
 	@psql -h $(DB_HOST) -p $(DB_PORT) -d postgres -v ON_ERROR_STOP=1 -q -v pw="$(DB_PASSWORD)" -f scripts/create-db.sql
 
-seed: ## load DEV-ONLY mock users (password: Passw0rd!Med)
-	@psql -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER) -d $(DB_NAME) -v ON_ERROR_STOP=1 -q -f scripts/seed-dev.sql
+seed: ## load DEV-ONLY mock data (admin login from SEED_ADMIN_EMAIL/SEED_ADMIN_PASSWORD in .env)
+	@psql -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER) -d $(DB_NAME) -v ON_ERROR_STOP=1 -q \
+		$(if $(SEED_ADMIN_EMAIL),-v admin_email='$(SEED_ADMIN_EMAIL)') \
+		$(if $(SEED_ADMIN_PASSWORD),-v admin_password='$(SEED_ADMIN_PASSWORD)') \
+		-f scripts/seed-dev.sql
 
 dev: ## run backend (:8080) and frontend (:5173)
 	@$(MAKE) -j2 backend frontend

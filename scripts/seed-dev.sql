@@ -1,9 +1,33 @@
 -- DEV ONLY. Fictional people; fake license numbers. Idempotent. Usage: make seed
--- All accounts use password: Passw0rd!Med   (bcrypt via pgcrypto, compatible with Spring BCrypt)
+-- Member accounts use password: Passw0rd!Med   (bcrypt via pgcrypto, compatible with Spring BCrypt)
+-- The platform admin's login comes from .env (SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD), passed in by `make seed`.
+-- Defaults keep the original demo account when those variables are not set.
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+\if :{?admin_email}
+\else
+  \set admin_email 'admin@medcord.dev'
+\endif
+\if :{?admin_password}
+\else
+  \set admin_password 'Passw0rd!Med'
+\endif
+
+-- Re-point the existing seeded admin (identified by its licence ADM-0001) at the configured login,
+-- keeping its id so memberships and audit history stay attached. Changing credentials signs out its sessions.
+WITH admin AS (
+  SELECT p.user_id FROM professional_profiles p WHERE p.license_country = 'IN' AND p.license_number = 'ADM-0001'
+), upd AS (
+  UPDATE users u SET email = lower(:'admin_email'), password_hash = crypt(:'admin_password', gen_salt('bf', 10)), updated_at = now()
+  FROM admin a
+  WHERE u.id = a.user_id
+    AND (lower(u.email) <> lower(:'admin_email') OR u.password_hash <> crypt(:'admin_password', u.password_hash))
+  RETURNING u.id
+)
+UPDATE refresh_tokens t SET revoked_at = now() FROM upd WHERE t.user_id = upd.id AND t.revoked_at IS NULL;
+
 WITH seed(email, name, status, role, specialty, lic, country, vstatus, bio) AS (VALUES
- ('admin@medcord.dev',        'Platform Admin',        'ACTIVE',    'ADMIN', 'Administration',    'ADM-0001',  'IN', 'APPROVED', 'MedCord platform administrator.'),
+ (lower(:'admin_email'),      'Platform Admin',        'ACTIVE',    'ADMIN', 'Administration',    'ADM-0001',  'IN', 'APPROVED', 'MedCord platform administrator.'),
  ('priya.raman@medcord.dev',  'Dr. Priya Raman',       'ACTIVE',    'USER',  'Cardiology',        'TN-CARD-48211', 'IN', 'APPROVED', 'Interventional cardiologist, 12 yrs.'),
  ('arjun.mehta@medcord.dev',  'Dr. Arjun Mehta',       'ACTIVE',    'USER',  'Neurology',         'MH-NEU-33902',  'IN', 'APPROVED', 'Stroke and epilepsy care.'),
  ('sara.ahmed@medcord.dev',   'Dr. Sara Ahmed',        'ACTIVE',    'USER',  'Pediatrics',        'GMC-7345512',   'GB', 'APPROVED', 'Paediatric emergency medicine.'),
@@ -16,7 +40,7 @@ WITH seed(email, name, status, role, specialty, lic, country, vstatus, bio) AS (
  ('suspended.user@medcord.dev','Test Suspended',       'SUSPENDED', 'USER',  'General Practice',  'XX-SUS-0001',   'IN', 'APPROVED', 'Suspended for policy violation.')
 ), ins_u AS (
   INSERT INTO users (email, password_hash, display_name, status, platform_role)
-  SELECT email, crypt('Passw0rd!Med', gen_salt('bf', 10)), name, status, role FROM seed
+  SELECT email, crypt(CASE WHEN role = 'ADMIN' THEN :'admin_password' ELSE 'Passw0rd!Med' END, gen_salt('bf', 10)), name, status, role FROM seed
   ON CONFLICT ((lower(email))) DO NOTHING
   RETURNING id, email
 )

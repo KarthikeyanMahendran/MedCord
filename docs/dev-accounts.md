@@ -1,10 +1,12 @@
 # Local dev accounts (mock data)
 
-Load with `make seed` (idempotent, DEV ONLY, never run against production). Password for all: `Passw0rd!Med`
+Load with `make seed` (idempotent, DEV ONLY, never run against production). Member password: `Passw0rd!Med`.
+
+**Platform admin:** set `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` in your local `.env`, then run `make seed`. Re-running with new values updates the existing admin in place (same account, sessions signed out). With neither set, the admin is `admin@medcord.dev` / `Passw0rd!Med`.
 
 | Email | Role / state | Use for |
 |---|---|---|
-| admin@medcord.dev | ADMIN, active | admin verification queue, moderation |
+| `SEED_ADMIN_EMAIL` (default admin@medcord.dev) | ADMIN, active | admin verification queue, moderation |
 | priya.raman@medcord.dev | active, verified (Cardiology) | normal verified doctor |
 | arjun.mehta@, sara.ahmed@, liam.oconnor@, meera.nair@, carlos.vega@ `@medcord.dev` | active, verified | multi-user chat/threads testing |
 | nina.kapoor@, omar.haddad@ `@medcord.dev` | pending verification | admin approval flow |
