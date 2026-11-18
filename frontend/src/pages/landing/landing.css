@@ -154,3 +154,10 @@
   .lp *, .lp *::before, .lp *::after { animation: none !important; transition: none !important; }
   .lp-reveal { opacity: 1; transform: none; } .lp-bars span { height: var(--h); }
 }
+
+.lp-scene { position: relative; color: #fff; background: var(--b800); }
+.lp-scene-art { display: block; width: 100%; height: clamp(320px, 42vw, 520px); }
+.lp-scene-cap { position: absolute; left: 0; right: 0; top: 0; padding-top: clamp(28px, 5vw, 64px); pointer-events: none; }
+.lp-scene-cap h2 { color: #fff; max-width: 520px; font-size: clamp(24px, 3vw, 38px); text-shadow: 0 4px 24px rgba(5, 20, 60, .45); }
+.lp-scene-cap p { max-width: 460px; margin-top: 12px; color: #e3eeff; text-shadow: 0 2px 14px rgba(5, 20, 60, .5); }
+@media (max-width: 700px) { .lp-scene-cap p { display: none; } }
