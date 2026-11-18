@@ -5,7 +5,7 @@ A scalable, Discord-like community platform for doctors and medical professional
 **Stack:** Spring Boot 3 (Java 21) · Hibernate/JPA · Flyway · PostgreSQL · React + Vite + TypeScript · Nexconn Chat SDK/API.
 
 ## Quickstart
-Prerequisites: Java 21, Node 20 (`.nvmrc`), PostgreSQL on `localhost:5432`.
+Prerequisites: Java 21, Node 24 LTS (`.nvmrc` — run `nvm use`), PostgreSQL on `localhost:5432`.
 
 ```bash
 cp .env.example .env     # fill in values (never commit .env)
