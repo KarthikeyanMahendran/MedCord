@@ -2,7 +2,9 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { KeyboardEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Hash, Megaphone, Pin, Send, ShieldOff, UserX, X } from 'lucide-react'
-import { Alert, Badge, Button, Modal } from '../components/ui'
+import { Alert, Badge, Button, FormGroup, Modal, Textarea } from '../components/ui'
+import { REPORT_REASONS, reportMessage } from '../api/moderation'
+import type { ReportReason } from '../api/moderation'
 import { getCommunity, listChannels } from '../api/communities'
 import type { Channel, Community } from '../api/communities'
 import { PresenceDot } from '../components/chat/PresenceDot'
@@ -37,6 +39,10 @@ export default function ChannelChat() {
   const [openThread, setOpenThread] = useState<string | null>(null)
   const [pins, setPins] = useState<Message[] | null>(null)
   const [convs, setConvs] = useState<Conversation[]>([])
+  const [reporting, setReporting] = useState<Message | null>(null)
+  const [reason, setReason] = useState<ReportReason>('PHI')
+  const [details, setDetails] = useState('')
+  const [notice, setNotice] = useState<string | null>(null)
   const [conv, setConv] = useState<Conversation | null>(null)
   const [history, setHistory] = useState<{ msg: Message; revs: Revision[] } | null>(null)
   const scroller = useRef<HTMLDivElement>(null)
@@ -172,6 +178,12 @@ export default function ChannelChat() {
     try { merge([await (m.pinned ? unpinMessage(m.id) : pinMessage(m.id))]) } catch (e) { setError(problemMessage(e)) }
   }
 
+  async function submitReport() {
+    if (!reporting) return
+    try { await reportMessage(reporting.id, reason, details || undefined); setNotice('Thanks — moderators will review this message.'); setReporting(null); setDetails('') }
+    catch (e) { setError(problemMessage(e)); setReporting(null) }
+  }
+
   async function showPins() {
     try { setPins(await listPins(channelId)) } catch (e) { setError(problemMessage(e)) }
   }
@@ -234,12 +246,13 @@ export default function ChannelChat() {
               {header && <div className="mc-day">{dayLabel(m.createdAt)}</div>}
               <MessageItem m={m} userId={user?.id} canPost={canPost} moderator={moderator}
                 onReply={(x) => { setReplyTo(x); setEditing(null) }} onEdit={startEdit} onDelete={setConfirmDelete}
-                onHistory={showHistory} onThread={openOrStartThread} onReact={toggleReaction} onPin={togglePin} />
+                onHistory={showHistory} onThread={openOrStartThread} onReact={toggleReaction} onPin={togglePin} onReport={dmMode ? undefined : setReporting} />
             </div>
           ))}
         </div>
 
         <div className="mc-composer">
+          {notice && <Alert tone="success">{notice}</Alert>}
           {error && <Alert tone="danger">{error}</Alert>}
           {replyTo && <div className="mc-composer-bar"><span>Replying to <strong>{replyTo.author.displayName}</strong></span><Button variant="icon" size="sm" aria-label="Cancel reply" onClick={() => setReplyTo(null)}><X size={14} /></Button></div>}
           {editing && <div className="mc-composer-bar"><span>Editing message · Esc to cancel</span><Button variant="icon" size="sm" aria-label="Cancel edit" onClick={() => { setEditing(null); setText('') }}><X size={14} /></Button></div>}
@@ -261,6 +274,18 @@ export default function ChannelChat() {
       <Modal isOpen={confirmDelete !== null} onClose={() => setConfirmDelete(null)} title="Delete message?" size="sm"
         footer={<><Button variant="secondary" onClick={() => setConfirmDelete(null)}>Cancel</Button><Button variant="danger" onClick={doDelete}>Delete</Button></>}>
         The message will be removed for everyone. A copy is kept for moderation audit.
+      </Modal>
+
+      <Modal isOpen={reporting !== null} onClose={() => setReporting(null)} title="Report message" size="sm"
+        footer={<><Button variant="secondary" onClick={() => setReporting(null)}>Cancel</Button><Button onClick={submitReport}>Submit report</Button></>}>
+        <div style={{ display: 'grid', gap: 12 }}>
+          <FormGroup id="rreason" label="Why are you reporting this?">
+            <select id="rreason" className="mc-input" value={reason} onChange={(e) => setReason(e.target.value as ReportReason)}>
+              {REPORT_REASONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+            </select>
+          </FormGroup>
+          <FormGroup id="rdetails" label="Details (optional)"><Textarea id="rdetails" rows={3} value={details} onChange={(e) => setDetails(e.target.value)} maxLength={1000} /></FormGroup>
+        </div>
       </Modal>
 
       <Modal isOpen={pins !== null} onClose={() => setPins(null)} title="Pinned messages" size="md">

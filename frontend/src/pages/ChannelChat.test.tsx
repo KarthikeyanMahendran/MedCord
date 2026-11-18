@@ -6,10 +6,12 @@ import ChannelChat from './ChannelChat'
 import * as comm from '../api/communities'
 import * as msgs from '../api/messages'
 import * as dms from '../api/dms'
+import * as moderation from '../api/moderation'
 
 vi.mock('../api/communities')
 vi.mock('../api/messages')
 vi.mock('../api/dms')
+vi.mock('../api/moderation', async (orig) => ({ ...(await orig<typeof import('../api/moderation')>()), reportMessage: vi.fn() }))
 vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', displayName: 'Me' } }) }))
 
 const community = (perms: comm.Permission[]): comm.Community => ({
@@ -160,6 +162,25 @@ describe('ChannelChat', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Pin message' }))
     await waitFor(() => expect(msgs.pinMessage).toHaveBeenCalledWith('m1'))
     expect(await screen.findByText('pinned')).toBeInTheDocument()
+  })
+
+  it('reports another member\'s message with a reason', async () => {
+    vi.mocked(msgs.listMessages).mockResolvedValue({ hasMore: false, items: [message()] })
+    vi.mocked(moderation.reportMessage).mockResolvedValue()
+    setup()
+    await screen.findByText('Hello team')
+    await userEvent.click(screen.getByRole('button', { name: 'Report message' }))
+    await userEvent.selectOptions(screen.getByLabelText('Why are you reporting this?'), 'HARASSMENT')
+    await userEvent.click(screen.getByRole('button', { name: 'Submit report' }))
+    await waitFor(() => expect(moderation.reportMessage).toHaveBeenCalledWith('m1', 'HARASSMENT', undefined))
+    expect(await screen.findByText(/moderators will review/)).toBeInTheDocument()
+  })
+
+  it('does not offer to report your own message', async () => {
+    vi.mocked(msgs.listMessages).mockResolvedValue({ hasMore: false, items: [message({ author: { id: 'me', displayName: 'Me', specialty: null, verified: false } })] })
+    setup()
+    await screen.findByText('Hello team')
+    expect(screen.queryByRole('button', { name: 'Report message' })).toBeNull()
   })
 
   it('shows an error when sending fails', async () => {

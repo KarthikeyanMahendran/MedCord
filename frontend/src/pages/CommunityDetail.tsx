@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Archive, Copy, Hash, Megaphone, MessageCircle, Trash2 } from 'lucide-react'
+import { ModerationPanel } from '../components/community/ModerationPanel'
+import { AuditPanel } from '../components/community/AuditPanel'
+import { muteMember } from '../api/moderation'
 import { Alert, Badge, Button, Card, CardBody, EmptyState, FormGroup, Input, Modal, Tabs } from '../components/ui'
 import * as api from '../api/communities'
 import type { Channel, Community, Invite, Member, Permission, Role } from '../api/communities'
@@ -11,7 +14,7 @@ import { PresenceDot } from '../components/chat/PresenceDot'
 import { fieldErrors, problemMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 
-type Tab = 'channels' | 'members' | 'roles' | 'invites'
+type Tab = 'channels' | 'members' | 'roles' | 'invites' | 'moderation' | 'audit'
 const label = (p: string) => p.toLowerCase().replace(/_/g, ' ')
 
 export default function CommunityDetail() {
@@ -84,6 +87,8 @@ export default function CommunityDetail() {
   const tabs: { value: Tab; label: string }[] = [{ value: 'channels', label: 'Channels' }, { value: 'members', label: 'Members' }]
   if (isMember) tabs.push({ value: 'roles', label: 'Roles' })
   if (can('CREATE_INVITE')) tabs.push({ value: 'invites', label: 'Invites' })
+  if (can('MODERATE_MESSAGES') || can('MANAGE_MEMBERS')) tabs.push({ value: 'moderation', label: 'Moderation' })
+  if (can('MANAGE_COMMUNITY')) tabs.push({ value: 'audit', label: 'Audit log' })
 
   return (
     <main className="mc-page mc-page-wide">
@@ -142,8 +147,10 @@ export default function CommunityDetail() {
                         <Button variant="ghost" size="sm" aria-label={`Message ${m.displayName}`} onClick={async () => { try { const c = await startDm([m.userId]); navigate(`/messages/${c.id}`) } catch (e) { fail(e) } }}><MessageCircle size={14} /> Message</Button>)}
                       {can('MANAGE_ROLES') && m.userId !== user?.id && (
                         <Button variant="ghost" size="sm" onClick={() => { setAssignFor(m); setAssignIds(new Set(m.roles.map((r) => r.id))); setErrors({}); setModal('assign') }}>Roles</Button>)}
-                      {can('MANAGE_MEMBERS') && m.userId !== user?.id && (
-                        <Button variant="ghost" size="sm" onClick={() => run(() => api.kickMember(id, m.userId), `${m.displayName} was removed.`)}>Remove</Button>)}
+                      {can('MANAGE_MEMBERS') && m.userId !== user?.id && (<>
+                        <Button variant="ghost" size="sm" aria-label={`Mute ${m.displayName}`} onClick={() => run(() => muteMember(id, m.userId, 60, 'Muted by moderator'), `${m.displayName} was muted for 1 hour.`)}>Mute 1h</Button>
+                        <Button variant="ghost" size="sm" onClick={() => run(() => api.kickMember(id, m.userId), `${m.displayName} was removed.`)}>Remove</Button>
+                        <Button variant="ghost" size="sm" aria-label={`Ban ${m.displayName}`} onClick={() => run(() => api.banMember(id, m.userId, 'Banned by moderator'), `${m.displayName} was banned.`)}>Ban</Button></>)}
                     </td>
                   </tr>))}</tbody>
               </table></div>
@@ -160,6 +167,9 @@ export default function CommunityDetail() {
                   <div className="mc-row" style={{ flexWrap: 'wrap', gap: 4, marginTop: 8 }}>{r.permissions.map((p) => <Badge key={p} tone="info">{label(p)}</Badge>)}</div>
                 </div>))}</div>
             </>)}
+
+            {tab === 'moderation' && <ModerationPanel communityId={id} canModerate={can('MODERATE_MESSAGES')} canManageMembers={can('MANAGE_MEMBERS')} />}
+            {tab === 'audit' && <AuditPanel communityId={id} />}
 
             {tab === 'invites' && (<>
               <div style={{ marginBottom: 12 }} className="mc-row">

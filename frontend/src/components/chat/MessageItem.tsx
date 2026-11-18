@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CornerUpLeft, History, MessageSquare, Pencil, Pin, PinOff, SmilePlus, Trash2 } from 'lucide-react'
+import { CornerUpLeft, Flag, History, MessageSquare, Pencil, Pin, PinOff, SmilePlus, Trash2 } from 'lucide-react'
 import { Badge, Button } from '../ui'
 import type { Message } from '../../api/messages'
 
@@ -18,12 +18,13 @@ export interface MessageItemProps {
   onThread?: (m: Message) => void
   onReact?: (m: Message, emoji: string) => void
   onPin?: (m: Message) => void
+  onReport?: (m: Message) => void
 }
 
 export const QUICK_EMOJIS = ['👍', '❤️', '🎉', '🙏', '👀', '✅', '🩺', '😂']
 
 /** One message row with hover actions. Shared by the channel timeline and the thread panel. */
-export function MessageItem({ m, userId, canPost, moderator, onReply, onEdit, onDelete, onHistory, onThread, onReact, onPin }: MessageItemProps) {
+export function MessageItem({ m, userId, canPost, moderator, onReply, onEdit, onDelete, onHistory, onThread, onReact, onPin, onReport }: MessageItemProps) {
   const [picker, setPicker] = useState(false)
   const mine = m.author.id === userId
   return (
@@ -76,6 +77,7 @@ export function MessageItem({ m, userId, canPost, moderator, onReply, onEdit, on
           {canPost && onReply && <Button variant="icon" size="sm" aria-label="Reply" onClick={() => onReply(m)}><CornerUpLeft size={15} /></Button>}
           {canPost && onThread && !m.thread && !m.threadId && <Button variant="icon" size="sm" aria-label="Start thread" onClick={() => onThread(m)}><MessageSquare size={15} /></Button>}
           {mine && canPost && <Button variant="icon" size="sm" aria-label="Edit" onClick={() => onEdit(m)}><Pencil size={15} /></Button>}
+          {!mine && onReport && <Button variant="icon" size="sm" aria-label="Report message" onClick={() => onReport(m)}><Flag size={15} /></Button>}
           {m.editedAt && (mine || moderator) && <Button variant="icon" size="sm" aria-label="Edit history" onClick={() => onHistory(m)}><History size={15} /></Button>}
           {moderator && onPin && !m.threadId && (
             <Button variant="icon" size="sm" aria-label={m.pinned ? 'Unpin message' : 'Pin message'} onClick={() => onPin(m)}>{m.pinned ? <PinOff size={15} /> : <Pin size={15} />}</Button>
