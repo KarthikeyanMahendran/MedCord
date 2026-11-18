@@ -12,4 +12,8 @@ public interface ChannelTransport {
     void onMemberJoined(UUID communityId, UUID userId);
     void onMemberLeft(UUID communityId, UUID userId);
     void onCommunityDeleted(UUID communityId);
+    /** Realtime fan-out hooks; the message is already persisted when these fire. */
+    void onMessageSent(UUID communityId, UUID channelId, UUID messageId);
+    void onMessageEdited(UUID communityId, UUID channelId, UUID messageId);
+    void onMessageDeleted(UUID communityId, UUID channelId, UUID messageId);
 }

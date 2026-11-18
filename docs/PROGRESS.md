@@ -27,7 +27,7 @@ Next up = first unchecked task. Update in every PR.
 ## M4
 
 - [x] T-010 Nexconn spike and gateway (code + tests done; live verification blocked by network DNS filter, see docs/nexconn-notes.md) — `docs/tasks/T-010-nexconn-spike-and-gateway.md`
-- [ ] T-011 Chat token + ChatProvider — `docs/tasks/T-011-chat-token-chatprovider.md`
+- [x] T-011 Messages API (send, history, reply, edit snapshots, delete) — see ADR 0004 — `docs/tasks/T-011-chat-token-chatprovider.md`
 - [ ] T-012 App shell and channel sidebar — `docs/tasks/T-012-app-shell-and-channel-sidebar.md`
 - [ ] T-013 Send/receive/history/reply UI — `docs/tasks/T-013-send-receive-history-reply-ui.md`
 

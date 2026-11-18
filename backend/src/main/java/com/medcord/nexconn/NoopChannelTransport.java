@@ -17,4 +17,7 @@ public class NoopChannelTransport implements ChannelTransport {
     @Override public void onMemberJoined(UUID c, UUID u) { log.debug("member {} joined {}", u, c); }
     @Override public void onMemberLeft(UUID c, UUID u) { log.debug("member {} left {}", u, c); }
     @Override public void onCommunityDeleted(UUID c) { log.debug("community deleted {}", c); }
+    @Override public void onMessageSent(UUID c, UUID ch, UUID m) { log.debug("message sent {} in {}", m, ch); }
+    @Override public void onMessageEdited(UUID c, UUID ch, UUID m) { log.debug("message edited {} in {}", m, ch); }
+    @Override public void onMessageDeleted(UUID c, UUID ch, UUID m) { log.debug("message deleted {} in {}", m, ch); }
 }
