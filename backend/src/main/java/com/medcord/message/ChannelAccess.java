@@ -32,7 +32,7 @@ public class ChannelAccess {
 
     /** Throws 403 when the user cannot even see the channel. */
     public Set<Permission> permissions(Channel ch, UUID userId) {
-        if (ch.getType() == Channel.Type.DM) {
+        if (ch.getType() == Channel.Type.DM || ch.getType() == Channel.Type.CASE) {
             if (!participants.existsByChannelIdAndUserId(ch.getId(), userId)) {
                 throw new ApiException(HttpStatus.FORBIDDEN, "You are not part of this conversation");
             }

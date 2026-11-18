@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Channel {
-    public enum Type { TEXT, ANNOUNCEMENT, DM }
+    public enum Type { TEXT, ANNOUNCEMENT, DM, CASE }
 
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     @Column(name = "community_id") private UUID communityId;
