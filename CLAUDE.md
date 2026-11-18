@@ -35,7 +35,7 @@ Backend: `cd backend && ./mvnw verify`. Frontend: `cd frontend && npm run lint &
 - See `docs/nexconn-notes.md` for verified Nexconn facts; do not re-research them.
 
 ## Frontend / UI
-Follow `docs/ui-ux-guide.md` (tokens `--mc-*`, `components/ui` kit, Discord-style shell, light/dark). Reuse the *patterns* of the author's HMS design system; never import from or copy branding of other projects.
+Follow `docs/ui-ux-guide.md` (tokens `--mc-*`, `components/ui` kit, Discord-style shell, light/dark). MedCord is fully standalone: never import from, copy from, or reference other projects.
 
 ## Environment
 Local PostgreSQL on `localhost:5432`. Create only the `medcord` DB and `medcord_app` role; do not touch other databases on the server.

@@ -1,6 +1,6 @@
 # MedCord UI/UX guide
 
-Reference: the author's HMS frontend design system (`HMS-frontend/src/components/ui`, `styles/ui/tokens.css`). We reuse its **patterns**, rebuilt in TypeScript with MedCord's own `mc-` prefix and branding. Do not import from or couple to that project.
+MedCord has its own standalone design system: TypeScript components with the `mc-` prefix and MedCord branding. It does not depend on or import from any other project.
 
 ## Principles
 - Calm, clinical, high-contrast neutral palette; one accent colour. Dense but readable (chat apps are information-heavy).
@@ -9,11 +9,11 @@ Reference: the author's HMS frontend design system (`HMS-frontend/src/components
 - Every async view has loading (skeleton), empty, and error states.
 
 ## Design tokens (`frontend/src/styles/tokens.css`, prefix `--mc-*`)
-Same structure as HMS tokens: brand primary/hover/active/light, neutral gray 50–950, semantic pairs (success/warning/danger/info × base/bg/border/text), spacing scale (4/8/12/16/24/32/48/64), radius (4/6/8/12/16/full), transitions (150/250/400 ms), shadows (modal, button), overlay colour. Add chat-specific tokens: `--mc-bubble-*`, `--mc-mention-bg`, `--mc-presence-online/away/offline`, `--mc-verified-badge`.
+Structure: brand primary/hover/active/light, neutral gray 50–950, semantic pairs (success/warning/danger/info × base/bg/border/text), spacing scale (4/8/12/16/24/32/48/64), radius (4/6/8/12/16/full), transitions (150/250/400 ms), shadows (modal, button), overlay colour. Add chat-specific tokens: `--mc-bubble-*`, `--mc-mention-bg`, `--mc-presence-online/away/offline`, `--mc-verified-badge`.
 
 ## Component kit (`frontend/src/components/ui/`, barrel `index.ts`)
-Thin React components over shared CSS classes (`mc-btn-primary`, `is-sm`, `is-loading`…), as in HMS:
-| Component | Notes (pattern taken from HMS) |
+Thin React components over shared CSS classes (`mc-btn-primary`, `is-sm`, `is-loading`…), as follows:
+| Component | Notes |
 |---|---|
 | `Button` | variants primary/secondary/ghost/danger/icon; sizes; `loading` shows spinner + `aria-busy`; `forwardRef` |
 | `Input`, `Textarea`, `Select`, `FormGroup` | label + hint + error wiring, `aria-describedby` |
@@ -24,11 +24,11 @@ Thin React components over shared CSS classes (`mc-btn-primary`, `is-sm`, `is-lo
 | `Table`, `Pagination`, `SearchBar`, `SearchableSelect` | admin verification queue, member lists, audit log |
 | `PageHeader`, `Card` | admin/settings pages |
 | `Toast` (new) | notifications for send failures, mentions |
-| `ErrorBoundary`, `ProtectedRoute` | as in HMS |
+| `ErrorBoundary`, `ProtectedRoute` | standard |
 
-Libraries (aligned with HMS): `lucide-react` icons, `react-router-dom` v6, `axios`, `date-fns`, `recharts` (admin analytics only). Add: Tailwind is **not** used; CSS variables + small component CSS keeps parity with HMS.
+Libraries: `lucide-react` icons, `react-router-dom` v6, `axios`, `date-fns`, `recharts` (admin analytics only). Add: Tailwind is **not** used; CSS variables + small component CSS keeps the stack simple.
 
-## App shell (pattern: HMS `Layout` + `Sidebar` + `Header`)
+## App shell (`Layout` + `Sidebar` + `Header`)
 Discord-style 4-column layout:
 1. **Community rail** (icons) – switch communities, add/join.
 2. **Channel sidebar** – grouped channels (text/announcement), DMs section, collapsible groups, unread badges, `NavLink` active state.
@@ -41,5 +41,5 @@ Responsive: collapses to rail + single pane on mobile.
 
 ## Conventions
 - Co-locate component + css; props typed; no inline colours (tokens only).
-- Tests with Vitest + Testing Library (setup like HMS `src/test/setup.js`); at least render + a11y-role assertions per kit component.
-- Storybook optional later; for now a `/dev/ui` page lists every kit component (HMS has `pages/dev`).
+- Tests with Vitest + Testing Library (shared `src/test/setup.ts`); at least render + a11y-role assertions per kit component.
+- Storybook optional later; for now a `/dev/ui` page lists every kit component.
