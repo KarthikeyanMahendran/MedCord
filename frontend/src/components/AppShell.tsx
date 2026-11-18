@@ -5,6 +5,7 @@ import { ServerRail } from './shell/ServerRail'
 import { SideColumn } from './shell/SideColumn'
 import { CallOverlay } from './call/CallOverlay'
 import { CallProvider } from '../context/CallContext'
+import { MedCordAiWidget } from './ai/MedCordAiWidget'
 
 /** Discord-style frame: server rail | contextual sidebar | content. */
 export function AppShell() {
@@ -23,6 +24,7 @@ export function AppShell() {
         <ServerRail />
         <SideColumn />
         <div className="mc-content"><Outlet /></div>
+        <MedCordAiWidget />
       </div>
       <CallOverlay />
     </CallProvider>
