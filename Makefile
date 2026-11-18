@@ -2,7 +2,7 @@ SHELL := /bin/bash
 -include .env
 export
 
-.PHONY: help setup db dev backend frontend test lint compose-up compose-down
+.PHONY: help setup db seed dev backend frontend test lint compose-up compose-down
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "%-14s %s\n", $$1, $$2}'
@@ -14,6 +14,9 @@ setup: ## install backend + frontend deps
 
 db: ## create local medcord db + role on localhost:5432 (idempotent, uses DB_PASSWORD)
 	@psql -h $(DB_HOST) -p $(DB_PORT) -d postgres -v ON_ERROR_STOP=1 -q -v pw="$(DB_PASSWORD)" -f scripts/create-db.sql
+
+seed: ## load DEV-ONLY mock users (password: Passw0rd!Med)
+	@psql -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER) -d $(DB_NAME) -v ON_ERROR_STOP=1 -q -f scripts/seed-dev.sql
 
 dev: ## run backend (:8080) and frontend (:5173)
 	@$(MAKE) -j2 backend frontend
