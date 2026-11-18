@@ -1,0 +1,188 @@
+-- DEV ONLY. Fictional people; fake license numbers. Idempotent. Usage: make seed
+-- All accounts use password: Passw0rd!Med   (bcrypt via pgcrypto, compatible with Spring BCrypt)
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+WITH seed(email, name, status, role, specialty, lic, country, vstatus, bio) AS (VALUES
+ ('admin@medcord.dev',        'Platform Admin',        'ACTIVE',    'ADMIN', 'Administration',    'ADM-0001',  'IN', 'APPROVED', 'MedCord platform administrator.'),
+ ('priya.raman@medcord.dev',  'Dr. Priya Raman',       'ACTIVE',    'USER',  'Cardiology',        'TN-CARD-48211', 'IN', 'APPROVED', 'Interventional cardiologist, 12 yrs.'),
+ ('arjun.mehta@medcord.dev',  'Dr. Arjun Mehta',       'ACTIVE',    'USER',  'Neurology',         'MH-NEU-33902',  'IN', 'APPROVED', 'Stroke and epilepsy care.'),
+ ('sara.ahmed@medcord.dev',   'Dr. Sara Ahmed',        'ACTIVE',    'USER',  'Pediatrics',        'GMC-7345512',   'GB', 'APPROVED', 'Paediatric emergency medicine.'),
+ ('liam.oconnor@medcord.dev', 'Dr. Liam O''Connor',    'ACTIVE',    'USER',  'Radiology',         'IMC-229871',    'IE', 'APPROVED', 'Musculoskeletal radiology.'),
+ ('meera.nair@medcord.dev',   'Dr. Meera Nair',        'ACTIVE',    'USER',  'Dermatology',       'KL-DER-90417',  'IN', 'APPROVED', 'Clinical dermatology.'),
+ ('carlos.vega@medcord.dev',  'Dr. Carlos Vega',       'ACTIVE',    'USER',  'Anesthesiology',    'MX-ANE-55120',  'MX', 'APPROVED', 'Perioperative medicine.'),
+ ('nina.kapoor@medcord.dev',  'Nina Kapoor, RN',       'PENDING',   'USER',  'Critical Care Nursing','RN-DL-77231','IN', 'PENDING',  'ICU nurse awaiting verification.'),
+ ('omar.haddad@medcord.dev',  'Dr. Omar Haddad',       'PENDING',   'USER',  'Orthopedics',       'JMA-118820',    'JO', 'PENDING',  'Awaiting license verification.'),
+ ('rejected.user@medcord.dev','Test Rejected',         'PENDING',   'USER',  'General Practice',  'XX-REJ-0001',   'IN', 'REJECTED', 'License could not be verified.'),
+ ('suspended.user@medcord.dev','Test Suspended',       'SUSPENDED', 'USER',  'General Practice',  'XX-SUS-0001',   'IN', 'APPROVED', 'Suspended for policy violation.')
+), ins_u AS (
+  INSERT INTO users (email, password_hash, display_name, status, platform_role)
+  SELECT email, crypt('Passw0rd!Med', gen_salt('bf', 10)), name, status, role FROM seed
+  ON CONFLICT ((lower(email))) DO NOTHING
+  RETURNING id, email
+)
+INSERT INTO professional_profiles (user_id, specialty, license_number, license_country, verification_status, verified_at, bio)
+SELECT u.id, s.specialty, s.lic, s.country, s.vstatus,
+       CASE WHEN s.vstatus='APPROVED' THEN now() END, s.bio
+FROM ins_u u JOIN seed s ON lower(s.email)=lower(u.email)
+ON CONFLICT (user_id) DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- Communities (DEV ONLY): owner + roles + channels + members. Idempotent by slug.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION pg_temp.seed_community(p_slug text, p_name text, p_desc text, p_tag text, p_vis text, p_owner text, p_members text[])
+RETURNS void LANGUAGE plpgsql AS $$
+DECLARE cid uuid; oid uuid; r_owner uuid; r_admin uuid; r_mod uuid; r_member uuid; mid uuid; m text;
+BEGIN
+  IF EXISTS (SELECT 1 FROM communities WHERE slug = p_slug) THEN RETURN; END IF;
+  SELECT id INTO oid FROM users WHERE lower(email) = lower(p_owner);
+  INSERT INTO communities (name, slug, description, specialty_tag, visibility, owner_id)
+    VALUES (p_name, p_slug, p_desc, p_tag, p_vis, oid) RETURNING id INTO cid;
+
+  INSERT INTO roles (community_id, name, position, system_key) VALUES (cid,'Owner',0,'OWNER') RETURNING id INTO r_owner;
+  INSERT INTO roles (community_id, name, position, system_key) VALUES (cid,'Admin',1,'ADMIN') RETURNING id INTO r_admin;
+  INSERT INTO roles (community_id, name, position, system_key) VALUES (cid,'Moderator',2,'MODERATOR') RETURNING id INTO r_mod;
+  INSERT INTO roles (community_id, name, position, system_key) VALUES (cid,'Member',3,'MEMBER') RETURNING id INTO r_member;
+  INSERT INTO role_permissions (role_id, permission)
+    SELECT r, p FROM (VALUES (r_owner),(r_admin)) o(r), unnest(ARRAY['MANAGE_COMMUNITY','MANAGE_CHANNELS','MANAGE_ROLES','MANAGE_MEMBERS','CREATE_INVITE','SEND_MESSAGES','POST_ANNOUNCEMENTS','MODERATE_MESSAGES']) p;
+  INSERT INTO role_permissions (role_id, permission) SELECT r_mod, unnest(ARRAY['MODERATE_MESSAGES','MANAGE_MEMBERS','SEND_MESSAGES','CREATE_INVITE']);
+  INSERT INTO role_permissions (role_id, permission) VALUES (r_member, 'SEND_MESSAGES');
+
+  INSERT INTO channels (community_id, name, topic, type, position) VALUES
+    (cid,'general','General discussion','TEXT',0), (cid,'announcements','Official announcements','ANNOUNCEMENT',1),
+    (cid,'case-discussions','Anonymised case discussions','TEXT',2), (cid,'journal-club','Papers and reviews','TEXT',3);
+
+  INSERT INTO memberships (community_id, user_id) VALUES (cid, oid) RETURNING id INTO mid;
+  INSERT INTO membership_roles VALUES (mid, r_owner), (mid, r_member);
+  FOREACH m IN ARRAY p_members LOOP
+    INSERT INTO memberships (community_id, user_id) SELECT cid, id FROM users WHERE lower(email)=lower(split_part(m,':',1)) RETURNING id INTO mid;
+    INSERT INTO membership_roles VALUES (mid, r_member);
+    IF split_part(m,':',2) = 'mod' THEN INSERT INTO membership_roles VALUES (mid, r_mod); END IF;
+    IF split_part(m,':',2) = 'admin' THEN INSERT INTO membership_roles VALUES (mid, r_admin); END IF;
+  END LOOP;
+END $$;
+
+SELECT pg_temp.seed_community('cardiology-collective','Cardiology Collective','Interventional, imaging and heart-failure discussion.','Cardiology','PUBLIC','priya.raman@medcord.dev',
+  ARRAY['arjun.mehta@medcord.dev:admin','sara.ahmed@medcord.dev:mod','liam.oconnor@medcord.dev','meera.nair@medcord.dev']);
+SELECT pg_temp.seed_community('emergency-medicine-hub','Emergency Medicine Hub','Trauma, triage and resuscitation protocols.','Emergency','PUBLIC','sara.ahmed@medcord.dev',
+  ARRAY['priya.raman@medcord.dev','carlos.vega@medcord.dev:mod','arjun.mehta@medcord.dev']);
+SELECT pg_temp.seed_community('radiology-readers-private','Radiology Readers','Private reading group for radiologists.','Radiology','PRIVATE','liam.oconnor@medcord.dev',
+  ARRAY['priya.raman@medcord.dev']);
+
+-- ---------------------------------------------------------------------------
+-- Messages (DEV ONLY): fictional conversations, no patient data. Idempotent per channel.
+-- ---------------------------------------------------------------------------
+DO $$
+DECLARE cid uuid; ch uuid; priya uuid; arjun uuid; sara uuid; liam uuid; meera uuid;
+        m1 uuid; m2 uuid; m3 uuid; m4 uuid; m5 uuid; t timestamptz := now() - interval '3 hours';
+BEGIN
+  SELECT id INTO cid FROM communities WHERE slug = 'cardiology-collective';
+  IF cid IS NULL THEN RETURN; END IF;
+  SELECT id INTO priya FROM users WHERE email = 'priya.raman@medcord.dev';
+  SELECT id INTO arjun FROM users WHERE email = 'arjun.mehta@medcord.dev';
+  SELECT id INTO sara  FROM users WHERE email = 'sara.ahmed@medcord.dev';
+  SELECT id INTO liam  FROM users WHERE email = 'liam.oconnor@medcord.dev';
+  SELECT id INTO meera FROM users WHERE email = 'meera.nair@medcord.dev';
+
+  SELECT id INTO ch FROM channels WHERE community_id = cid AND name = 'general';
+  IF NOT EXISTS (SELECT 1 FROM messages WHERE channel_id = ch) THEN
+    INSERT INTO messages (channel_id, author_id, body, created_at) VALUES (ch, priya, 'Welcome to the Cardiology Collective! Introduce yourself and your sub-specialty. 👋', t) RETURNING id INTO m1;
+    INSERT INTO messages (channel_id, author_id, body, created_at, reply_to_id) VALUES (ch, arjun, 'Neurologist here, mostly stroke. Happy to join the cardio-embolic stroke discussions.', t + interval '4 min', m1);
+    INSERT INTO messages (channel_id, author_id, body, created_at) VALUES (ch, liam, 'Radiologist, cardiac MRI and CT angiography. Glad to help with imaging questions.', t + interval '9 min');
+    INSERT INTO messages (channel_id, author_id, body, created_at, edited_at) VALUES (ch, meera, 'Dermatology — curious about cutaneous signs of endocarditis and amyloid.', t + interval '15 min', t + interval '20 min') RETURNING id INTO m2;
+    INSERT INTO message_revisions (message_id, revision_no, kind, body, actor_id, created_at) VALUES (m2, 1, 'EDIT', 'Dermatology - curious about skin signs of endocarditis.', meera, t + interval '20 min');
+    INSERT INTO messages (channel_id, author_id, body, created_at, deleted_at, deleted_by) VALUES (ch, sara, 'Oops wrong channel', t + interval '25 min', t + interval '26 min', sara) RETURNING id INTO m3;
+    INSERT INTO message_revisions (message_id, revision_no, kind, body, actor_id, created_at) VALUES (m3, 1, 'DELETE', 'Oops wrong channel', sara, t + interval '26 min');
+    INSERT INTO messages (channel_id, author_id, body, created_at, reply_to_id) VALUES (ch, priya, 'Welcome all. Please keep cases anonymised — no names, dates of birth or record numbers.', t + interval '40 min', m2);
+  END IF;
+
+  SELECT id INTO ch FROM channels WHERE community_id = cid AND name = 'case-discussions';
+  IF NOT EXISTS (SELECT 1 FROM messages WHERE channel_id = ch) THEN
+    INSERT INTO messages (channel_id, author_id, body, created_at) VALUES (ch, priya, E'Anonymised case: 58M, exertional chest tightness, normal resting ECG, positive stress test. LAD proximal stenosis ~80% on CT-FFR.\nWould you go PCI or optimal medical therapy first?', t + interval '1 hour') RETURNING id INTO m4;
+    INSERT INTO messages (channel_id, author_id, body, created_at, reply_to_id) VALUES (ch, sara, 'With a proximal LAD lesion and a positive functional test, I lean towards revascularisation. ISCHEMIA subgroup data is worth a look.', t + interval '1 hour 8 min', m4);
+    INSERT INTO messages (channel_id, author_id, body, created_at, reply_to_id) VALUES (ch, liam, 'Plaque morphology on CTA matters too — any high-risk features (low attenuation, positive remodelling)?', t + interval '1 hour 14 min', m4);
+    INSERT INTO messages (channel_id, author_id, body, created_at, edited_at) VALUES (ch, priya, 'Yes, positive remodelling and a napkin-ring sign. Leaning PCI plus DAPT.', t + interval '1 hour 22 min', t + interval '1 hour 23 min') RETURNING id INTO m5;
+    INSERT INTO message_revisions (message_id, revision_no, kind, body, actor_id, created_at) VALUES (m5, 1, 'EDIT', 'Yes, positive remodelling. Leaning PCI.', priya, t + interval '1 hour 23 min');
+  END IF;
+
+  SELECT id INTO ch FROM channels WHERE community_id = cid AND name = 'announcements';
+  IF NOT EXISTS (SELECT 1 FROM messages WHERE channel_id = ch) THEN
+    INSERT INTO messages (channel_id, author_id, body, created_at) VALUES (ch, priya, 'Journal club this Friday 18:00 IST: updates in HFpEF therapy. Link will be shared here.', t + interval '2 hours');
+  END IF;
+END $$;
+
+-- Thread on the first case-discussion message (DEV ONLY, idempotent).
+DO $$
+DECLARE ch uuid; root uuid; th uuid; priya uuid; sara uuid; arjun uuid; t timestamptz := now() - interval '90 minutes';
+BEGIN
+  SELECT id INTO ch FROM channels WHERE name = 'case-discussions' AND community_id = (SELECT id FROM communities WHERE slug = 'cardiology-collective');
+  IF ch IS NULL THEN RETURN; END IF;
+  SELECT id INTO root FROM messages WHERE channel_id = ch AND thread_id IS NULL AND body LIKE 'Anonymised case: 58M%' LIMIT 1;
+  IF root IS NULL OR EXISTS (SELECT 1 FROM threads WHERE root_message_id = root) THEN RETURN; END IF;
+  SELECT id INTO priya FROM users WHERE email = 'priya.raman@medcord.dev';
+  SELECT id INTO sara  FROM users WHERE email = 'sara.ahmed@medcord.dev';
+  SELECT id INTO arjun FROM users WHERE email = 'arjun.mehta@medcord.dev';
+  INSERT INTO threads (channel_id, root_message_id, title, created_by, created_at) VALUES (ch, root, 'PCI vs medical therapy', sara, t) RETURNING id INTO th;
+  INSERT INTO messages (channel_id, author_id, body, created_at, thread_id) VALUES
+    (ch, sara,  'Starting a thread so the main channel stays readable. ISCHEMIA excluded left-main and recent ACS, so applicability here is reasonable.', t + interval '2 min', th),
+    (ch, arjun, 'From the neuro side: if there is any AF history, factor in anticoagulation before choosing DAPT duration.', t + interval '6 min', th),
+    (ch, priya, 'Good point — no AF so far. Planning 6 months of DAPT given low bleeding risk.', t + interval '11 min', th);
+END $$;
+
+-- Reactions and a pinned message (DEV ONLY, idempotent).
+DO $$
+DECLARE cid uuid; ch uuid; mid uuid;
+BEGIN
+  SELECT id INTO cid FROM communities WHERE slug = 'cardiology-collective';
+  IF cid IS NULL THEN RETURN; END IF;
+  SELECT id INTO ch FROM channels WHERE community_id = cid AND name = 'general';
+  SELECT id INTO mid FROM messages WHERE channel_id = ch AND body LIKE 'Welcome to the Cardiology Collective%' LIMIT 1;
+  IF mid IS NOT NULL THEN
+    INSERT INTO message_reactions (message_id, user_id, emoji)
+      SELECT mid, u.id, e.emoji FROM users u JOIN (VALUES ('arjun.mehta@medcord.dev','👍'),('sara.ahmed@medcord.dev','👍'),('liam.oconnor@medcord.dev','👍'),
+        ('meera.nair@medcord.dev','🎉'),('sara.ahmed@medcord.dev','🩺')) e(email, emoji) ON lower(u.email) = e.email
+      ON CONFLICT DO NOTHING;
+    UPDATE messages SET pinned_at = now() - interval '2 hours', pinned_by = (SELECT id FROM users WHERE email='priya.raman@medcord.dev')
+      WHERE id = mid AND pinned_at IS NULL;
+  END IF;
+  SELECT id INTO ch FROM channels WHERE community_id = cid AND name = 'case-discussions';
+  SELECT id INTO mid FROM messages WHERE channel_id = ch AND body LIKE 'Anonymised case: 58M%' LIMIT 1;
+  IF mid IS NOT NULL THEN
+    INSERT INTO message_reactions (message_id, user_id, emoji)
+      SELECT mid, u.id, '👀' FROM users u WHERE u.email IN ('arjun.mehta@medcord.dev','liam.oconnor@medcord.dev','meera.nair@medcord.dev') ON CONFLICT DO NOTHING;
+  END IF;
+END $$;
+
+-- Direct messages (DEV ONLY, idempotent via dm_key).
+CREATE OR REPLACE FUNCTION pg_temp.seed_dm(p_emails text[]) RETURNS uuid LANGUAGE plpgsql AS $$
+DECLARE key text; ch uuid; uid uuid;
+BEGIN
+  SELECT string_agg(id::text, ',' ORDER BY id) INTO key FROM users WHERE email = ANY(p_emails);
+  SELECT id INTO ch FROM channels WHERE dm_key = key;
+  IF ch IS NOT NULL THEN RETURN NULL; END IF;
+  INSERT INTO channels (name, type, dm_key) VALUES ('dm', 'DM', key) RETURNING id INTO ch;
+  FOR uid IN SELECT id FROM users WHERE email = ANY(p_emails) LOOP
+    INSERT INTO dm_participants (channel_id, user_id) VALUES (ch, uid);
+  END LOOP;
+  RETURN ch;
+END $$;
+
+DO $$
+DECLARE ch uuid; priya uuid; arjun uuid; sara uuid; t timestamptz := now() - interval '50 minutes';
+BEGIN
+  SELECT id INTO priya FROM users WHERE email = 'priya.raman@medcord.dev';
+  SELECT id INTO arjun FROM users WHERE email = 'arjun.mehta@medcord.dev';
+  SELECT id INTO sara  FROM users WHERE email = 'sara.ahmed@medcord.dev';
+  ch := pg_temp.seed_dm(ARRAY['priya.raman@medcord.dev','arjun.mehta@medcord.dev']);
+  IF ch IS NOT NULL THEN
+    INSERT INTO messages (channel_id, author_id, body, created_at) VALUES
+      (ch, arjun, 'Hi Priya, do you have 10 minutes this week to talk through the cardio-embolic stroke pathway?', t),
+      (ch, priya, 'Absolutely. Thursday after the journal club works?', t + interval '4 min'),
+      (ch, arjun, 'Perfect, see you then. 👍', t + interval '6 min');
+  END IF;
+  ch := pg_temp.seed_dm(ARRAY['priya.raman@medcord.dev','sara.ahmed@medcord.dev','arjun.mehta@medcord.dev']);
+  IF ch IS NOT NULL THEN
+    INSERT INTO messages (channel_id, author_id, body, created_at) VALUES
+      (ch, sara, 'Group chat for planning the HFpEF journal club on Friday.', t + interval '20 min'),
+      (ch, priya, 'I will present the SGLT2 data; Arjun, can you cover the cognitive outcomes?', t + interval '24 min');
+  END IF;
+END $$;
