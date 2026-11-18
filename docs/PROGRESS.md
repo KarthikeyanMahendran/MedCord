@@ -13,7 +13,7 @@ Next up = first unchecked task. Update in every PR.
 
 - [x] T-004 Backend scaffold — `docs/tasks/T-004-backend-scaffold.md`
 - [x] T-005 Postgres db/role and Flyway V1 — `docs/tasks/T-005-postgres-db-role-and-flyway-v1.md`
-- [ ] T-006 Frontend scaffold and UI kit — `docs/tasks/T-006-frontend-scaffold-and-ui-kit.md`
+- [x] T-006 Frontend scaffold and UI kit — `docs/tasks/T-006-frontend-scaffold-and-ui-kit.md`
 
 ## M2
 
