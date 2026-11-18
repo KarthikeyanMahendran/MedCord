@@ -11,6 +11,7 @@ import './styles/shell.css'
 import './styles/chat.css'
 import './styles/auth.css'
 import './styles/call.css'
+import './styles/cases.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

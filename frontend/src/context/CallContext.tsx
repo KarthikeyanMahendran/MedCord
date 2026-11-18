@@ -53,6 +53,8 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false)
   const [state, setState] = useState<CallState>(IDLE)
   const [error, setError] = useState<string | null>(null)
+  /** Why background set-up failed. Shown only when the user actually tries to call, so a blocked network does not nag on every page. */
+  const setupError = useRef<string | null>(null)
   const [lastEnded, setLastEnded] = useState<string | null>(null)
   const stateRef = useRef(state)
   const providerCallId = useRef<string | null>(null)
@@ -141,10 +143,10 @@ export function CallProvider({ children }: { children: ReactNode }) {
           .setFrameRate(call.NCCallVideoFrameRate.FPS_24).build())
         const res = await chat.NCEngine.connect({ token: token.token })
         if (cancelled) return
-        if (res.isOk) setReady(true)
-        else setError(`Calling is unavailable (connection code ${res.code}).`)
+        if (res.isOk) { setupError.current = null; setReady(true) }
+        else setupError.current = `Calling is unavailable (connection code ${res.code}).`
       } catch (e) {
-        if (!cancelled) setError(`Calling is unavailable: ${problemMessage(e)}`)
+        if (!cancelled) setupError.current = `Calling is unavailable: ${problemMessage(e)}`
       }
     })()
     return () => {
@@ -157,7 +159,8 @@ export function CallProvider({ children }: { children: ReactNode }) {
   // ---- Actions ----
   const startCall = useCallback(async (channelId: string, media: CallMedia) => {
     const engine = sdk.engine
-    if (!engine || !sdk.mods || stateRef.current.phase !== 'idle') return
+    if (!engine || !sdk.mods) { if (setupError.current) setError(setupError.current); return }
+    if (stateRef.current.phase !== 'idle') return
     setError(null)
     let call: CallRecord
     try { call = await createCall(channelId, media) } catch (e) { setError(problemMessage(e)); return }
