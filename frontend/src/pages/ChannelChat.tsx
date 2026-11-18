@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { useParams } from 'react-router-dom'
-import { ArrowUp, Hash, Megaphone, MessageCircle, Pin, ShieldOff, UserX, Users, X } from 'lucide-react'
+import { ArrowUp, Hash, Megaphone, MessageCircle, Phone, Pin, ShieldOff, UserX, Users, Video, X } from 'lucide-react'
 import { Alert, Avatar, Button, EmptyState, FormGroup, Modal, Textarea, VerifiedMark } from '../components/ui'
 import { PresenceDot } from '../components/chat/PresenceDot'
 import { MessageItem } from '../components/chat/MessageItem'
@@ -16,6 +16,7 @@ import { REPORT_REASONS, reportMessage } from '../api/moderation'
 import type { ReportReason } from '../api/moderation'
 import { problemMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { useCall } from '../context/CallContext'
 
 const POLL_MS = 4000
 const dayKey = (iso: string) => new Date(iso).toDateString()
@@ -27,6 +28,7 @@ export default function ChannelChat() {
   const { id = '', channelId = '' } = useParams()
   const dmMode = !id
   const { user } = useAuth()
+  const calls = useCall()
   const [community, setCommunity] = useState<Community | null>(null)
   const [channels, setChannels] = useState<Channel[]>([])
   const [members, setMembers] = useState<Member[]>([])
@@ -239,6 +241,14 @@ export default function ChannelChat() {
                   {channel?.topic && <span className="mc-chat-topic">{channel.topic}</span>}</>)}
           </div>
           <div className="mc-chat-actions">
+            {dmMode && otherPerson && conv && (() => {
+              const why = conv.blockedByMe || conv.blockedByThem ? 'Calling is unavailable in this conversation'
+                : !calls.ready ? 'Calling is connecting…' : calls.state.phase !== 'idle' ? 'You are already in a call' : null
+              return (<>
+                <Button variant="icon" aria-label="Start voice call" title={why ?? 'Start voice call'} disabled={!!why} onClick={() => calls.startCall(conv.id, 'AUDIO')}><Phone size={17} /></Button>
+                <Button variant="icon" aria-label="Start video call" title={why ?? 'Start video call'} disabled={!!why} onClick={() => calls.startCall(conv.id, 'VIDEO')}><Video size={18} /></Button>
+              </>)
+            })()}
             {dmMode && otherPerson && <Button variant="ghost" size="sm" onClick={toggleBlock}>{conv?.blockedByMe ? <><ShieldOff size={14} /> Unblock</> : <><UserX size={14} /> Block</>}</Button>}
             {!dmMode && <Button variant="icon" aria-label="Pinned" onClick={showPins}><Pin size={17} /></Button>}
             {!dmMode && <Button variant="icon" aria-label={showMembers ? 'Hide member list' : 'Show member list'} aria-pressed={showMembers} onClick={() => setShowMembers((v) => !v)}><Users size={17} /></Button>}

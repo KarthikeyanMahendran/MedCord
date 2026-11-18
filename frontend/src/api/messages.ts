@@ -8,6 +8,8 @@ export interface Message {
   id: string; channelId: string; author: Author; body: string | null; createdAt: string
   editedAt: string | null; deleted: boolean; replyTo: ReplyPreview | null; thread: ThreadSummary | null; threadId: string | null
   reactions: ReactionCount[]; pinned: boolean
+  /** 'CALL' rows are call outcomes posted by the system (not editable). */
+  kind?: 'TEXT' | 'CALL'; callId?: string | null
 }
 export interface MessagePage { items: Message[]; hasMore: boolean }
 export interface Revision { revisionNo: number; kind: 'EDIT' | 'DELETE'; body: string; actorId: string; actorName: string; createdAt: string }

@@ -24,7 +24,7 @@ public final class MessageDtos {
     /** body is null when deleted. thread is set on a root message that has a thread; threadId on a thread reply. */
     public record MessageDto(UUID id, UUID channelId, Author author, String body, Instant createdAt,
                              Instant editedAt, boolean deleted, ReplyPreview replyTo, ThreadSummary thread, UUID threadId,
-                             List<ReactionDto> reactions, boolean pinned) {}
+                             List<ReactionDto> reactions, boolean pinned, String kind, UUID callId) {}
 
     public record CreateThreadRequest(@Size(max = 120) String title) {}
 
