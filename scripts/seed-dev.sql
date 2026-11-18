@@ -127,3 +127,27 @@ BEGIN
     (ch, arjun, 'From the neuro side: if there is any AF history, factor in anticoagulation before choosing DAPT duration.', t + interval '6 min', th),
     (ch, priya, 'Good point — no AF so far. Planning 6 months of DAPT given low bleeding risk.', t + interval '11 min', th);
 END $$;
+
+-- Reactions and a pinned message (DEV ONLY, idempotent).
+DO $$
+DECLARE cid uuid; ch uuid; mid uuid;
+BEGIN
+  SELECT id INTO cid FROM communities WHERE slug = 'cardiology-collective';
+  IF cid IS NULL THEN RETURN; END IF;
+  SELECT id INTO ch FROM channels WHERE community_id = cid AND name = 'general';
+  SELECT id INTO mid FROM messages WHERE channel_id = ch AND body LIKE 'Welcome to the Cardiology Collective%' LIMIT 1;
+  IF mid IS NOT NULL THEN
+    INSERT INTO message_reactions (message_id, user_id, emoji)
+      SELECT mid, u.id, e.emoji FROM users u JOIN (VALUES ('arjun.mehta@medcord.dev','👍'),('sara.ahmed@medcord.dev','👍'),('liam.oconnor@medcord.dev','👍'),
+        ('meera.nair@medcord.dev','🎉'),('sara.ahmed@medcord.dev','🩺')) e(email, emoji) ON lower(u.email) = e.email
+      ON CONFLICT DO NOTHING;
+    UPDATE messages SET pinned_at = now() - interval '2 hours', pinned_by = (SELECT id FROM users WHERE email='priya.raman@medcord.dev')
+      WHERE id = mid AND pinned_at IS NULL;
+  END IF;
+  SELECT id INTO ch FROM channels WHERE community_id = cid AND name = 'case-discussions';
+  SELECT id INTO mid FROM messages WHERE channel_id = ch AND body LIKE 'Anonymised case: 58M%' LIMIT 1;
+  IF mid IS NOT NULL THEN
+    INSERT INTO message_reactions (message_id, user_id, emoji)
+      SELECT mid, u.id, '👀' FROM users u WHERE u.email IN ('arjun.mehta@medcord.dev','liam.oconnor@medcord.dev','meera.nair@medcord.dev') ON CONFLICT DO NOTHING;
+  END IF;
+END $$;

@@ -16,7 +16,7 @@ const community = (perms: comm.Permission[]): comm.Community => ({
 const channel = (o: Partial<comm.Channel> = {}): comm.Channel => ({ id: 'ch', name: 'general', topic: 'Chat', type: 'TEXT', position: 0, archived: false, ...o })
 const message = (o: Partial<msgs.Message> = {}): msgs.Message => ({
   id: 'm1', channelId: 'ch', author: { id: 'u2', displayName: 'Dr Sara', specialty: 'Pediatrics', verified: true },
-  body: 'Hello team', createdAt: '2026-11-18T10:00:00Z', editedAt: null, deleted: false, replyTo: null, thread: null, threadId: null, ...o,
+  body: 'Hello team', createdAt: '2026-11-18T10:00:00Z', editedAt: null, deleted: false, replyTo: null, thread: null, threadId: null, reactions: [], pinned: false, ...o,
 })
 const setup = () => render(
   <MemoryRouter initialEntries={['/communities/c/channels/ch']}>
@@ -118,6 +118,46 @@ describe('ChannelChat', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Start thread' }))
     await waitFor(() => expect(msgs.startThread).toHaveBeenCalledWith('m1'))
     expect(await screen.findByLabelText('Reply in thread')).toBeInTheDocument()
+  })
+
+  it('toggles a reaction chip and adds one from the picker', async () => {
+    const withReaction = message({ reactions: [{ emoji: '👍', count: 2, mine: false }] })
+    vi.mocked(msgs.listMessages).mockResolvedValue({ hasMore: false, items: [withReaction] })
+    vi.mocked(msgs.react).mockResolvedValue({ ...withReaction, reactions: [{ emoji: '👍', count: 3, mine: true }] })
+    vi.mocked(msgs.unreact).mockResolvedValue({ ...withReaction, reactions: [{ emoji: '👍', count: 2, mine: false }] })
+    setup()
+    const chip = await screen.findByRole('button', { name: /👍 2 reactions/ })
+    await userEvent.click(chip)
+    await waitFor(() => expect(msgs.react).toHaveBeenCalledWith('m1', '👍'))
+    const mineChip = await screen.findByRole('button', { name: /👍 3 reactions, including yours/ })
+    expect(mineChip).toHaveAttribute('aria-pressed', 'true')
+    await userEvent.click(mineChip)
+    await waitFor(() => expect(msgs.unreact).toHaveBeenCalledWith('m1', '👍'))
+    await userEvent.click(screen.getByRole('button', { name: 'Add reaction' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'React with 🎉' }))
+    await waitFor(() => expect(msgs.react).toHaveBeenCalledWith('m1', '🎉'))
+  })
+
+  it('only moderators see the pin action, and the pinned list opens', async () => {
+    vi.mocked(msgs.listMessages).mockResolvedValue({ hasMore: false, items: [message({ pinned: true })] })
+    vi.mocked(msgs.listPins).mockResolvedValue([message({ pinned: true, body: 'Channel rules' })])
+    setup()
+    await screen.findByText('Hello team')
+    expect(screen.queryByRole('button', { name: /Pin message|Unpin message/ })).toBeNull() // not a moderator
+    expect(screen.getByText('pinned')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /Pinned/ }))
+    expect(await screen.findByText('Channel rules')).toBeInTheDocument()
+  })
+
+  it('moderators can pin a message', async () => {
+    vi.mocked(comm.getCommunity).mockResolvedValue(community(['SEND_MESSAGES', 'MODERATE_MESSAGES']))
+    vi.mocked(msgs.listMessages).mockResolvedValue({ hasMore: false, items: [message()] })
+    vi.mocked(msgs.pinMessage).mockResolvedValue(message({ pinned: true }))
+    setup()
+    await screen.findByText('Hello team')
+    await userEvent.click(screen.getByRole('button', { name: 'Pin message' }))
+    await waitFor(() => expect(msgs.pinMessage).toHaveBeenCalledWith('m1'))
+    expect(await screen.findByText('pinned')).toBeInTheDocument()
   })
 
   it('shows an error when sending fails', async () => {

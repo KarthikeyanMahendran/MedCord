@@ -136,3 +136,14 @@
 .mc-thread-chip span { color: var(--mc-text-muted); font-size: 12px; }
 .mc-thread-chip:hover { background: var(--mc-brand-soft); }
 @media (max-width: 1100px) { .mc-chat.has-thread { grid-template-columns: 1fr 360px; } .mc-chat.has-thread .mc-chat-side { display: none; } }
+
+/* Reactions */
+.mc-reactions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.mc-reaction { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border: 1px solid var(--mc-border); border-radius: var(--mc-radius-full); background: var(--mc-surface); font: 13px var(--mc-font); cursor: pointer; color: var(--mc-text); }
+.mc-reaction span { font-size: 12px; color: var(--mc-text-muted); font-weight: 600; }
+.mc-reaction:hover:not(:disabled) { background: var(--mc-surface-2); }
+.mc-reaction.is-mine { border-color: var(--mc-brand); background: var(--mc-brand-soft); }
+.mc-reaction.is-mine span { color: var(--mc-brand); }
+.mc-picker { position: absolute; top: 100%; right: 0; z-index: 20; display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 6px; background: var(--mc-surface); border: 1px solid var(--mc-border); border-radius: var(--mc-radius); box-shadow: var(--mc-shadow-md); }
+.mc-picker button { border: 0; background: transparent; font-size: 20px; padding: 4px 6px; border-radius: 6px; cursor: pointer; }
+.mc-picker button:hover { background: var(--mc-surface-2); }

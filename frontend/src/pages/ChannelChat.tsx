@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Hash, Megaphone, Send, X } from 'lucide-react'
+import { Hash, Megaphone, Pin, Send, X } from 'lucide-react'
 import { Alert, Badge, Button, Modal } from '../components/ui'
 import { getCommunity, listChannels } from '../api/communities'
 import type { Channel, Community } from '../api/communities'
 import { MessageItem } from '../components/chat/MessageItem'
 import { ThreadPanel } from '../components/chat/ThreadPanel'
-import { deleteMessage, editMessage, listMessages, messageHistory, sendMessage, startThread } from '../api/messages'
+import { deleteMessage, editMessage, listMessages, listPins, messageHistory, pinMessage, react, sendMessage, startThread, unpinMessage, unreact } from '../api/messages'
 import type { Message, Revision } from '../api/messages'
 import { problemMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
@@ -31,6 +31,7 @@ export default function ChannelChat() {
   const [sending, setSending] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<Message | null>(null)
   const [openThread, setOpenThread] = useState<string | null>(null)
+  const [pins, setPins] = useState<Message[] | null>(null)
   const [history, setHistory] = useState<{ msg: Message; revs: Revision[] } | null>(null)
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
@@ -130,6 +131,19 @@ export default function ChannelChat() {
     } catch (e) { setError(problemMessage(e)) }
   }
 
+  async function toggleReaction(m: Message, emoji: string) {
+    const had = m.reactions.some((r) => r.emoji === emoji && r.mine)
+    try { merge([await (had ? unreact(m.id, emoji) : react(m.id, emoji))]) } catch (e) { setError(problemMessage(e)) }
+  }
+
+  async function togglePin(m: Message) {
+    try { merge([await (m.pinned ? unpinMessage(m.id) : pinMessage(m.id))]) } catch (e) { setError(problemMessage(e)) }
+  }
+
+  async function showPins() {
+    try { setPins(await listPins(channelId)) } catch (e) { setError(problemMessage(e)) }
+  }
+
   const rows = useMemo(() => {
     let last = ''
     return messages.map((m) => { const k = dayKey(m.createdAt); const header = k !== last; last = k; return { m, header } })
@@ -150,6 +164,7 @@ export default function ChannelChat() {
       <section className="mc-chat-main">
         <div className="mc-chat-head">
           <div><strong># {channel?.name ?? '…'}</strong>{channel?.topic && <span className="mc-muted-sub" style={{ marginLeft: 10 }}>{channel.topic}</span>}</div>
+          <Button variant="ghost" size="sm" onClick={showPins}><Pin size={14} /> Pinned</Button>
         </div>
 
         <div className="mc-msgs" ref={scroller} onScroll={(e) => { const el = e.currentTarget; stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80 }} role="log" aria-live="polite" aria-label="Messages">
@@ -161,7 +176,7 @@ export default function ChannelChat() {
               {header && <div className="mc-day">{dayLabel(m.createdAt)}</div>}
               <MessageItem m={m} userId={user?.id} canPost={canPost} moderator={moderator}
                 onReply={(x) => { setReplyTo(x); setEditing(null) }} onEdit={startEdit} onDelete={setConfirmDelete}
-                onHistory={showHistory} onThread={openOrStartThread} />
+                onHistory={showHistory} onThread={openOrStartThread} onReact={toggleReaction} onPin={togglePin} />
             </div>
           ))}
         </div>
@@ -187,6 +202,15 @@ export default function ChannelChat() {
       <Modal isOpen={confirmDelete !== null} onClose={() => setConfirmDelete(null)} title="Delete message?" size="sm"
         footer={<><Button variant="secondary" onClick={() => setConfirmDelete(null)}>Cancel</Button><Button variant="danger" onClick={doDelete}>Delete</Button></>}>
         The message will be removed for everyone. A copy is kept for moderation audit.
+      </Modal>
+
+      <Modal isOpen={pins !== null} onClose={() => setPins(null)} title="Pinned messages" size="md">
+        {pins?.length === 0 && <div className="mc-empty"><strong>No pinned messages</strong><p className="mc-hint">Moderators can pin important messages from the message menu.</p></div>}
+        <div style={{ display: 'grid', gap: 10 }}>
+          {pins?.map((p) => (
+            <div key={p.id} className="mc-rev"><div className="mc-muted-sub">{p.author.displayName} · {new Date(p.createdAt).toLocaleString()}</div><div className="mc-msg-body" style={{ marginTop: 4 }}>{p.body}</div></div>
+          ))}
+        </div>
       </Modal>
 
       <Modal isOpen={history !== null} onClose={() => setHistory(null)} title="Edit history" size="md">

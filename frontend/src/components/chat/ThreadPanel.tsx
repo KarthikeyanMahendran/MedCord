@@ -3,7 +3,7 @@ import type { KeyboardEvent } from 'react'
 import { Archive, Send, X } from 'lucide-react'
 import { Alert, Badge, Button, Modal } from '../ui'
 import { MessageItem } from './MessageItem'
-import { deleteMessage, editMessage, getThread, listThreadMessages, messageHistory, replyInThread, updateThread } from '../../api/messages'
+import { deleteMessage, editMessage, getThread, listThreadMessages, messageHistory, react, replyInThread, unreact, updateThread } from '../../api/messages'
 import type { Message, Revision, Thread } from '../../api/messages'
 import { problemMessage } from '../../api/client'
 
@@ -81,8 +81,13 @@ export function ThreadPanel({ threadId, userId, canPost, moderator, onClose, onC
     try { setThread(await updateThread(threadId, { archived: !thread.archived })); onChanged() } catch (e) { setError(problemMessage(e)) }
   }
 
+  async function toggleReaction(m: Message, emoji: string) {
+    const had = m.reactions.some((r) => r.emoji === emoji && r.mine)
+    try { merge([await (had ? unreact(m.id, emoji) : react(m.id, emoji))]) } catch (e) { setError(problemMessage(e)) }
+  }
+
   const canManage = !!thread && (thread.createdBy === userId || moderator)
-  const common = { userId, canPost: canReply, moderator, onEdit: (m: Message) => { setEditing(m); setText(m.body ?? '') }, onDelete: setConfirmDelete,
+  const common = { userId, canPost: canReply, moderator, onReact: toggleReaction, onEdit: (m: Message) => { setEditing(m); setText(m.body ?? '') }, onDelete: setConfirmDelete,
     onHistory: async (m: Message) => { try { setHistory({ msg: m, revs: await messageHistory(m.id) }) } catch (e) { setError(problemMessage(e)) } } }
 
   return (

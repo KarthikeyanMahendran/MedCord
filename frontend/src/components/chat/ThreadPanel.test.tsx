@@ -9,7 +9,7 @@ vi.mock('../../api/messages')
 const author = { id: 'u2', displayName: 'Dr Sara', specialty: null, verified: true }
 const message = (o: Partial<msgs.Message> = {}): msgs.Message => ({
   id: 'm', channelId: 'ch', author, body: 'root text', createdAt: '2026-11-18T10:00:00Z', editedAt: null, deleted: false,
-  replyTo: null, thread: null, threadId: null, ...o,
+  replyTo: null, thread: null, threadId: null, reactions: [], pinned: false, ...o,
 })
 const thread = (o: Partial<msgs.Thread> = {}): msgs.Thread => ({
   id: 't1', channelId: 'ch', rootMessageId: 'm', title: 'Case 1', archived: false, replyCount: 1, lastReplyAt: null,

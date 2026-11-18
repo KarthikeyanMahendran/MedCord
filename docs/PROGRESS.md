@@ -37,7 +37,7 @@ Next up = first unchecked task. Update in every PR.
 - [x] T-015 Edit with revisions (backend + UI incl. history modal) — `docs/tasks/T-015-edit-with-revisions.md`
 - [x] T-016 Delete/recall with tombstones (soft delete + tombstones, backend + UI) — `docs/tasks/T-016-delete-recall-with-tombstones.md`
 - [x] T-017 Threads (backend + side panel UI) — `docs/tasks/T-017-threads.md`
-- [ ] T-018 Reactions and pins — `docs/tasks/T-018-reactions-and-pins.md`
+- [x] T-018 Reactions and pins (backend + UI) — `docs/tasks/T-018-reactions-and-pins.md`
 
 ## M6
 
