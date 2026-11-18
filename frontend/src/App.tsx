@@ -3,7 +3,10 @@ import { AdminRoute } from './components/AdminRoute'
 import { AppShell } from './components/AppShell'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import Verifications from './pages/admin/Verifications'
+import CommunityDetail from './pages/CommunityDetail'
+import Communities from './pages/Communities'
 import Home from './pages/Home'
+import JoinInvite from './pages/JoinInvite'
 import Login from './pages/Login'
 import Register from './pages/Register'
 
@@ -15,6 +18,9 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route path="/" element={<Home />} />
+          <Route path="/communities" element={<Communities />} />
+          <Route path="/communities/:id" element={<CommunityDetail />} />
+          <Route path="/invite/:code" element={<JoinInvite />} />
           <Route element={<AdminRoute />}>
             <Route path="/admin/verifications" element={<Verifications />} />
           </Route>

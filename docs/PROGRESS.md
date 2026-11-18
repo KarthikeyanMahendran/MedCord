@@ -22,7 +22,7 @@ Next up = first unchecked task. Update in every PR.
 
 ## M3
 
-- [ ] T-009 Communities, channels, roles (DB) — `docs/tasks/T-009-communities-channels-roles-db.md`
+- [x] T-009 Communities, channels, roles (DB) — `docs/tasks/T-009-communities-channels-roles-db.md`
 
 ## M4
 

@@ -15,6 +15,7 @@ export function AppShell() {
             <span className="mc-logo-mark" style={{ background: 'var(--mc-brand)', color: 'var(--mc-text-on-brand)' }}><Plus size={18} strokeWidth={3} /></span>MedCord
           </div>
           <nav className="mc-nav" aria-label="Main">
+            <NavLink to="/communities">Communities</NavLink>
             <NavLink to="/" end>Profile</NavLink>
             {user?.platformRole === 'ADMIN' && <NavLink to="/admin/verifications">Verifications</NavLink>}
           </nav>
