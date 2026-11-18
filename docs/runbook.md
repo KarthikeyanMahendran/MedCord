@@ -25,3 +25,9 @@ Dev accounts: `docs/dev-accounts.md`.
 
 ## Secrets rotation
 Rotate `JWT_SECRET` (invalidates sessions), DB password, Nexconn secret (invalidates Nexconn tokens), and GitHub tokens on a schedule and immediately if exposed. Rotate any token that was pasted into a chat or ticket.
+
+## Running the backend tests against Supabase
+The session pooler drops connections when many Spring contexts open at once. Before running the full suite:
+- Stop the dev backend so it does not hold pooled connections.
+- Keep the Hikari pool small for tests: max pool size 3, min idle 1, connection timeout 60000 ms.
+- Expect a slow first run; the last full run passed (85 tests, 0 failures).
