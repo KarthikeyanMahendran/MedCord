@@ -7,16 +7,17 @@ Real-time chat transport is **Nexconn** (SDK + Server API). Postgres is the sour
 ## How to work (AUTO mode loop)
 1. Read `docs/PROGRESS.md`; take the first unchecked task under "Next up".
 2. Open `docs/tasks/T-###-*.md` and the use cases it references in `docs/use-cases/`.
-3. `git switch -c feat/T-###-slug` from an up-to-date `main`.
+3. Work directly on `main` (`git pull --ff-only` first). No feature branches or PRs: owner's decision for this solo, private repo.
 4. Implement exactly the task scope. Do not start the next task.
 5. Run the task's **Verification** commands. If anything fails or is ambiguous: stop and report.
 6. Update docs (`docs/PROGRESS.md`, use case, ADR if a decision was made).
-7. Commit (rules below), push, open a PR, tick the task.
+7. Run the checks below, tick the task, commit (rules below) and push to `main`. CI runs on every push; fix a red build immediately.
 
 ## Version-control rules
 - Git identity is repo-local: `KarthikeyanMahendran <karthi13122005@gmail.com>`. Never change global git config.
 - Commits: short, Conventional Commits (`feat(chat): add edit endpoint`), imperative, ≤72 chars. **No attribution/co-author lines.**
-- One task per PR, squash-merge, branches `feat/ fix/ chore/ docs/`. Never force-push `main`.
+- Commit straight to `main`, one focused commit per task (or a few small ones). Never force-push `main` or rewrite pushed history.
+- Run backend and frontend checks before pushing, since there is no PR gate.
 - Never commit `.env`, tokens, keys, or the Nexconn secret. Only `.env.example` (placeholders).
 - Flyway migrations are immutable once merged; add a new `V<n>__*.sql`.
 - Ask before destructive or outward actions: force-push, dropping DBs/roles, changing GitHub settings, upgrading the Nexconn plan.
