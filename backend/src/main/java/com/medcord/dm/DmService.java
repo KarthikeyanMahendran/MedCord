@@ -74,7 +74,8 @@ public class DmService {
 
     @Transactional(readOnly = true)
     public List<ConversationDto> list(UUID me) {
-        List<Channel> mine = channels.findAllById(participants.channelIdsOf(me));
+        List<Channel> mine = channels.findAllById(participants.channelIdsOf(me)).stream()
+            .filter(c -> c.getType() == Channel.Type.DM).toList();   // case rooms have their own screens
         List<ConversationDto> out = new ArrayList<>();
         for (Channel c : mine) out.add(toDto(c, me));
         out.sort(Comparator.comparing((ConversationDto d) -> d.lastMessage() == null ? java.time.Instant.EPOCH : d.lastMessage().at()).reversed());
