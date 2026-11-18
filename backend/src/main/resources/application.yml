@@ -33,6 +33,10 @@ management:
         enabled: true
 
 medcord:
+  security:
+    jwt-secret: ${JWT_SECRET}
+    access-ttl-minutes: ${JWT_ACCESS_TTL_MINUTES:15}
+    refresh-ttl-days: ${JWT_REFRESH_TTL_DAYS:14}
   nexconn:
     app-key: ${NEXCONN_APP_KEY:}
     app-secret: ${NEXCONN_APP_SECRET:}
