@@ -1,0 +1,74 @@
+/* Rural case rooms. Uses the existing --mc-* tokens only. */
+
+.mc-select { height: 36px; padding: 0 10px; background: var(--mc-surface-2); color: var(--mc-text); border: 1px solid var(--mc-border-strong); border-radius: var(--mc-radius); font: inherit; font-size: 13px; }
+.mc-select:focus-visible { outline: 2px solid var(--mc-brand-ring); outline-offset: 1px; }
+.mc-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.mc-casform { display: grid; gap: 16px; }
+.mc-backlink { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--mc-text-muted); text-decoration: none; }
+.mc-backlink:hover { color: var(--mc-text); }
+
+/* urgency dots */
+.mc-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.mc-dot-red { background: var(--mc-danger); box-shadow: 0 0 0 3px var(--mc-danger-bg); }
+.mc-dot-amber { background: var(--mc-warning); }
+.mc-dot-green { background: var(--mc-success); }
+
+/* red-flag alert */
+.mc-redflag { display: flex; gap: 12px; padding: 14px 16px; border-radius: var(--mc-radius-lg); border: 1px solid var(--mc-danger-border); background: var(--mc-danger-bg); color: var(--mc-text); }
+.mc-redflag > svg { color: var(--mc-danger); flex: none; margin-top: 2px; }
+.mc-redflag strong { display: block; font-weight: 600; }
+.mc-redflag p { margin-top: 4px; font-size: 14px; line-height: 1.5; }
+.mc-redflag .mc-redflag-note { color: var(--mc-text-muted); font-size: 12px; }
+
+/* big symptom tap targets */
+.mc-symptoms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.mc-symptom { display: grid; justify-items: center; gap: 8px; padding: 16px 8px; min-height: 92px; background: var(--mc-surface-2); color: var(--mc-text-2); border: 1.5px solid var(--mc-border-strong); border-radius: var(--mc-radius-lg); font: inherit; font-size: 13px; text-align: center; cursor: pointer; transition: background var(--mc-transition), border-color var(--mc-transition); }
+.mc-symptom:hover { background: var(--mc-surface-3); }
+.mc-symptom.is-on { border-color: var(--mc-brand); background: var(--mc-brand-soft); color: var(--mc-text); }
+.mc-symptom:focus-visible, .mc-mic:focus-visible { outline: 2px solid var(--mc-brand-ring); outline-offset: 2px; }
+
+/* dictation */
+.mc-dictate { display: grid; gap: 10px; }
+.mc-mic { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 64px; width: 100%; background: var(--mc-brand); color: var(--mc-text-on-brand); border: 0; border-radius: var(--mc-radius-lg); font: inherit; font-size: 16px; font-weight: 500; cursor: pointer; }
+.mc-mic:hover { background: var(--mc-brand-hover); }
+.mc-mic.is-live { background: var(--mc-danger); animation: mc-pulse 1.4s ease-in-out infinite; }
+@keyframes mc-pulse { 0%, 100% { box-shadow: 0 0 0 0 var(--mc-danger-bg); } 50% { box-shadow: 0 0 0 10px transparent; } }
+@media (prefers-reduced-motion: reduce) { .mc-mic.is-live { animation: none; } }
+
+/* case room layout + chat */
+.mc-casegrid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.mc-casechat { display: flex; flex-direction: column; height: min(640px, 70vh); }
+.mc-casechat-msgs { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+.mc-bubble { max-width: 88%; padding: 8px 12px; border-radius: var(--mc-radius-lg); background: var(--mc-surface-2); border: 1px solid var(--mc-border); }
+.mc-bubble.is-me { align-self: flex-end; background: var(--mc-brand-soft); border-color: transparent; }
+.mc-bubble p { margin: 2px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; font-size: 14px; }
+.mc-bubble-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--mc-text-muted); }
+.mc-bubble-meta strong { color: var(--mc-text); font-weight: 500; }
+.mc-bubble-speak { margin-left: auto; display: inline-flex; background: none; border: 0; color: var(--mc-text-muted); cursor: pointer; padding: 4px; border-radius: var(--mc-radius-sm); }
+.mc-bubble-speak:hover { color: var(--mc-text); background: var(--mc-hover); }
+.mc-casechat-error { margin: 0; padding: 6px 16px; font-size: 12px; color: var(--mc-danger); }
+.mc-casechat-form { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--mc-border); align-items: flex-end; }
+.mc-casechat-form textarea { flex: 1; resize: none; padding: 8px 10px; background: var(--mc-surface-2); color: var(--mc-text); border: 1px solid var(--mc-border-strong); border-radius: var(--mc-radius); font: inherit; font-size: 14px; }
+.mc-casechat-form textarea:focus-visible { outline: 2px solid var(--mc-brand-ring); outline-offset: 1px; }
+.mc-casechat-btns { display: flex; gap: 6px; }
+
+/* impact */
+.mc-stats-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.mc-bars { padding: 8px 20px 16px; display: grid; gap: 12px; }
+.mc-bar-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) 90px; gap: 12px; align-items: center; font-size: 13px; }
+.mc-bar-label { display: grid; line-height: 1.3; }
+.mc-bar-label small { color: var(--mc-text-muted); font-size: 11px; }
+.mc-bar-track { position: relative; height: 10px; background: var(--mc-surface-3); border-radius: var(--mc-radius-full); overflow: hidden; }
+.mc-bar-fill { position: absolute; inset: 0 auto 0 0; background: var(--mc-brand); border-radius: var(--mc-radius-full); }
+.mc-bar-fill.is-red { background: var(--mc-danger); }
+.mc-spark { display: flex; align-items: flex-end; gap: 6px; height: 160px; padding: 20px; }
+.mc-spark-col { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+.mc-spark-bar { width: 100%; background: var(--mc-brand); border-radius: var(--mc-radius-sm) var(--mc-radius-sm) 0 0; }
+
+@media (max-width: 860px) {
+  .mc-casegrid { grid-template-columns: minmax(0, 1fr); }
+  .mc-symptoms { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mc-stats-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mc-bar-row { grid-template-columns: 110px minmax(0, 1fr) 70px; }
+  .mc-grid-2 { grid-template-columns: minmax(0, 1fr); }
+}
