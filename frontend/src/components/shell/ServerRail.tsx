@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BarChart3, BookOpenCheck, CircleHelp, MessageCircle, Plus, Search, ShieldCheck, Stethoscope } from 'lucide-react'
+import { BarChart3, BookOpenCheck, CircleHelp, MessageCircle, Plus, Radar, Search, ShieldCheck, Stethoscope } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { colorFor, initialsOf } from '../ui'
 import { listMine } from '../../api/communities'
@@ -51,6 +51,7 @@ export function ServerRail() {
       </button>
       <RailButton to="/library" label="Verified answer library"><span className="mc-rail-icon"><BookOpenCheck size={17} /></span></RailButton>
       <RailButton to="/impact" label="Impact"><span className="mc-rail-icon"><BarChart3 size={17} /></span></RailButton>
+      <RailButton to="/radar" label="Outbreak radar"><span className="mc-rail-icon"><Radar size={17} /></span></RailButton>
       <RailButton to="/search" label="Search messages"><span className="mc-rail-icon"><Search size={17} /></span></RailButton>
       {user?.platformRole === 'ADMIN' && <RailButton to="/admin/verifications" label="Verification queue"><span className="mc-rail-icon"><ShieldCheck size={17} /></span></RailButton>}
     </nav>

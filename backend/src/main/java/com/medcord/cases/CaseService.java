@@ -4,6 +4,7 @@ import com.medcord.cases.CaseDtos.*;
 import com.medcord.common.ApiException;
 import com.medcord.community.Channel;
 import com.medcord.community.ChannelRepository;
+import com.medcord.outbreak.OutbreakService;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
@@ -22,16 +23,20 @@ public class CaseService {
     private final JdbcClient jdbc;
     private final ChannelRepository channels;
     private final CaseTriage triage;
+    private final OutbreakService outbreaks;
     private final JsonMapper json = JsonMapper.builder().build();
 
-    public CaseService(JdbcClient jdbc, ChannelRepository channels, CaseTriage triage) {
-        this.jdbc = jdbc; this.channels = channels; this.triage = triage;
+    public CaseService(JdbcClient jdbc, ChannelRepository channels, CaseTriage triage, OutbreakService outbreaks) {
+        this.jdbc = jdbc; this.channels = channels; this.triage = triage; this.outbreaks = outbreaks;
     }
 
     // ---------- submit + routing ----------
 
+    public SubmitResult submit(UUID me, SubmitCaseRequest r) { return submit(me, r, false); }
+
+    /** {@code demo} marks the case so the admin demo can be reset without touching real data. */
     @Transactional
-    public SubmitResult submit(UUID me, SubmitCaseRequest r) {
+    public SubmitResult submit(UUID me, SubmitCaseRequest r, boolean demo) {
         Map<String, Object> vitals = r.vitals() == null ? Map.of() : r.vitals();
         CaseTriage.Result t = triage.assess(r.chiefComplaint(), r.patientAge(), r.patientSex(), r.village(), vitals);
 
@@ -50,16 +55,16 @@ public class CaseService {
         String lang = r.language() == null ? "en" : r.language();
         jdbc.sql("""
             INSERT INTO cases (id, channel_id, reporter_id, village, region_id, patient_age, patient_sex, chief_complaint, vitals,
-                               original_language, original_text, sbar, urgency, red_flags, specialty_needed, status, escalate_at)
+                               original_language, original_text, sbar, urgency, red_flags, specialty_needed, status, escalate_at, is_demo)
             VALUES (:id, :ch, :me, :village, :region, :age, :sex, :cc, CAST(:vitals AS jsonb), :lang, :cc,
-                    CAST(:sbar AS jsonb), :urgency, CAST(:flags AS jsonb), :spec, 'OPEN', now() + make_interval(mins => :mins))
+                    CAST(:sbar AS jsonb), :urgency, CAST(:flags AS jsonb), :spec, 'OPEN', now() + make_interval(mins => :mins), :demo)
             """)
             .param("id", caseId).param("ch", ch.getId()).param("me", me)
             .param("village", r.village()).param("region", regionId)
             .param("age", r.patientAge()).param("sex", r.patientSex()).param("cc", r.chiefComplaint())
             .param("vitals", write(vitals)).param("lang", lang)
             .param("sbar", write(t.sbar())).param("urgency", t.urgency()).param("flags", write(t.flags()))
-            .param("spec", t.specialty()).param("mins", minutes).update();
+            .param("spec", t.specialty()).param("mins", minutes).param("demo", demo).update();
 
         event(caseId, me, "SUBMITTED", Map.of("language", lang));
         event(caseId, null, "STRUCTURED", Map.of("urgency", t.urgency(), "flags", t.flags().size(), "specialty", t.specialty()));
@@ -68,6 +73,9 @@ public class CaseService {
         String title = t.urgency() + " case for " + t.specialty() + (r.village() == null ? "" : " from " + r.village());
         for (UUID d : doctors) notify(d, "CASE_OFFER", caseId, title, String.valueOf(t.sbar().get("situation")));
         event(caseId, null, "ROUTED", Map.of("doctors", doctors.size()));
+
+        // Outbreak radar: a new case may complete a cluster. Never let it block a patient case.
+        try { outbreaks.evaluateRegion(regionId); } catch (RuntimeException ex) { /* radar is best-effort */ }
 
         postMessage(ch.getId(), me, "Case submitted.\nS: " + t.sbar().get("situation") + "\nB: " + t.sbar().get("background")
             + "\nA: " + t.sbar().get("assessment") + "\nR: " + t.sbar().get("recommendation"));

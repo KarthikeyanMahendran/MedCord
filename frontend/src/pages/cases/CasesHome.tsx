@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Bell, ChevronRight, Plus, Stethoscope, WifiOff } from 'lucide-react'
+import { Bell, ChevronRight, Plus, Radar, Stethoscope, WifiOff } from 'lucide-react'
 import { Alert, Button, Card, EmptyState, PageHeader, Tabs } from '../../components/ui'
 import { StatusBadge, UrgencyBadge, ago } from '../../components/cases/UrgencyBadge'
 import { caseQueue, listNotifications, markNotificationRead, myCases, setAvailability } from '../../api/cases'
 import type { AppNotification, CaseRoom } from '../../api/cases'
+import { getRadar, isLive } from '../../api/outbreaks'
+import type { OutbreakAlert } from '../../api/outbreaks'
 import { useAuth } from '../../context/AuthContext'
 import { flushQueue, queuedCount } from '../../lib/offlineQueue'
 
@@ -36,11 +38,14 @@ export default function CasesHome() {
   const [onDuty, setOnDuty] = useState(false)
   const [pending, setPending] = useState(queuedCount())
   const [notice, setNotice] = useState<string | null>(null)
+  const [outbreak, setOutbreak] = useState<OutbreakAlert | null>(null)
 
   const load = useCallback(() => {
     myCases().then(setMine).catch(() => setMine([]))
     if (isDoctor) caseQueue().then(setQueue).catch(() => setQueue([]))
     listNotifications().then(setNotes).catch(() => undefined)
+    // Early warning: show the most serious live outbreak alert, if any.
+    getRadar().then((r) => setOutbreak(r.alerts.filter(isLive).sort((a, b) => Number(b.severity === 'ALERT') - Number(a.severity === 'ALERT'))[0] ?? null)).catch(() => undefined)
   }, [isDoctor])
 
   const flush = useCallback(async () => {
@@ -76,6 +81,13 @@ export default function CasesHome() {
         </>} />
 
       {notice && <Alert tone="success">{notice}</Alert>}
+      {outbreak && (
+        <Link to="/radar" className={`rd-banner ${outbreak.severity === 'ALERT' ? '' : 'is-watch'}`}>
+          <Radar size={18} />
+          <span><strong>Possible outbreak:</strong> {outbreak.syndromeLabel} near {outbreak.regionName} <em>· {outbreak.caseCount} cases in 72 h</em></span>
+          <ChevronRight size={16} />
+        </Link>
+      )}
       {pending > 0 && (
         <Alert tone="info"><WifiOff size={15} style={{ marginRight: 8 }} />{pending} case{pending > 1 ? 's are' : ' is'} saved on this device and will send when you are online.</Alert>
       )}
@@ -98,7 +110,7 @@ export default function CasesHome() {
           {notes.length === 0 ? <EmptyState title="Nothing yet">Case offers, answers and follow-ups show up here.</EmptyState> : (
             <div className="mc-list">
               {notes.slice(0, 8).map((n) => (
-                <Link key={n.id} to={n.caseId ? `/cases/${n.caseId}` : '/cases'} className="mc-list-row" style={{ opacity: n.read ? 0.6 : 1 }}
+                <Link key={n.id} to={n.kind === 'OUTBREAK' ? '/radar' : n.caseId ? `/cases/${n.caseId}` : '/cases'} className="mc-list-row" style={{ opacity: n.read ? 0.6 : 1 }}
                   onClick={() => { if (!n.read) void markNotificationRead(n.id) }}>
                   <span className="mc-list-main"><strong style={{ fontWeight: 500 }}>{n.title}</strong><span>{n.body}</span></span>
                   <span className="mc-list-meta">{ago(n.createdAt)}</span>

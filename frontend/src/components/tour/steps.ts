@@ -29,6 +29,12 @@ const URGENCY: TourStep = {
   legend: 'urgency',
 }
 
+const RADAR: TourStep = {
+  target: '[aria-label="Outbreak radar"]',
+  title: 'Outbreak radar',
+  body: 'The app watches every case. When 3 or more similar cases appear in one area within 3 days, it raises an alert here with a map and what to do.',
+}
+
 export const STEPS: Record<TourRole, TourStep[]> = {
   worker: [
     { title: 'Welcome to Case Rooms', body: 'You will never face a hard case alone. Send a patient case to a verified doctor and chat about it in a private room. This 1-minute tour shows you how.' },
@@ -36,6 +42,7 @@ export const STEPS: Record<TourRole, TourStep[]> = {
     URGENCY,
     { target: '[aria-label="Direct messages"]', title: 'Talk to colleagues', body: 'Message a doctor or another health worker one to one. Use this for questions that are not a case.' },
     { target: '[aria-label="Verified answer library"]', title: 'Answers you can reuse', body: 'Every doctor answer is saved here. Search it first. Someone may have already solved a case like yours.' },
+    RADAR,
     AI,
     { title: 'You are ready', body: 'Tap New case to send your first one. You can replay this tour any time from the help button at the bottom of the left bar. Use test data only.' },
   ],
@@ -45,6 +52,7 @@ export const STEPS: Record<TourRole, TourStep[]> = {
     URGENCY,
     { target: '[aria-label="Verified answer library"]', title: 'Answer once, help many', body: 'When you post a verified answer, it joins the library. The next worker with a similar case gets help in seconds. A 24-hour follow-up checks on the patient.' },
     { target: '[aria-label="Impact"]', title: 'See your impact', body: 'Watch where help is reaching and how fast cases get a doctor.' },
+    RADAR,
     AI,
     { title: 'You are ready', body: 'Go on duty from Case rooms to start receiving cases. Replay this tour any time from the help button in the left bar.' },
   ],
@@ -54,6 +62,7 @@ export const STEPS: Record<TourRole, TourStep[]> = {
     { target: '[aria-label="Case rooms"]', title: 'Watch the cases', body: 'Urgent cases that nobody accepts are escalated to you after the timer runs out.' },
     URGENCY,
     { target: '[aria-label="Impact"]', title: 'Show the impact', body: 'Cases by area, response times and a 14-day trend. Good for reports and demos.' },
+    RADAR,
     { title: 'You are ready', body: 'Replay this tour any time from the help button in the left bar.' },
   ],
 }

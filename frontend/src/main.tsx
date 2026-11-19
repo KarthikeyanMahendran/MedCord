@@ -12,6 +12,7 @@ import './styles/chat.css'
 import './styles/auth.css'
 import './styles/call.css'
 import './styles/cases.css'
+import './styles/radar.css'
 import './styles/ai.css'
 
 createRoot(document.getElementById('root')!).render(
