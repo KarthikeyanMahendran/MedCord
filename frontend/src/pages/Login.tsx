@@ -78,6 +78,7 @@ export default function Login() {
 
       <div className="mc-auth-divider">New user?</div>
       <Link to="/register" style={{ textDecoration: 'none' }}><Button variant="secondary" full>Create a new account</Button></Link>
+      <p className="mc-hint" style={{ textAlign: 'center', margin: 0 }}>Are you a doctor? <Link to="/register?role=doctor">Join as a doctor</Link></p>
     </AuthLayout>
   )
 }
