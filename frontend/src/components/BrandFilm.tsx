@@ -1,110 +1,217 @@
-import { useEffect, useState } from 'react'
-import { CheckCircle2, Siren } from 'lucide-react'
-import { Person } from '../pages/landing/People'
+import { useEffect, useRef, useState } from 'react'
+import { Activity, CheckCircle2, Siren, Stethoscope } from 'lucide-react'
 import './brandFilm.css'
 
-const SCENE_MS = 4200
+const PHASE_MS = 4500
 
 const CAPTIONS = [
-  'A health worker meets a patient far from any hospital.',
-  'Red flags are caught in a second, not an hour.',
-  'A verified doctor joins a live case room.',
+  'Health workers in remote villages meet patients far from any hospital.',
+  'A case is sent by voice. Red flags are caught in a second.',
+  'A verified doctor accepts it and answers in a live room.',
   'The answer is saved, so the next village is helped too.',
 ]
 
-function Village() {
-  return (
-    <svg viewBox="0 0 480 300" className="bf-svg" aria-hidden="true">
-      <defs>
-        <linearGradient id="bf-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1456d6" /><stop offset="1" stopColor="#9fd0ff" /></linearGradient>
-      </defs>
-      <rect width="480" height="300" fill="url(#bf-sky)" />
-      <circle cx="400" cy="70" r="26" fill="#fff3b8" className="bf-sun" />
-      <path d="M0 200c80-40 150-30 240 0s170 20 240-14v114H0z" fill="#2fa57a" />
-      <path d="M0 240c120-30 240-20 480 4v56H0z" fill="#52c08e" />
-      {/* hut */}
-      <rect x="40" y="150" width="120" height="70" fill="#f4e3c8" /><path d="M28 152L100 96l72 56z" fill="#c8553d" /><rect x="88" y="178" width="26" height="42" rx="3" fill="#8a5a3c" />
-      {/* patient on a cot */}
-      <g transform="translate(250 190)">
-        <rect x="0" y="34" width="110" height="10" rx="4" fill="#8a5a3c" /><rect x="6" y="44" width="6" height="22" fill="#6b4a2f" /><rect x="98" y="44" width="6" height="22" fill="#6b4a2f" />
-        <path d="M10 34c0-22 12-30 30-30s30 8 30 30z" fill="#7aa6e8" />
-        <circle cx="30" cy="-6" r="13" fill="#a8714b" /><path d="M17 -8c0-9 6-13 13-13s13 4 13 13c-4-4-8-6-13-6s-9 2-13 6z" fill="#e8e8ee" />
-        <path d="M44 6c8 0 14 6 18 14" stroke="#a8714b" strokeWidth="6" strokeLinecap="round" fill="none" />
-      </g>
-      {/* ASHA worker */}
-      <g transform="translate(205 160)"><g className="bf-breathe">
-        <path d="M0 88V40c0-14 9-20 17-20s17 6 17 20v48z" fill="#e4572e" /><path d="M17 22c9 8 17 18 20 36l-12 6z" fill="#f3b33d" />
-        <circle cx="17" cy="8" r="12" fill="#b9794f" /><path d="M5 6c0-11 7-14 12-14s12 3 12 14c-4-5-7-7-12-7s-8 2-12 7z" fill="#1a1210" /><circle cx="17" cy="1" r="1.5" fill="#c2185b" />
-        <rect x="30" y="38" width="12" height="20" rx="3" fill="#122a5c" /><rect x="32" y="41" width="8" height="12" rx="1.5" fill="#7fd1ff" className="bf-blink" />
-      </g></g>
-      <ellipse cx="226" cy="252" rx="26" ry="5" fill="#0a3a2a" opacity=".25" />
-    </svg>
-  )
+/** Coarse outline of India as [lon, lat]. Used only to draw a dotted map. */
+const OUTLINE: [number, number][] = [
+  [74.3, 34.5], [77.8, 35.5], [79, 32], [81, 30.2], [84, 28.5], [88, 27.2], [88.5, 26.6], [92, 27.8], [96, 28.3], [97, 27], [95, 25],
+  [93.5, 22], [92.2, 23.5], [91.3, 22.5], [89, 22], [87, 21.5], [85, 19.5], [82, 16.5], [80.3, 15.5], [80.3, 13], [79.8, 10.3], [78.2, 8.1],
+  [77.5, 8.1], [76.3, 9.5], [75.3, 12], [74.4, 14.8], [73.5, 17], [72.8, 19.3], [72.8, 21], [70.5, 20.8], [69, 22.3], [70.2, 22.9],
+  [68.2, 23.7], [70, 25.5], [71, 27.5], [73.5, 29.5], [74.5, 31.5],
+]
+const LON0 = 68, LON1 = 97.5, LAT0 = 8, LAT1 = 35.8
+const KX = Math.cos((22 * Math.PI) / 180)
+
+type Place = { name: string; lon: number; lat: number }
+const VILLAGES: Place[] = [
+  { name: 'Wayanad', lon: 76.1, lat: 11.7 }, { name: 'Pudukkottai', lon: 78.8, lat: 10.4 }, { name: 'Barmer', lon: 71.4, lat: 25.7 },
+  { name: 'Gadchiroli', lon: 80.2, lat: 20.2 }, { name: 'Koraput', lon: 82.7, lat: 18.8 }, { name: 'Dhemaji', lon: 94.6, lat: 27.5 },
+  { name: 'Pithoragarh', lon: 80.2, lat: 29.6 }, { name: 'Kutch', lon: 69.8, lat: 23.7 }, { name: 'Malda', lon: 88.1, lat: 25.0 },
+]
+const HUBS: Place[] = [
+  { name: 'Delhi', lon: 77.2, lat: 28.6 }, { name: 'Mumbai', lon: 72.9, lat: 19.1 }, { name: 'Chennai', lon: 80.3, lat: 13.1 }, { name: 'Kolkata', lon: 88.4, lat: 22.6 },
+]
+
+function inside(lon: number, lat: number) {
+  let c = false
+  for (let i = 0, j = OUTLINE.length - 1; i < OUTLINE.length; j = i++) {
+    const [xi, yi] = OUTLINE[i], [xj, yj] = OUTLINE[j]
+    if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) c = !c
+  }
+  return c
 }
 
-function Alert() {
-  return (
-    <div className="bf-center bf-alertscene">
-      <div className="bf-phone">
-        <div className="bf-phone-bar"><span /> New case</div>
-        <p className="bf-line">Man, 58 · chest pain 30 min</p>
-        <p className="bf-line bf-dim">SpO₂ 88 · sweating</p>
-        <div className="bf-redcard"><Siren size={18} /><div><strong>RED · Urgent</strong><small>Possible cardiac event. Arrange transport now.</small></div></div>
-      </div>
-      <i className="bf-ring bf-ring1" /><i className="bf-ring bf-ring2" />
-    </div>
-  )
+type Arc = { a: number; h: number; t0: number; dur: number; hero: boolean }
+
+function MapCanvas({ phaseRef }: { phaseRef: React.MutableRefObject<number> }) {
+  const ref = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    const canvas = ref.current
+    const ctx = canvas?.getContext('2d')
+    if (!canvas || !ctx) return
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    let W = 0, H = 0, raf = 0
+    let dots: { x: number; y: number }[] = []
+    let proj: (p: Place) => { x: number; y: number } = () => ({ x: 0, y: 0 })
+    const arcs: Arc[] = []
+    const ripples: { x: number; y: number; t0: number }[] = []
+    let lastAmbient = 0, lastHero = -1
+
+    const layout = () => {
+      const r = canvas.getBoundingClientRect()
+      const dpr = Math.min(2, window.devicePixelRatio || 1)
+      W = r.width; H = r.height
+      canvas.width = W * dpr; canvas.height = H * dpr
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      const spanX = (LON1 - LON0) * KX, spanY = LAT1 - LAT0
+      const scale = Math.min((W * 1.02) / spanX, (H * 0.66) / spanY)
+      const ox = W / 2 - (spanX * scale) / 2 + W * 0.04
+      const oy = H - spanY * scale - H * 0.14
+      proj = (p) => ({ x: ox + (p.lon - LON0) * KX * scale, y: oy + (LAT1 - p.lat) * scale })
+      dots = []
+      const step = Math.max(8, Math.round(scale * 0.42))
+      for (let y = oy; y < oy + spanY * scale; y += step) {
+        for (let x = ox; x < ox + spanX * scale; x += step) {
+          const lon = LON0 + (x - ox) / (KX * scale), lat = LAT1 - (y - oy) / scale
+          if (inside(lon, lat)) dots.push({ x, y })
+        }
+      }
+    }
+
+    const nearestHub = (i: number) => {
+      const v = VILLAGES[i]; let best = 0, bd = 1e9
+      HUBS.forEach((h, k) => { const d = (h.lon - v.lon) ** 2 + (h.lat - v.lat) ** 2; if (d < bd) { bd = d; best = k } })
+      return best
+    }
+
+    const frame = (now: number) => {
+      const t = now / 1000
+      ctx.clearRect(0, 0, W, H)
+
+      // dotted map with a slow light sweep
+      for (const d of dots) {
+        const wave = 0.5 + 0.5 * Math.sin(t * 1.1 - (d.x + d.y) * 0.012)
+        ctx.fillStyle = `rgba(120, 180, 255, ${0.24 + wave * 0.5})`
+        ctx.beginPath(); ctx.arc(d.x, d.y, 1.9, 0, 6.283); ctx.fill()
+      }
+
+      const vp = VILLAGES.map(proj), hp = HUBS.map(proj)
+
+      // arcs: ambient traffic, plus a hero arc when phase 1 begins
+      const phase = phaseRef.current
+      if (t - lastAmbient > 1.1) {
+        lastAmbient = t
+        const a = Math.floor(Math.random() * VILLAGES.length)
+        arcs.push({ a, h: nearestHub(a), t0: t, dur: 2.4, hero: false })
+      }
+      if (phase === 1 && lastHero !== 1) { lastHero = 1; arcs.push({ a: 2, h: 0, t0: t, dur: 2.8, hero: true }) }
+      if (phase !== 1) lastHero = phase
+
+      // hubs
+      hp.forEach((p, k) => {
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 34)
+        g.addColorStop(0, 'rgba(79, 140, 255, .55)'); g.addColorStop(1, 'rgba(79, 140, 255, 0)')
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 34, 0, 6.283); ctx.fill()
+        ctx.fillStyle = '#cfe3ff'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, 6.283); ctx.fill()
+        ctx.strokeStyle = 'rgba(207, 227, 255, .9)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, 6.283); ctx.stroke()
+        if (k === 0 || k === 2) { ctx.fillStyle = 'rgba(207,227,255,.8)'; ctx.font = '600 11px system-ui, sans-serif'; ctx.fillText(HUBS[k].name, p.x + 12, p.y + 4) }
+      })
+
+      // villages: pulsing beacons
+      vp.forEach((p, i) => {
+        const hero = i === 2 && phase >= 1
+        const col = hero ? '255, 93, 108' : i % 3 === 0 ? '232, 163, 61' : '52, 195, 143'
+        const k = (t * 0.7 + i * 0.37) % 1
+        ctx.strokeStyle = `rgba(${col}, ${(1 - k) * 0.8})`; ctx.lineWidth = 1.6
+        ctx.beginPath(); ctx.arc(p.x, p.y, 4 + k * (hero ? 26 : 16), 0, 6.283); ctx.stroke()
+        ctx.fillStyle = `rgb(${col})`; ctx.shadowColor = `rgb(${col})`; ctx.shadowBlur = 10
+        ctx.beginPath(); ctx.arc(p.x, p.y, hero ? 5 : 3.4, 0, 6.283); ctx.fill(); ctx.shadowBlur = 0
+      })
+
+      // arcs with a travelling comet
+      for (let n = arcs.length - 1; n >= 0; n--) {
+        const A = arcs[n], p = (t - A.t0) / A.dur
+        if (p > 1.25) { arcs.splice(n, 1); continue }
+        const s = vp[A.a], e = hp[A.h]
+        const cx = (s.x + e.x) / 2, cy = Math.min(s.y, e.y) - Math.hypot(e.x - s.x, e.y - s.y) * 0.32
+        const at = (u: number) => ({ x: (1 - u) * (1 - u) * s.x + 2 * (1 - u) * u * cx + u * u * e.x, y: (1 - u) * (1 - u) * s.y + 2 * (1 - u) * u * cy + u * u * e.y })
+        const head = Math.min(1, p), tail = Math.max(0, head - 0.3)
+        ctx.lineCap = 'round'
+        for (let u = tail; u < head; u += 0.02) {
+          const a = at(u), b = at(Math.min(1, u + 0.02)), f = (u - tail) / (head - tail || 1)
+          ctx.strokeStyle = A.hero ? `rgba(255, 140, 150, ${f})` : `rgba(127, 209, 255, ${f * 0.85})`
+          ctx.lineWidth = (A.hero ? 3 : 1.8) * (0.4 + f); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke()
+        }
+        if (p <= 1) { const h = at(head); ctx.fillStyle = '#fff'; ctx.shadowColor = A.hero ? '#ff5d6c' : '#7fd1ff'; ctx.shadowBlur = 16; ctx.beginPath(); ctx.arc(h.x, h.y, A.hero ? 4 : 2.6, 0, 6.283); ctx.fill(); ctx.shadowBlur = 0 }
+        if (p > 1 && p < 1.02) ripples.push({ x: e.x, y: e.y, t0: t })
+      }
+      for (let n = ripples.length - 1; n >= 0; n--) {
+        const r = ripples[n], k = (t - r.t0) / 1.2
+        if (k > 1) { ripples.splice(n, 1); continue }
+        ctx.strokeStyle = `rgba(160, 205, 255, ${1 - k})`; ctx.lineWidth = 2
+        ctx.beginPath(); ctx.arc(r.x, r.y, 8 + k * 44, 0, 6.283); ctx.stroke()
+      }
+      if (!reduce) raf = requestAnimationFrame(frame)
+    }
+
+    layout()
+    const ro = new ResizeObserver(layout); ro.observe(canvas)
+    raf = requestAnimationFrame(frame)
+    return () => { cancelAnimationFrame(raf); ro.disconnect() }
+  }, [phaseRef])
+  return <canvas ref={ref} className="bf-canvas" aria-hidden="true" />
 }
 
-function Doctor() {
-  return (
-    <div className="bf-duo">
-      <div className="bf-tile bf-tile-l"><Person look="doctorF" size={150} /><span><i className="bf-dot" /> Dr. Meera · live</span></div>
-      <div className="bf-bubbles">
-        <p className="bf-b bf-b1">Give aspirin 300 mg if no allergy.</p>
-        <p className="bf-b bf-b2 is-me">No allergy. Ambulance in 20 min.</p>
-        <p className="bf-b bf-b3">Good. Keep him seated and calm.</p>
-      </div>
-      <div className="bf-tile bf-tile-r"><Person look="asha" size={150} /><span>Kavitha · ASHA</span></div>
-    </div>
-  )
-}
-
-function Saved() {
-  return (
-    <div className="bf-center bf-saved">
-      <div className="bf-card">
-        <div className="bf-card-h"><CheckCircle2 size={20} /> Verified answer saved</div>
-        <p>Chest pain with low SpO₂: seat the patient, aspirin if no allergy, urgent transport.</p>
-        <div className="bf-tags"><span>Cardiology</span><span>RED</span><span>Helpful · 12</span></div>
-      </div>
-      <div className="bf-follow"><i /> Follow-up check in 24 h</div>
-    </div>
-  )
+function useTicker(to: number, on: boolean) {
+  const [n, setN] = useState(0)
+  useEffect(() => {
+    if (!on) { setN(0); return }
+    let raf = 0; const t0 = performance.now()
+    const tick = (t: number) => { const p = Math.min(1, (t - t0) / 2400); setN(Math.round(to * (1 - Math.pow(1 - p, 3)))); if (p < 1) raf = requestAnimationFrame(tick) }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [to, on])
+  return n
 }
 
 export function BrandFilm() {
   const [i, setI] = useState(0)
   const [hasVideo, setHasVideo] = useState(false)
-
+  const phaseRef = useRef(0)
+  useEffect(() => { phaseRef.current = i }, [i])
   useEffect(() => {
-    const t = setInterval(() => setI((n) => (n + 1) % CAPTIONS.length), SCENE_MS)
+    const t = setInterval(() => setI((n) => (n + 1) % CAPTIONS.length), PHASE_MS)
     return () => clearInterval(t)
   }, [])
+  const cases = useTicker(1284, i === 3), mins = useTicker(4, i === 3)
 
-  const scenes = [<Village key="a" />, <Alert key="b" />, <Doctor key="c" />, <Saved key="d" />]
   return (
-    <figure className="bf" aria-label="Short film: a health worker, a doctor and a patient">
+    <figure className="bf" aria-label="Short film: villages connected to verified doctors across India">
       <div className="bf-stage">
-        {scenes.map((s, k) => <div key={k} className={`bf-scene ${k === i ? 'is-on' : ''}`} aria-hidden={k !== i}>{s}</div>)}
-        {/* Optional real video: drop a file at public/media/brand.mp4. If it is missing or cannot play, the film above stays. */}
+        <div className="bf-glow" aria-hidden="true" />
+        <MapCanvas phaseRef={phaseRef} />
+
+        <div className="bf-cards" aria-hidden="true">
+          <div key={`c${i}`} className="bf-glass">
+            {i === 0 && <><span className="bf-ic is-amber"><Activity size={16} /></span><div><strong>Wayanad · ASHA Kavitha</strong><small>Child, 3 yrs · fever 3 days</small></div><em className="bf-tag is-amber">AMBER</em></>}
+            {i === 1 && <><span className="bf-ic is-red"><Siren size={16} /></span><div><strong>Barmer · chest pain, SpO₂ 88</strong><small>Possible cardiac event. Transport advised.</small></div><em className="bf-tag is-red">RED</em></>}
+            {i === 2 && <><span className="bf-ic is-blue"><Stethoscope size={16} /></span><div><strong>Dr. Meera accepted in 38 s</strong><small>“Aspirin 300 mg if no allergy. Keep him seated.”</small></div><em className="bf-tag is-blue">LIVE</em></>}
+            {i === 3 && <><span className="bf-ic is-green"><CheckCircle2 size={16} /></span><div><strong>Verified answer saved</strong><small>Searchable by every health worker</small></div><em className="bf-tag is-green">SAVED</em></>}
+          </div>
+          <div className={`bf-stats ${i === 3 ? 'is-on' : ''}`}>
+            <div><strong>{cases.toLocaleString()}</strong><span>cases answered</span></div>
+            <div><strong>{mins} min</strong><span>avg. time to a doctor</span></div>
+          </div>
+        </div>
+
+        {/* Optional real video: drop a file at public/media/brand.mp4. It plays over the film when present. */}
         <video className={`bf-video ${hasVideo ? 'is-on' : ''}`} src="/media/brand.mp4" autoPlay muted loop playsInline
           onCanPlay={() => setHasVideo(true)} onError={() => setHasVideo(false)} />
-        <span className="bf-live"><i /> Preview</span>
+        <span className="bf-live">Illustrative · demo data</span>
+        <div className="bf-shade" aria-hidden="true" />
       </div>
       <figcaption>
         <span key={i} className="bf-cap">{CAPTIONS[i]}</span>
-        <span className="bf-dots" aria-hidden="true">{CAPTIONS.map((_, k) => <i key={k} className={k === i ? 'is-on' : k < i ? 'is-done' : ''} style={k === i ? { animationDuration: `${SCENE_MS}ms` } : undefined} />)}</span>
+        <span className="bf-dots" aria-hidden="true">{CAPTIONS.map((_, k) => <i key={k} className={k === i ? 'is-on' : k < i ? 'is-done' : ''} style={k === i ? { animationDuration: `${PHASE_MS}ms` } : undefined} />)}</span>
       </figcaption>
     </figure>
   )
