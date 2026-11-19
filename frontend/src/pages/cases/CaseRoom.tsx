@@ -106,7 +106,7 @@ export default function CaseRoom() {
 
         <Card>
           <div className="mc-card-head"><h2>Case chat</h2></div>
-          <CaseChat channelId={c.channelId} lang={lang} meId={user.id} readOnly={c.status === 'CLOSED'} />
+          <CaseChat channelId={c.channelId} lang={lang} meId={user.id} peerId={user.id === c.reporterId ? c.assignedDoctorId : c.reporterId} readOnly={c.status === 'CLOSED'} />
         </Card>
       </div>
     </main>

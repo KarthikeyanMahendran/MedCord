@@ -6,11 +6,15 @@ import { listMessages, sendMessage } from '../../api/messages'
 import type { Message } from '../../api/messages'
 import { problemMessage } from '../../api/client'
 import { canDictate, canSpeak, dictate, speak } from '../../lib/speech'
+import { connectNexconn, onChannelSignal, onNexconnStatus, signalPeer } from '../../lib/nexconn'
+import type { NexconnStatus } from '../../lib/nexconn'
 
-const POLL_MS = 4000
+const POLL_MS = 4000          // slow safety net; Nexconn delivers new messages instantly
+const POLL_LIVE_MS = 20000
 
 /** Compact chat for a case room. Messages go through the backend; read-aloud uses the browser's speech engine. */
-export function CaseChat({ channelId, lang, meId, readOnly }: { channelId: string; lang: string; meId: string; readOnly?: boolean }) {
+export function CaseChat({ channelId, lang, meId, peerId, readOnly }: { channelId: string; lang: string; meId: string; peerId?: string | null; readOnly?: boolean }) {
+  const [live, setLive] = useState<NexconnStatus>('off')
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -27,11 +31,14 @@ export function CaseChat({ channelId, lang, meId, readOnly }: { channelId: strin
     } catch { /* keep what we have; the next poll retries */ }
   }, [channelId])
 
+  useEffect(() => { void connectNexconn(); return onNexconnStatus(setLive) }, [])
+  useEffect(() => onChannelSignal((ch) => { if (ch === channelId) void load() }), [channelId, load])
+
   useEffect(() => {
     void load()
-    const t = setInterval(() => { if (document.visibilityState !== 'hidden') void load() }, POLL_MS)
+    const t = setInterval(() => { if (document.visibilityState !== 'hidden') void load() }, live === 'live' ? POLL_LIVE_MS : POLL_MS)
     return () => { clearInterval(t); stopRef.current?.() }
-  }, [load])
+  }, [load, live])
 
   useEffect(() => {
     if (messages.length !== count.current) {
@@ -45,7 +52,7 @@ export function CaseChat({ channelId, lang, meId, readOnly }: { channelId: strin
     const body = text.trim()
     if (!body || sending) return
     setSending(true); setError(null)
-    try { await sendMessage(channelId, body); setText(''); await load() } catch (err) { setError(problemMessage(err)) } finally { setSending(false) }
+    try { await sendMessage(channelId, body); setText(''); void signalPeer(peerId, channelId); await load() } catch (err) { setError(problemMessage(err)) } finally { setSending(false) }
   }
 
   function toggleMic() {
@@ -57,6 +64,7 @@ export function CaseChat({ channelId, lang, meId, readOnly }: { channelId: strin
 
   return (
     <div className="mc-casechat">
+      <div className={`mc-live mc-live-${live}`} role="status">{live === 'live' ? '● Live with Nexconn' : live === 'connecting' ? 'Connecting…' : 'Updating every few seconds'}</div>
       <div className="mc-casechat-msgs" ref={scroller} aria-live="polite">
         {messages.length === 0 && <p className="mc-muted-sub" style={{ padding: 16 }}>No messages yet.</p>}
         {messages.map((m) => (

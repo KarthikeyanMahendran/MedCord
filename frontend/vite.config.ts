@@ -10,8 +10,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      // Stub out Nexconn SDKs until the real packages are installed
-      '@nexconn/chat': resolve(__dirname, 'src/lib/nexconn-chat-stub.ts'),
+      // Chat uses the real Nexconn SDK. Tests and the call feature keep the stubs.
+      ...(process.env.VITEST ? { '@nexconn/chat': resolve(__dirname, 'src/lib/nexconn-chat-stub.ts') } : {}),
       '@nexconn/call': resolve(__dirname, 'src/lib/nexconn-call-stub.ts'),
     },
   },

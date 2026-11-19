@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import * as authApi from '../api/auth'
 import type { Me, RegisterInput } from '../api/auth'
 import { tokenStore } from '../api/client'
+import { disconnectNexconn } from '../lib/nexconn'
 
 interface AuthState {
   user: Me | null
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(await authApi.fetchMe())
   }, [])
   const signOut = useCallback(async () => {
+    void disconnectNexconn()
     await authApi.logout()
     setUser(null)
   }, [])

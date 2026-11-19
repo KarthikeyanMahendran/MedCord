@@ -72,3 +72,6 @@
   .mc-bar-row { grid-template-columns: 110px minmax(0, 1fr) 70px; }
   .mc-grid-2 { grid-template-columns: minmax(0, 1fr); }
 }
+
+.mc-live { font-size: 12px; padding: 6px 12px; color: var(--mc-text-2); border-bottom: 1px solid var(--mc-border); }
+.mc-live-live { color: #22c55e; font-weight: 600; }
