@@ -19,7 +19,7 @@ MedCord shortens the time to a doctor, makes every answer reusable for the next 
 ## How Nexconn is used
 - **Chat SDK:** real-time case room conversation between the health worker and the accepting doctor. A server-issued token connects each browser to Nexconn; a direct-channel signal tells the other side a message is waiting, so the screen updates instantly. The label `● Live with Nexconn` shows when connected.
 - **Server API:** the backend signs requests and issues Nexconn tokens (`/v4/auth/access-token/issue`).
-- **Call SDK:** voice and video buttons in the case room, integrated in code and sharing the same connection. It needs the Call (VoIP) service enabled on the Nexconn app.
+- **Call SDK:** one-to-one voice and video calls in private messages (tested live on the deployed app), plus the same buttons in the case room, sharing the same connection.
 - **Resilience:** PostgreSQL remains the record of every message, so chat degrades to a slow refresh if Nexconn is unreachable.
 
 ## Features judges can try (5 minutes)
@@ -52,7 +52,7 @@ Record this run as a video as a backup in case the network fails on the day.
 - [ ] Use a **mobile hotspot**: college and office networks block Nexconn.
 - [ ] Start the backend and frontend; sign in once on both demo accounts to warm up.
 - [ ] Confirm both browsers show `● Live with Nexconn` in a case room.
-- [ ] Enable the **Call (VoIP) service** in the Nexconn console if you want to demo voice or video, then test one call.
+- [ ] Test one video call right before recording (private message works; also try from a case room).
 - [ ] Change the demo admin password if the app will be public.
 - [ ] Reset demo data if needed (Outbreak radar, *Reset demo*).
 
@@ -60,7 +60,7 @@ Record this run as a video as a backup in case the network fails on the day.
 - Care Fund payments are simulated (no real money moves).
 - Doctor verification is a human review of a licence number in the app, not a register lookup.
 - Outbreak detection is rule-based decision support, not a diagnosis.
-- Calls depend on the Call service being enabled for the Nexconn app.
+- Case-room calls were added after the last live call test; private-message calls are the verified path.
 
 ## Links
 - Repository: https://github.com/KarthikeyanMahendran/MedCord

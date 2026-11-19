@@ -61,12 +61,12 @@ In rural India a patient can be hours from the nearest doctor. The **ASHA worker
 
 ## Built on Nexconn
 
-MedCord uses the **Nexconn Chat SDK** for real-time conversation in case rooms, and is wired for the **Nexconn Call SDK** for voice and video.
+MedCord uses the **Nexconn Chat SDK** for real-time conversation in case rooms, and the **Nexconn Call SDK** for voice and video calls.
 
 <table>
 <tr><td width="33%"><b>Real-time case chat</b><br><br>When a health worker sends a message, the doctor's screen updates the moment Nexconn delivers the signal. Both sides show <code>● Live with Nexconn</code>.</td>
 <td width="33%"><b>One shared connection</b><br><br>Chat and calls share a single <code>NCEngine</code> connection, started once per sign-in with a server-issued token. The backend keeps the message record.</td>
-<td width="33%"><b>Calls from the case room</b><br><br>Once a doctor accepts a case, <i>Voice call</i> and <i>Video call</i> appear between the worker and that doctor (Call SDK, needs the Call service enabled on the Nexconn app).</td></tr>
+<td width="33%"><b>Voice and video calls</b><br><br>One-to-one calls in private messages (tested on the deployed app). Once a doctor accepts a case, <i>Voice call</i> and <i>Video call</i> also appear in the case room.</td></tr>
 </table>
 
 ```mermaid
@@ -234,7 +234,7 @@ cd backend  && ./mvnw test                                       # 119 tests aga
 |---|---|
 | Case flow, triage, doctor answers, verified library | Working and tested |
 | Real-time case chat on Nexconn | Working (needs network access to Nexconn) |
-| Nexconn **voice and video calls** | Integrated in code; requires the **Call (VoIP) service to be enabled** on the Nexconn app |
+| Nexconn **voice and video calls** | Working in private messages (tested by two people on the deployed app). The same buttons in the case room are newer and still being verified |
 | Care Fund payments | **Simulated.** No real money moves. The live version would add UPI |
 | Doctor verification | Admin reviews a licence number in the app. It is not checked against a national register |
 | Outbreak detection | Transparent keyword rules, not a diagnosis. Decision support only |
