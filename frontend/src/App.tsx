@@ -5,6 +5,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import CaseRoom from './pages/cases/CaseRoom'
 import CasesHome from './pages/cases/CasesHome'
 import Impact from './pages/cases/Impact'
+import Radar from './pages/radar/Radar'
 import Library from './pages/cases/Library'
 import NewCase from './pages/cases/NewCase'
 import Verifications from './pages/admin/Verifications'
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="/cases/:id" element={<CaseRoom />} />
           <Route path="/library" element={<Library />} />
           <Route path="/impact" element={<Impact />} />
+          <Route path="/radar" element={<Radar />} />
           <Route path="/search" element={<Search />} />
           <Route path="/messages" element={<ChannelChat />} />
           <Route path="/messages/:channelId" element={<ChannelChat />} />
