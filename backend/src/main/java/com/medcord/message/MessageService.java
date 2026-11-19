@@ -135,6 +135,14 @@ public class MessageService {
 
     public MessageDto dto(Message m, UUID viewerId) { return toDtos(List.of(m), viewerId).get(0); }
 
+    @Transactional(readOnly = true)
+    public MessageDto get(UUID messageId, UUID userId) {
+        Message msg = message(messageId);
+        Channel ch = channel(msg.getChannelId());
+        access.permissions(ch, userId);
+        return dto(msg, userId);
+    }
+
     /** Newest page first in storage order; returned oldest-to-newest for display. Cursor = id of the oldest message already loaded. */
     @Transactional(readOnly = true)
     public MessagePage list(UUID channelId, UUID userId, UUID before, int limit) {

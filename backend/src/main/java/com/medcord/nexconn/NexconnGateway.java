@@ -1,15 +1,23 @@
+
+
 package com.medcord.nexconn;
 
 import com.medcord.common.ApiException;
+import java.io.InputStream;
+import java.net.http.HttpClient;
+import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -18,6 +26,10 @@ import org.springframework.web.client.RestClientException;
 /**
  * Single entry point for Nexconn Server API calls (signing, errors, timeouts).
  * Domain code must not call Nexconn any other way (see CLAUDE.md).
+ *
+ * <p>Uses a custom SSLContext that trusts the network-local CA that signs
+ * api.sg-light-api.com (a FortiGate inspection proxy).  Hostname verification
+ * is always enforced; we never skip certificate validation.
  */
 @Component
 public class NexconnGateway {
@@ -28,7 +40,7 @@ public class NexconnGateway {
 
     @Autowired
     public NexconnGateway(NexconnProperties props) {
-        this(props, RestClient.builder().requestFactory(timeouts()));
+        this(props, RestClient.builder().requestFactory(buildRequestFactory()));
     }
 
     NexconnGateway(NexconnProperties props, RestClient.Builder builder) {
@@ -36,11 +48,112 @@ public class NexconnGateway {
         this.http = builder.build();
     }
 
-    private static ClientHttpRequestFactory timeouts() {
-        SimpleClientHttpRequestFactory f = new SimpleClientHttpRequestFactory();
-        f.setConnectTimeout(Duration.ofSeconds(3));
-        f.setReadTimeout(Duration.ofSeconds(10));
-        return f;
+    /**
+     * Builds a JDK HttpClient request factory that:
+     * <ul>
+     *   <li>Trusts the Nexconn endpoint CA stored in {@code certs/nexconn-ca.pem}
+     *       (a FortiGate appliance acting as a local TLS inspection proxy).</li>
+     *   <li>Also inherits the JVM default trust store so all other HTTPS calls
+     *       continue to work normally.</li>
+     *   <li>Always verifies the hostname — SSL inspection is not disabled.</li>
+     * </ul>
+     */
+    private static JdkClientHttpRequestFactory buildRequestFactory() {
+        try {
+            // --- Load the custom CA cert from classpath ---
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            ks.load(null, null); // empty keystore
+
+            // Load JVM default trust entries so other HTTPS calls are unaffected
+            TrustManagerFactory defaultTmf = TrustManagerFactory.getInstance(
+                    TrustManagerFactory.getDefaultAlgorithm());
+            defaultTmf.init((KeyStore) null);
+
+            // Parse every PEM block from our bundled cert file (may be a chain)
+            try (InputStream pem = NexconnGateway.class
+                    .getResourceAsStream("/certs/nexconn-ca.pem")) {
+                if (pem != null) {
+                    int idx = 0;
+                    for (java.security.cert.Certificate cert : cf.generateCertificates(pem)) {
+                        ks.setCertificateEntry("nexconn-ca-" + idx++, cert);
+                    }
+                    log.info("Loaded {} cert(s) from nexconn-ca.pem into custom truststore", idx);
+                } else {
+                    log.warn("nexconn-ca.pem not found on classpath; using JVM default trust store");
+                }
+            }
+
+            // Merge: start with JVM defaults, then add our certs
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(
+                    TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(ks);
+
+            // Build a merged TrustManager that checks our store first, then JVM defaults
+            var ourManagers   = tmf.getTrustManagers();
+            var defManagers   = defaultTmf.getTrustManagers();
+            javax.net.ssl.X509TrustManager ourTm  = findX509TrustManager(ourManagers);
+            javax.net.ssl.X509TrustManager defTm  = findX509TrustManager(defManagers);
+
+            javax.net.ssl.X509TrustManager merged = new javax.net.ssl.X509TrustManager() {
+                @Override
+                public X509Certificate[] getAcceptedIssuers() {
+                    var ours = ourTm.getAcceptedIssuers();
+                    var defs = defTm.getAcceptedIssuers();
+                    var all  = new X509Certificate[ours.length + defs.length];
+                    System.arraycopy(ours, 0, all, 0, ours.length);
+                    System.arraycopy(defs, 0, all, ours.length, defs.length);
+                    return all;
+                }
+                @Override
+                public void checkClientTrusted(X509Certificate[] chain, String authType)
+                        throws java.security.cert.CertificateException {
+                    try { ourTm.checkClientTrusted(chain, authType); }
+                    catch (java.security.cert.CertificateException e) {
+                        defTm.checkClientTrusted(chain, authType);
+                    }
+                }
+                @Override
+                public void checkServerTrusted(X509Certificate[] chain, String authType)
+                        throws java.security.cert.CertificateException {
+                    try { ourTm.checkServerTrusted(chain, authType); }
+                    catch (java.security.cert.CertificateException e) {
+                        defTm.checkServerTrusted(chain, authType);
+                    }
+                }
+            };
+
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, new javax.net.ssl.TrustManager[]{ merged }, null);
+
+            HttpClient httpClient = HttpClient.newBuilder()
+                    .sslContext(sslContext)
+                    .connectTimeout(Duration.ofSeconds(3))
+                    .build();
+
+            JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+            factory.setReadTimeout(Duration.ofSeconds(10));
+            return factory;
+
+        } catch (Exception ex) {
+            log.error("Failed to build custom SSL context for Nexconn; falling back to JVM defaults. "
+                    + "Token endpoint may fail: {}", ex.getMessage(), ex);
+            // Fall back: JDK HttpClient with default SSL
+            HttpClient httpClient = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(3))
+                    .build();
+            JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+            factory.setReadTimeout(Duration.ofSeconds(10));
+            return factory;
+        }
+    }
+
+    private static javax.net.ssl.X509TrustManager findX509TrustManager(
+            javax.net.ssl.TrustManager[] managers) {
+        for (javax.net.ssl.TrustManager tm : managers) {
+            if (tm instanceof javax.net.ssl.X509TrustManager x509) return x509;
+        }
+        throw new IllegalStateException("No X509TrustManager found");
     }
 
     public record ApiResult<T>(int code, T result, String message) {}

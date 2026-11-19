@@ -7,7 +7,7 @@ export interface Conversation {
 }
 export interface BlockedUser { id: string; displayName: string; blockedAt: string }
 
-export const listDms = async () => (await api.get<Conversation[]>('/dms')).data
+export const listDms = async (limit = 50, offset = 0) => (await api.get<Conversation[]>('/dms', { params: { limit, offset } })).data
 export const getDm = async (id: string) => (await api.get<Conversation>(`/dms/${id}`)).data
 export const startDm = async (userIds: string[]) => (await api.post<Conversation>('/dms', { userIds })).data
 export const blockUser = async (id: string) => { await api.put(`/users/${id}/block`) }

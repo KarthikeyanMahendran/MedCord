@@ -37,6 +37,8 @@ export interface BookmarkItem {
 
 export const listMessages = async (channelId: string, before?: string, limit = 50) =>
   (await api.get<MessagePage>(`/channels/${channelId}/messages`, { params: { before, limit } })).data
+export const getMessage = async (id: string) =>
+  (await api.get<Message>(`/messages/${id}`)).data
 export const sendMessage = async (
   channelId: string,
   body: string,

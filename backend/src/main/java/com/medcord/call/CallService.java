@@ -12,6 +12,8 @@ import com.medcord.message.Message;
 import com.medcord.message.MessageRepository;
 import com.medcord.nexconn.ChannelTransport;
 import com.medcord.nexconn.NexconnGateway;
+import com.medcord.realtime.RealtimeEvent;
+import com.medcord.realtime.RealtimeHub;
 import com.medcord.user.User;
 import com.medcord.user.UserRepository;
 import java.time.Duration;
@@ -42,11 +44,13 @@ public class CallService {
     private final UserRepository users;
     private final MessageRepository messages;
     private final ChannelTransport transport;
+    private final RealtimeHub realtime;
 
     public CallService(CallRepository calls, ChannelRepository channels, DmParticipantRepository participants,
-                       UserBlockRepository blocks, UserRepository users, MessageRepository messages, ChannelTransport transport) {
+                       UserBlockRepository blocks, UserRepository users, MessageRepository messages,
+                       ChannelTransport transport, RealtimeHub realtime) {
         this.calls = calls; this.channels = channels; this.participants = participants; this.blocks = blocks;
-        this.users = users; this.messages = messages; this.transport = transport;
+        this.users = users; this.messages = messages; this.transport = transport; this.realtime = realtime;
     }
 
     public record Party(UUID id, String displayName, String providerUserId) {}
@@ -75,7 +79,13 @@ public class CallService {
         c.setCallerId(userId);
         c.setCalleeId(calleeId);
         c.setMedia(media);
-        return dto(calls.saveAndFlush(c));
+        Call saved = calls.saveAndFlush(c);
+
+        // Notify callee in real-time over SSE
+        realtime.sendToUser(calleeId, RealtimeEvent.of("CALL_INCOMING", channelId, null,
+            java.util.Map.of("callId", saved.getId().toString(), "callerId", userId.toString(), "media", media.name())));
+
+        return dto(saved);
     }
 
     /** Participants only; a ringing call past the timeout is finalised as missed on read. */
@@ -159,6 +169,23 @@ public class CallService {
         m.setBody(summary(c));
         messages.saveAndFlush(m);
         transport.onMessageSent(null, c.getChannelId(), m.getId());
+
+        // Notify other peer in real time
+        UUID peerId = (actor != null && actor.equals(c.getCallerId())) ? c.getCalleeId() : c.getCallerId();
+        realtime.sendToUser(peerId, RealtimeEvent.of("CALL_ENDED", c.getChannelId(), null,
+            java.util.Map.of("callId", c.getId().toString(), "outcome", outcome.name())));
+    }
+
+    @Transactional(readOnly = true)
+    public void signal(UUID callId, UUID senderId, String kind, Object data) {
+        Call c = expireIfStale(owned(callId, senderId));
+        UUID recipientId = c.getCallerId().equals(senderId) ? c.getCalleeId() : c.getCallerId();
+        java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+        payload.put("callId", callId.toString());
+        payload.put("fromUserId", senderId.toString());
+        payload.put("kind", kind);
+        payload.put("data", data);
+        realtime.sendToUser(recipientId, RealtimeEvent.of("CALL_SIGNAL", c.getChannelId(), null, payload));
     }
 
     static String summary(Call c) {

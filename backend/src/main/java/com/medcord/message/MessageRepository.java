@@ -28,4 +28,7 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
     @Query("select count(m) from Message m where m.channelId = ?1 and m.pinnedAt is not null and m.deletedAt is null")
     long countPinned(UUID channelId);
+
+    @Query(value = "SELECT DISTINCT ON (channel_id) * FROM messages WHERE channel_id IN :channelIds AND thread_id IS NULL ORDER BY channel_id, created_at DESC, id DESC", nativeQuery = true)
+    List<Message> latestMessagesForChannels(@org.springframework.data.repository.query.Param("channelIds") java.util.Collection<UUID> channelIds);
 }

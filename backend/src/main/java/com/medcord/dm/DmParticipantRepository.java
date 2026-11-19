@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 public interface DmParticipantRepository extends JpaRepository<DmParticipant, DmParticipant.Key> {
     boolean existsByChannelIdAndUserId(UUID channelId, UUID userId);
     List<DmParticipant> findByChannelId(UUID channelId);
+    List<DmParticipant> findByChannelIdIn(java.util.Collection<UUID> channelIds);
 
     @Query("select p.channelId from DmParticipant p where p.userId = ?1")
     List<UUID> channelIdsOf(UUID userId);

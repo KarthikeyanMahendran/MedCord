@@ -28,7 +28,11 @@ public class DmController {
     ConversationDto start(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody StartDmRequest r) { return service.start(me(jwt), r.userIds()); }
 
     @GetMapping("/dms")
-    List<ConversationDto> list(@AuthenticationPrincipal Jwt jwt) { return service.list(me(jwt)); }
+    List<ConversationDto> list(@AuthenticationPrincipal Jwt jwt,
+                               @RequestParam(defaultValue = "50") int limit,
+                               @RequestParam(defaultValue = "0") int offset) {
+        return service.list(me(jwt), limit, offset);
+    }
 
     @GetMapping("/dms/{channelId}")
     ConversationDto get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID channelId) { return service.get(channelId, me(jwt)); }

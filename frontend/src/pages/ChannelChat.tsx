@@ -19,7 +19,7 @@ import type { CopilotMode } from '../api/copilot'
 import { blockUser, getDm, unblockUser } from '../api/dms'
 import type { Conversation } from '../api/dms'
 import {
-  deleteMessage, editMessage, listMessages, listPins, messageHistory,
+  deleteMessage, editMessage, getMessage, listMessages, listPins, messageHistory,
   pinMessage, react, sendMessage, sendTyping, startThread, unpinMessage, unreact, uploadAttachment,
 } from '../api/messages'
 import type { Attachment, Message, Revision } from '../api/messages'
@@ -52,6 +52,8 @@ interface MentionCandidate {
   sub: string
   kind: 'USER' | 'ROLE' | 'EVERYONE' | 'AI'
 }
+
+const channelMessageCache = new Map<string, { items: Message[]; hasMore: boolean }>()
 
 /** Message pane for a community channel (`/communities/:id/channels/:channelId`) or a DM (`/messages/:channelId`). The sidebar lives in the app shell. */
 export default function ChannelChat() {
@@ -176,7 +178,16 @@ export default function ChannelChat() {
 
   // Load initial messages, snapshot unread divider anchor, and subscribe to real-time SSE events
   useEffect(() => {
-    setMessages([]); setLoading(!!channelId); setReplyTo(null); setEditing(null); setOpenThread(null)
+    const cached = channelId ? channelMessageCache.get(channelId) : null
+    if (cached) {
+      setMessages(cached.items)
+      setHasMore(cached.hasMore)
+      setLoading(false)
+    } else {
+      setMessages([])
+      setLoading(!!channelId)
+    }
+    setReplyTo(null); setEditing(null); setOpenThread(null)
     setText(''); setNotice(null); setPendingAttachments([]); setTypers({})
     setMentionQuery(null); stick.current = true
     if (!channelId) { setUnreadAnchorId(null); return }
@@ -188,6 +199,7 @@ export default function ChannelChat() {
     listMessages(channelId)
       .then((p) => {
         if (!alive) return
+        channelMessageCache.set(channelId, { items: p.items, hasMore: p.hasMore })
         setMessages(p.items); setHasMore(p.hasMore); setError(null)
         const latest = p.items[p.items.length - 1]
         if (latest) void realtime.markRead(channelId, latest.id)
@@ -197,20 +209,31 @@ export default function ChannelChat() {
 
     const unsub = realtime.subscribe((ev) => {
       if (ev.channelId !== channelId) return
-      if (ev.type === 'MESSAGE_CREATED' || ev.type === 'MESSAGE_UPDATED' || ev.type === 'MESSAGE_DELETED') {
-        listMessages(channelId).then((p) => {
-          if (!alive) return
-          // When a new message arrives from another user in real time, place unread anchor divider if not already placed
-          const incoming = p.items.filter(Boolean)
-          const latest = incoming[incoming.length - 1]
-          if (latest && latest.author.id !== user?.id) {
-            setUnreadAnchorId((prevAnchor) => prevAnchor || (messages.length > 0 ? messages[messages.length - 1].id : null))
-          }
-          merge(incoming)
-          if (latest && stick.current && document.visibilityState !== 'hidden') {
-            void realtime.markRead(channelId, latest.id)
-          }
-        }).catch(() => undefined)
+      if (ev.type === 'MESSAGE_DELETED') {
+        const deletedId = String(ev.payload.messageId ?? '')
+        if (deletedId) {
+          setMessages((prev) => prev.map((m) => m.id === deletedId ? { ...m, deleted: true, body: null, reactions: [] } : m))
+        }
+      } else if (ev.type === 'MESSAGE_CREATED' || ev.type === 'MESSAGE_UPDATED') {
+        const msgId = String(ev.payload.messageId ?? '')
+        if (msgId) {
+          getMessage(msgId).then((incoming) => {
+            if (!alive || !incoming) return
+            if (incoming.author.id !== user?.id) {
+              setUnreadAnchorId((prevAnchor) => prevAnchor || (messages.length > 0 ? messages[messages.length - 1].id : null))
+            }
+            merge([incoming])
+            if (stick.current && document.visibilityState !== 'hidden') {
+              void realtime.markRead(channelId, incoming.id)
+            }
+          }).catch(() => {
+            // Fall back to batch list only if single get fails
+            listMessages(channelId).then((p) => {
+              if (!alive) return
+              merge(p.items)
+            }).catch(() => undefined)
+          })
+        }
       } else if (ev.type === 'AI_STREAM_INIT' || ev.type === 'AI_STREAM_DELTA' || ev.type === 'AI_STREAM_COMPLETE') {
         const msgId = String(ev.payload.messageId ?? '')
         const thId = ev.payload.threadId ? String(ev.payload.threadId) : null
@@ -497,35 +520,77 @@ export default function ChannelChat() {
     try {
       if (editing) {
         merge([await editMessage(editing.id, body)]); setEditing(null)
+        setText('')
+        setMentionQuery(null)
       } else {
+        const tempId = `temp-${Date.now()}`
+        const optimisticMsg: Message = {
+          id: tempId,
+          channelId,
+          author: {
+            id: user?.id ?? '',
+            displayName: user?.displayName ?? 'You',
+            specialty: user?.specialty ?? null,
+            verified: user?.verificationStatus === 'APPROVED',
+          },
+          body,
+          createdAt: new Date().toISOString(),
+          editedAt: null,
+          deleted: false,
+          replyTo: replyTo ? {
+            id: replyTo.id,
+            authorName: replyTo.author.displayName,
+            excerpt: replyTo.body ? (replyTo.body.length <= 100 ? replyTo.body : replyTo.body.substring(0, 100) + '…') : null,
+            deleted: replyTo.deleted,
+          } : null,
+          thread: null,
+          threadId: null,
+          reactions: [],
+          pinned: false,
+          kind: 'TEXT',
+          attachments: pendingAttachments.length > 0 ? pendingAttachments : undefined,
+        }
+
+        // Optimistically show message immediately
         stick.current = true
-        const sent = forceAutoRedact
-          ? await sendMessage(channelId, body, replyTo?.id, attIds.length > 0 ? attIds : undefined, true)
-          : attIds.length > 0
-            ? await sendMessage(channelId, body, replyTo?.id, attIds)
-            : await sendMessage(channelId, body, replyTo?.id)
-        if (sent) merge([sent])
+        setMessages((prev) => [...prev, optimisticMsg])
+        setText('')
         setReplyTo(null)
         setPendingAttachments([])
         setUnreadAnchorId(null)
+        setMentionQuery(null)
 
-        // If message summons AI via @ai or @copilot
-        if (/(?:^|\s)@(ai|copilot)\b/i.test(body)) {
-          const q = body.replace(/(?:^|\s)@(ai|copilot)\b/gi, '').trim()
-          let mode: CopilotMode = 'ASK'
-          let prompt: string | undefined = q || undefined
-          if (!q || /^(summarize|summary|sbar)$/i.test(q)) {
-            mode = 'SUMMARIZE'
-            prompt = undefined
-          } else if (/^(differential|ddx)$/i.test(q)) {
-            mode = 'DIFFERENTIAL'
-            prompt = undefined
+        try {
+          const sent = forceAutoRedact
+            ? await sendMessage(channelId, body, replyTo?.id, attIds.length > 0 ? attIds : undefined, true)
+            : attIds.length > 0
+              ? await sendMessage(channelId, body, replyTo?.id, attIds)
+              : await sendMessage(channelId, body, replyTo?.id)
+          if (sent) {
+            setMessages((prev) => prev.map((m) => (m.id === tempId ? sent : m)))
           }
-          void runCopilot(mode, prompt)
+
+          // If message summons AI via @ai or @copilot
+          if (/(?:^|\s)@(ai|copilot)\b/i.test(body)) {
+            const q = body.replace(/(?:^|\s)@(ai|copilot)\b/gi, '').trim()
+            let mode: CopilotMode = 'ASK'
+            let prompt: string | undefined = q || undefined
+            if (!q || /^(summarize|summary|sbar)$/i.test(q)) {
+              mode = 'SUMMARIZE'
+              prompt = undefined
+            } else if (/^(differential|ddx)$/i.test(q)) {
+              mode = 'DIFFERENTIAL'
+              prompt = undefined
+            }
+            void runCopilot(mode, prompt)
+          }
+        } catch (err) {
+          // Revert optimistic message if send failed
+          setMessages((prev) => prev.filter((m) => m.id !== tempId))
+          setText(rawBody)
+          throw err
         }
       }
-      setText('')
-      setMentionQuery(null)
     } catch (e) { setError(problemMessage(e)) } finally { setSending(false) }
   }
 
