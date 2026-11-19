@@ -75,6 +75,7 @@ export default function Landing() {
   const [progress, setProgress] = useState(0)
   const [y, setY] = useState(0)
   const [sceneVideo, setSceneVideo] = useState(false)
+  const [heroVideo, setHeroVideo] = useState(false)
   useEffect(() => {
     // The app shell locks page scroll; the landing page is a normal long page.
     const root = document.documentElement
@@ -102,7 +103,10 @@ export default function Landing() {
         <div className="lp-nav-cta"><Link to="/login" className="lp-link">Sign in</Link><Link to="/register" className="lp-btn lp-btn-sm">Get started</Link></div>
       </header>
 
-      <section className="lp-hero">
+      <section className={`lp-hero ${heroVideo ? 'has-video' : ''}`}>
+        <video className={`lp-hero-video ${heroVideo ? 'is-on' : ''}`} src="/media/brand3.mp4" autoPlay muted loop playsInline
+          onCanPlay={() => setHeroVideo(true)} onError={() => setHeroVideo(false)} aria-hidden="true" />
+        <div className="lp-hero-shade" aria-hidden="true" />
         <div className="lp-orb lp-orb-a" style={{ transform: `translateY(${y * 0.12}px)` }} />
         <div className="lp-orb lp-orb-b" style={{ transform: `translateY(${y * -0.08}px)` }} />
         <div className="lp-wrap lp-hero-grid">
@@ -149,7 +153,7 @@ export default function Landing() {
 
       <section className="lp-scene" aria-label="From village to doctor">
         <VillageScene className="lp-scene-art" />
-        <video className={`lp-scene-video ${sceneVideo ? 'is-on' : ''}`} src="/media/brand3.mp4" autoPlay muted loop playsInline
+        <video className={`lp-scene-video ${sceneVideo ? 'is-on' : ''}`} src="/media/brand.mp4" autoPlay muted loop playsInline
           onCanPlay={() => setSceneVideo(true)} onError={() => setSceneVideo(false)} aria-hidden="true" />
         <div className="lp-scene-shade" aria-hidden="true" />
         <div className="lp-scene-cap lp-wrap">
