@@ -84,7 +84,7 @@ export default function Home() {
 
   return (
     <main className="mc-page mc-page-wide">
-      <PageHeader eyebrow={today} title={`${greeting()}, ${first}`} description="Pick what you want to do. Everything else is in the menu on the left." />
+      <PageHeader eyebrow={today} title={`${greeting()}, ${first}`} description="Pick what you want to do. Everything else is in the menu." />
 
       {notice && <Alert tone="success">{notice}</Alert>}
       {!isWorker && user.verificationStatus === 'REJECTED' && (
