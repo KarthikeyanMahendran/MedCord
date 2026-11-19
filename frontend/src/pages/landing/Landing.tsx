@@ -120,7 +120,7 @@ export default function Landing() {
               <a href="#how" className="lp-btn lp-btn-ghost">See how it works</a>
             </div>
             <ul className="lp-trust">
-              <li><CheckCircle2 size={15} /> Verified doctors</li><li><CheckCircle2 size={15} /> Works offline</li><li><CheckCircle2 size={15} /> Demo data only</li>
+              <li><CheckCircle2 size={15} /> Verified doctors</li><li><CheckCircle2 size={15} /> Works offline</li><li><CheckCircle2 size={15} /> Seven Indian languages</li>
             </ul>
           </div>
           <div className="lp-hero-art">
@@ -222,9 +222,12 @@ export default function Landing() {
             </ul>
           </Reveal>
           <Reveal delay={150}>
-            <div className="lp-bars" aria-label="Example impact chart">
-              {[34, 52, 41, 68, 59, 82, 74, 96].map((h, i) => <span key={i} style={{ ['--h' as string]: `${h}%`, transitionDelay: `${i * 70}ms` }} />)}
-              <p>Cases answered per day · demo data</p>
+            <div className="lp-flow" aria-label="How Nexconn connects a health worker and a doctor">
+              <div className="lp-flow-node"><Mic size={22} /><strong>Health worker</strong><small>sends the case by voice</small></div>
+              <div className="lp-flow-link"><i /><span><Wifi size={14} /> Nexconn Chat SDK</span><i /></div>
+              <div className="lp-flow-node"><Siren size={22} /><strong>Verified doctor</strong><small>answers in the live room</small></div>
+              <div className="lp-flow-link"><i /><span><Phone size={14} /> Nexconn Call SDK</span><i /></div>
+              <div className="lp-flow-node is-accent"><ShieldCheck size={22} /><strong>Care for the patient</strong><small>voice or video when it matters</small></div>
             </div>
           </Reveal>
         </div>
@@ -242,7 +245,7 @@ export default function Landing() {
       <footer className="lp-foot">
         <div className="lp-wrap">
           <span className="lp-logo"><span><LogoMark size={40} /></span>MedCord Case Rooms</span>
-          <p>Demo project for the Nexconn Build Challenge 2026. Uses test data only. Not a medical device and not a diagnosis.</p>
+          <p>Built by Team NexGen for the Nexconn Build Challenge 2026. MedCord supports a doctor's judgement and does not replace it. It is not a medical device and not a diagnosis.</p>
         </div>
       </footer>
     </div>
