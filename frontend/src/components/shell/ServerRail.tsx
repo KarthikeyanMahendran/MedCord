@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BarChart3, Bell, BellOff, Bookmark, BookOpenCheck, CircleHelp, MessageCircle, Plus, Radar, Search, ShieldCheck, Stethoscope } from 'lucide-react'
+import { BarChart3, Bell, BellOff, Bookmark, BookOpenCheck, CircleHelp, MapPin, MessageCircle, Plus, Radar, Search, ShieldCheck, Stethoscope } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { colorFor, initialsOf } from '../ui'
 import { listMine } from '../../api/communities'
@@ -85,6 +85,7 @@ export function ServerRail() {
         {totalMentions > 0 && <span className="mc-rail-badge is-mention" aria-hidden="true">@</span>}
       </button>
       <RailButton to="/bookmarks" label="Saved messages"><span className="mc-rail-icon"><Bookmark size={17} /></span></RailButton>
+      <RailButton to="/network" label="Care network map"><span className="mc-rail-icon"><MapPin size={17} /></span></RailButton>
       <RailButton to="/radar" label="Outbreak radar"><span className="mc-rail-icon"><Radar size={17} /></span></RailButton>
       <RailButton to="/search" label="Search messages"><span className="mc-rail-icon"><Search size={17} /></span></RailButton>
       {user?.platformRole === 'ADMIN' && <RailButton to="/admin/verifications" label="Verification queue"><span className="mc-rail-icon"><ShieldCheck size={17} /></span></RailButton>}

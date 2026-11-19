@@ -6,6 +6,7 @@ import CaseRoom from './pages/cases/CaseRoom'
 import CasesHome from './pages/cases/CasesHome'
 import Impact from './pages/cases/Impact'
 import Radar from './pages/radar/Radar'
+import NetworkPage from './pages/network/Network'
 import Library from './pages/cases/Library'
 import NewCase from './pages/cases/NewCase'
 import Verifications from './pages/admin/Verifications'
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="/library" element={<Library />} />
           <Route path="/impact" element={<Impact />} />
           <Route path="/radar" element={<Radar />} />
+          <Route path="/network" element={<NetworkPage />} />
           <Route path="/search" element={<Search />} />
           <Route path="/bookmarks" element={<Bookmarks />} />
           <Route path="/messages" element={<ChannelChat />} />
