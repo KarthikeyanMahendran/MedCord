@@ -19,7 +19,7 @@ A verified doctor picks it up in a **live private room**. The whole village can 
 
 [![Nexconn Build Challenge 2026](https://img.shields.io/badge/Nexconn_Build_Challenge-2026-3b6cf6?style=for-the-badge)](https://nexconn.ai)
 [![Track](https://img.shields.io/badge/Track-Humanitarian_%26_Social_Good-0f9d8a?style=for-the-badge)](#)
-[![Team](https://img.shields.io/badge/Team-NexGen-7c4dde?style=for-the-badge)](#team)
+[![Team](https://img.shields.io/badge/Team-hackCrew-7c4dde?style=for-the-badge)](#team)
 
 ![Java 21](https://img.shields.io/badge/Java-21-orange?logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4-6db33f?logo=springboot&logoColor=white)
@@ -306,9 +306,9 @@ cd backend  && ./mvnw test                                       # 119 tests aga
 
 ## Team
 
-**NexGen**, built for the **Nexconn Build Challenge 2026** (Reskilll), track **Humanitarian and Social Good**.
+**hackCrew**, built for the **Nexconn Build Challenge 2026** (Reskilll), track **Humanitarian and Social Good**.
 
-Built on [MedCord](https://github.com/KarthikeyanMahendran/MedCord) by Karthikeyan Mahendran, with contributions from the NexGen team.
+Built on [MedCord](https://github.com/KarthikeyanMahendran/MedCord) by Karthikeyan Mahendran, with contributions from the hackCrew team.
 
 <div align="center">
 

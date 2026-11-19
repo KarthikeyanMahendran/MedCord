@@ -1,6 +1,6 @@
 # Submission pack: MedCord · Rural Case Rooms
 
-**Challenge:** Nexconn Build Challenge 2026 (Reskilll) · **Track:** Humanitarian & Social Good · **Team:** NexGen
+**Challenge:** Nexconn Build Challenge 2026 (Reskilll) · **Track:** Humanitarian & Social Good · **Team:** hackCrew
 
 ## One line
 A doctor in every village: community health workers send a patient case by voice, a verified doctor answers in a live Nexconn room, and the community helps pay for care.

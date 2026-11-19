@@ -245,7 +245,7 @@ export default function Landing() {
       <footer className="lp-foot">
         <div className="lp-wrap">
           <span className="lp-logo"><span><LogoMark size={40} /></span>MedCord Case Rooms</span>
-          <p>Built by Team NexGen for the Nexconn Build Challenge 2026. MedCord supports a doctor's judgement and does not replace it. It is not a medical device and not a diagnosis.</p>
+          <p>Built by Team hackCrew for the Nexconn Build Challenge 2026. MedCord supports a doctor's judgement and does not replace it. It is not a medical device and not a diagnosis.</p>
         </div>
       </footer>
     </div>
