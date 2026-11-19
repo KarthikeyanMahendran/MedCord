@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { NCCallEngine, NCCallEventHandler } from '@nexconn/call'
-import { attachCall, createCall, endCallRecord, getCall, getChatToken, markConnected, sendCallSignal } from '../api/calls'
+import { attachCall, createCall, endCallRecord, getCall, markConnected, sendCallSignal } from '../api/calls'
 import type { CallMedia, CallRecord, CallStatus } from '../api/calls'
 import { problemMessage } from '../api/client'
 import { useAuth } from './AuthContext'
@@ -57,7 +57,7 @@ const sdk: { engine: NCCallEngine | null; mods: { chat: typeof import('@nexconn/
 export function CallProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const realtime = useRealtime()
-  const [ready, setReady] = useState(true) // Calling is always ready with native WebRTC
+  const [ready] = useState(true) // Calling is always ready with native WebRTC
   const [state, setState] = useState<CallState>(IDLE)
   const [error, setError] = useState<string | null>(null)
   const [lastEnded, setLastEnded] = useState<string | null>(null)

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { HandHeart, MessageCircle, Plus } from 'lucide-react'
-import { Alert, Badge, Button, Card, EmptyState, FormGroup, Input, Modal, PageHeader, Tabs, Textarea } from '../../components/ui'
+import { Alert, Badge, Button, Card, EmptyState, FormGroup, Input, Modal, PageHeader, Tabs } from '../../components/ui'
 import { ago } from '../../components/cases/UrgencyBadge'
 import { VoiceInput, VoiceTextarea } from '../../components/VoiceField'
 import { cancelDispatch, claimDispatch, createDispatch, finishDispatch, listDispatch } from '../../api/support'

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Flame, Heart } from 'lucide-react'
-import { Alert, Button, Card, EmptyState, FormGroup, Input, PageHeader } from '../../components/ui'
+import { Alert, Button, Card, EmptyState, FormGroup, PageHeader } from '../../components/ui'
 import { ago } from '../../components/cases/UrgencyBadge'
 import { VoiceInput } from '../../components/VoiceField'
 import { checkIn, cheer, circle, myCheckins } from '../../api/support'
