@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Check } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { Alert, Button, FormGroup, Input, PasswordInput } from '../components/ui'
 import { AuthLayout } from '../components/AuthLayout'
 import { useAuth } from '../context/AuthContext'
@@ -9,7 +9,7 @@ import { fieldErrors, problemMessage } from '../api/client'
 import { listRegions, listSpecialties } from '../api/auth'
 import type { RegionOption, RegisterInput } from '../api/auth'
 import { emailLooksValid, passwordChecks, passwordStrength, passwordValid } from '../lib/password'
-import { ROLE_NOUN, ROLE_TITLE, roleFromParam, savedRole } from '../lib/roles'
+import { roleFromParam, savedRole } from '../lib/roles'
 import type { LoginRole } from '../lib/roles'
 
 const LANGUAGES = [
@@ -32,8 +32,7 @@ export default function Register() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const picked = roleFromParam(params.get('role')) ?? savedRole()
-  const [chosen, setChosen] = useState<LoginRole>(picked === 'ADMIN' ? 'HEALTH_WORKER' : picked)
-  const role: LoginRole = chosen
+  const role: LoginRole = picked === 'ADMIN' ? 'HEALTH_WORKER' : picked
   const isDoctor = role === 'DOCTOR'
   const isAsha = role === 'ASHA'
 
@@ -119,8 +118,6 @@ export default function Register() {
   return (
     <AuthLayout>
       <div>
-        <Link to="/login" className="mc-back"><ArrowLeft size={14} /> Back to sign in</Link>
-        <p className="mc-step">Signing up as {ROLE_NOUN[role]}</p>
         <h2>Create your account</h2>
         <p className="mc-hint">
           {isDoctor ? 'We review your licence before your profile shows the verified mark. You can browse while you wait.' : 'You can send your first case as soon as you finish.'}
@@ -174,12 +171,6 @@ export default function Register() {
         )}
 
         <Button type="submit" full loading={busy}>{isDoctor ? 'Create account' : 'Create account and start'}</Button>
-        <p className="mc-hint" style={{ textAlign: 'center', margin: 0 }}>
-          Registering as {ROLE_NOUN[role] === 'doctor' ? 'a doctor' : `a ${ROLE_NOUN[role]}`}.{' '}
-          {(['HEALTH_WORKER', 'ASHA', 'DOCTOR'] as LoginRole[]).filter((r) => r !== role).map((r, n) => (
-            <span key={r}>{n > 0 && ' · '}<button type="button" className="mc-link-btn" onClick={() => { setChosen(r); setErrors({}); setError(null) }}>I am {r === 'DOCTOR' ? 'a doctor' : r === 'ASHA' ? 'an ASHA worker' : 'a health worker'}</button></span>
-          ))}
-        </p>
         <p className="mc-hint">Use test data only. Never enter real patient details. By continuing you agree to use this demo responsibly.</p>
       </form>
       <p className="mc-hint">Already registered? <Link to="/login">Sign in</Link></p>

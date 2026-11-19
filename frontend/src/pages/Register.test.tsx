@@ -46,8 +46,6 @@ describe('Register page', () => {
     setup('/register?role=worker')
     expect(screen.getByRole('heading', { name: /Create your account/i })).toBeInTheDocument()
     expect(screen.queryByRole('radio')).toBeNull()
-    expect(screen.getByText(/Signing up as health worker/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Back to sign in/i })).toHaveAttribute('href', '/login')
   })
 
   it('signs up a health worker with an area and no ID, then goes home', async () => {
@@ -71,7 +69,6 @@ describe('Register page', () => {
     vi.mocked(authApi.register).mockResolvedValue()
     vi.mocked(authApi.fetchMe).mockResolvedValue(me({ accountType: 'HEALTH_WORKER' }))
     setup('/register?role=asha')
-    expect(screen.getByText(/Signing up as ASHA worker/i)).toBeInTheDocument()
     await fillCommon()
     await userEvent.selectOptions(await screen.findByLabelText('Your area'), 'r1')
     await userEvent.click(screen.getByRole('button', { name: /Create account and start/i }))
@@ -85,7 +82,6 @@ describe('Register page', () => {
 
   it('asks a doctor for speciality and licence number and says exactly what is missing', async () => {
     setup('/register?role=doctor')
-    expect(screen.getByText(/Signing up as doctor/i)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Create account' }))
     expect(await screen.findByText('Enter your full name')).toBeInTheDocument()
     expect(screen.getByText(/valid email/i)).toBeInTheDocument()
@@ -109,7 +105,6 @@ describe('Register page', () => {
   it('uses the role last picked on this device when the link has none', async () => {
     localStorage.setItem('mc_login_role', 'DOCTOR')
     setup('/register')
-    expect(screen.getByText(/Signing up as doctor/i)).toBeInTheDocument()
     expect(screen.getByLabelText('Licence number')).toBeInTheDocument()
   })
 
