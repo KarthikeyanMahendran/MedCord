@@ -13,7 +13,7 @@
   "dependencies": {
     "@nexconn/call": "26.2.1",
     "@nexconn/chat": "26.2.0",
-    "@nexconn/engine": "26.2.0",
+    "@nexconn/engine": "26.2.1",
     "axios": "^1.21.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.75.0",
