@@ -95,3 +95,4 @@ a.mc-list-row:hover { background: var(--mc-hover); }
 @media (max-width: 1000px) { .mc-layout-2 { grid-template-columns: 1fr; } }
 @media (max-width: 900px) { .mc-shell { grid-template-columns: 64px minmax(0, 1fr); } .mc-side { display: none; } .mc-page { padding: 24px 16px 48px; } }
 @media (max-width: 640px) { .mc-stats { grid-template-columns: 1fr; } .mc-stat + .mc-stat { border-left: 0; border-top: 1px solid var(--mc-border); } .mc-grid-2 { grid-template-columns: 1fr; } }
+button.mc-rail-btn { background: none; border: 0; padding: 0; cursor: pointer; color: inherit; }
