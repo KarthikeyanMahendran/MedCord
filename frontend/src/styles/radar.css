@@ -5,6 +5,16 @@
 
 .rd-map { padding: 8px 12px 16px; background: radial-gradient(ellipse at 50% 40%, var(--mc-brand-soft), transparent 70%); }
 .rd-map svg { display: block; width: 100%; max-height: 640px; height: auto; }
+.rd-readout { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; min-height: 34px; padding: 6px 4px; font-size: 13px; color: var(--mc-text-muted, #5b6b7f); }
+.rd-readout strong { color: var(--mc-text, #0e1b2c); font-size: 14px; }
+.rd-readout button { border: 1px solid var(--mc-border, #cfd9e6); background: var(--mc-surface, #fff); border-radius: 999px; padding: 3px 10px; font-size: 12px; cursor: pointer; color: inherit; }
+.rd-state { fill: color-mix(in srgb, var(--mc-brand-text) 16%, var(--mc-brand-soft)); stroke: color-mix(in srgb, var(--mc-brand-text) 45%, transparent); stroke-width: 1; stroke-linejoin: round; cursor: pointer; transition: fill .15s; }
+.rd-state.is-watch { fill: color-mix(in srgb, #f59e0b 30%, var(--mc-brand-soft)); }
+.rd-state.is-alert { fill: color-mix(in srgb, #ef4444 32%, var(--mc-brand-soft)); }
+.rd-state:hover, .rd-state.is-active { fill: color-mix(in srgb, var(--mc-brand-text) 40%, var(--mc-brand-soft)); stroke: var(--mc-brand-text); stroke-width: 1.5; }
+.rd-names { pointer-events: none; }
+.rd-names text { font-size: 8.5px; font-weight: 600; fill: var(--mc-text, #0e1b2c); opacity: .72; paint-order: stroke; stroke: var(--mc-surface, #fff); stroke-width: 2.5px; }
+.rd-names text.is-active { font-size: 11px; opacity: 1; }
 .rd-dots { fill: none; stroke: var(--mc-brand-text); stroke-width: 3.4; stroke-linecap: round; opacity: .42; }
 .rd-quiet circle { fill: var(--mc-brand-text); opacity: .75; }
 
