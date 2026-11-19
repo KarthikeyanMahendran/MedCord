@@ -63,5 +63,6 @@ Record this run as a video as a backup in case the network fails on the day.
 - Case-room calls were added after the last live call test; private-message calls are the verified path.
 
 ## Links
+- **Live app:** https://med-cord.vercel.app/welcome
 - Repository: https://github.com/KarthikeyanMahendran/MedCord
 - README with architecture and screenshots: [`README.md`](../README.md)

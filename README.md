@@ -16,6 +16,10 @@ A verified doctor picks it up in a **live private room**. The whole village can 
 
 <br>
 
+### 🔗 **[Live demo: med-cord.vercel.app](https://med-cord.vercel.app/welcome)**
+
+<br>
+
 [![Nexconn Build Challenge 2026](https://img.shields.io/badge/Nexconn_Build_Challenge-2026-3b6cf6?style=for-the-badge)](https://nexconn.ai)
 [![Track](https://img.shields.io/badge/Track-Humanitarian_%26_Social_Good-0f9d8a?style=for-the-badge)](#)
 [![Team](https://img.shields.io/badge/Team-NexGen-7c4dde?style=for-the-badge)](#team)
@@ -199,6 +203,8 @@ cd frontend && npm install && npm run dev
 > Corporate or college networks often block Nexconn. Use a mobile hotspot if the chat shows *Updating every few seconds* instead of *Live with Nexconn*.
 
 ### Demo accounts
+
+Try the live app at **https://med-cord.vercel.app/welcome** with these accounts.
 
 | Role | Email | Password |
 |---|---|---|
