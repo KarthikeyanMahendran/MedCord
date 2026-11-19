@@ -103,3 +103,10 @@ Early-warning layer on top of the case rooms. Rule-based, no AI, no patient iden
 
 Notes: Flyway `out-of-order` is now on so migrations added on other branches still apply after V20. Demo: sign in as an admin, open Outbreak radar, press Simulate outbreak (3 fever-and-rash cases in Wayanad Hills), then Reset demo.
 
+## M10 – Role-first sign-in and sign-up
+
+- [x] Sign-in window picks the role: health worker, ASHA worker, doctor or admin. ASHA workers give their ASHA / NHM ID; doctors give speciality and licence number; the server checks them after the password so emails cannot be probed
+- [x] Sign-up opens straight on the form for that role (no role cards): health worker / ASHA worker (area, language, health centre; ASHA also the NHM ID) or doctor (speciality, licence, country). Health workers are active at once; doctors wait for licence review
+- [x] Field-level errors from the server, live password rules, "sign in instead" for duplicate emails, Back to home link, autofill of the ID details used on this device, demo quick-fill (dev only)
+- [x] `GET /api/v1/auth/regions` and `/auth/specialties` for the form; `/me` returns accountType and preferredLanguage
+
