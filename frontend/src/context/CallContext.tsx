@@ -186,7 +186,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
     })
     if (res.code !== C.NCCallCode.SUCCESS || !res.callId) {
       report(call.id, 'FAILED')
-      setError(res.busyLineUserList?.length ? `${call.callee.displayName} is on another call.` : `Couldn't place the call (code ${res.code}).`)
+      setError(res.busyLineUserList?.length ? `${call.callee.displayName} is on another call.` : res.code === 80006 ? 'Calling is not switched on for this Nexconn app yet. Turn on the Call (VoIP) service in the Nexconn console.' : `Couldn't place the call (code ${res.code}).`)
       return reset()
     }
     providerCallId.current = res.callId
