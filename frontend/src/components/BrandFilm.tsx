@@ -177,15 +177,23 @@ export function BrandFilm() {
   const [i, setI] = useState(0)
   const [hasVideo, setHasVideo] = useState(false)
   const phaseRef = useRef(0)
+  const vref = useRef<HTMLVideoElement>(null)
   useEffect(() => { phaseRef.current = i }, [i])
+  const [phaseMs, setPhaseMs] = useState(PHASE_MS)
+  // Without a video the animation runs on a timer. With a video, captions follow its playback.
   useEffect(() => {
+    if (hasVideo) return
     const t = setInterval(() => setI((n) => (n + 1) % CAPTIONS.length), PHASE_MS)
     return () => clearInterval(t)
-  }, [])
+  }, [hasVideo])
+  const followVideo = () => {
+    const v = vref.current
+    if (v && v.duration) setI(Math.min(CAPTIONS.length - 1, Math.floor((v.currentTime / v.duration) * CAPTIONS.length)))
+  }
   const cases = useTicker(1284, i === 3), mins = useTicker(4, i === 3)
 
   return (
-    <figure className="bf" aria-label="Short film: villages connected to verified doctors across India">
+    <figure className={`bf ${hasVideo ? 'has-video' : ''}`} aria-label="Short film: villages connected to verified doctors across India">
       <div className="bf-stage">
         <div className="bf-glow" aria-hidden="true" />
         <MapCanvas phaseRef={phaseRef} />
@@ -204,14 +212,15 @@ export function BrandFilm() {
         </div>
 
         {/* Optional real video: drop a file at public/media/brand.mp4. It plays over the film when present. */}
-        <video className={`bf-video ${hasVideo ? 'is-on' : ''}`} src="/media/brand.mp4" autoPlay muted loop playsInline
-          onCanPlay={() => setHasVideo(true)} onError={() => setHasVideo(false)} />
+        <video ref={vref} className={`bf-video ${hasVideo ? 'is-on' : ''}`} src="/media/brand.mp4" autoPlay muted loop playsInline
+          onCanPlay={(e) => { setHasVideo(true); setPhaseMs((e.currentTarget.duration / CAPTIONS.length) * 1000) }}
+          onTimeUpdate={followVideo} onError={() => setHasVideo(false)} />
         <span className="bf-live">Illustrative · demo data</span>
         <div className="bf-shade" aria-hidden="true" />
       </div>
       <figcaption>
         <span key={i} className="bf-cap">{CAPTIONS[i]}</span>
-        <span className="bf-dots" aria-hidden="true">{CAPTIONS.map((_, k) => <i key={k} className={k === i ? 'is-on' : k < i ? 'is-done' : ''} style={k === i ? { animationDuration: `${PHASE_MS}ms` } : undefined} />)}</span>
+        <span className="bf-dots" aria-hidden="true">{CAPTIONS.map((_, k) => <i key={k} className={k === i ? 'is-on' : k < i ? 'is-done' : ''} style={k === i ? { animationDuration: `${phaseMs}ms` } : undefined} />)}</span>
       </figcaption>
     </figure>
   )
