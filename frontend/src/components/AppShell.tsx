@@ -6,6 +6,7 @@ import { SideColumn } from './shell/SideColumn'
 import { CallOverlay } from './call/CallOverlay'
 import { CallProvider } from '../context/CallContext'
 import { MedCordAiWidget } from './ai/MedCordAiWidget'
+import { Tour } from './tour/Tour'
 
 /** Discord-style frame: server rail | contextual sidebar | content. */
 export function AppShell() {
@@ -25,6 +26,7 @@ export function AppShell() {
         <SideColumn />
         <div className="mc-content"><Outlet /></div>
         <MedCordAiWidget />
+        <Tour />
       </div>
       <CallOverlay />
     </CallProvider>

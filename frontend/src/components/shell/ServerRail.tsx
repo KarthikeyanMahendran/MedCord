@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { BarChart3, BookOpenCheck, MessageCircle, Plus, Search, ShieldCheck, Stethoscope } from 'lucide-react'
+import { BarChart3, BookOpenCheck, CircleHelp, MessageCircle, Plus, Search, ShieldCheck, Stethoscope } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { colorFor, initialsOf } from '../ui'
 import { listMine } from '../../api/communities'
 import type { Community } from '../../api/communities'
 import { useAuth } from '../../context/AuthContext'
+import { START_TOUR_EVENT } from '../tour/steps'
 
 function RailButton({ to, label, end, children }: { to: string; label: string; end?: boolean; children: React.ReactNode }) {
   return (
@@ -45,6 +46,9 @@ export function ServerRail() {
       ))}
       <RailButton to="/communities" end label="Browse & create communities"><span className="mc-rail-icon mc-rail-add"><Plus size={18} /></span></RailButton>
       <div className="mc-rail-grow" />
+      <button type="button" className="mc-rail-btn" aria-label="Take a tour" data-tip="Take a tour" onClick={() => window.dispatchEvent(new Event(START_TOUR_EVENT))}>
+        <span className="mc-rail-icon"><CircleHelp size={17} /></span>
+      </button>
       <RailButton to="/library" label="Verified answer library"><span className="mc-rail-icon"><BookOpenCheck size={17} /></span></RailButton>
       <RailButton to="/impact" label="Impact"><span className="mc-rail-icon"><BarChart3 size={17} /></span></RailButton>
       <RailButton to="/search" label="Search messages"><span className="mc-rail-icon"><Search size={17} /></span></RailButton>
