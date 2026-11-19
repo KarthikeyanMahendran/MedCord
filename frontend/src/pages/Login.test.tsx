@@ -68,7 +68,7 @@ describe('Login page', () => {
   it('links to account creation', async () => {
     const u = userEvent.setup()
     setup()
-    await u.click(screen.getByRole('button', { name: /create an account/i }))
+    await u.click(screen.getByRole('button', { name: /create a new account/i }))
     expect(await screen.findByText('REGISTER')).toBeInTheDocument()
   })
 })

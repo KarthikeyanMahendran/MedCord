@@ -76,8 +76,8 @@ export default function Login() {
         </div>
       )}
 
-      <div className="mc-auth-divider">New to MedCord?</div>
-      <Link to="/register" style={{ textDecoration: 'none' }}><Button variant="secondary" full>Create an account</Button></Link>
+      <div className="mc-auth-divider">New user?</div>
+      <Link to="/register" style={{ textDecoration: 'none' }}><Button variant="secondary" full>Create a new account</Button></Link>
     </AuthLayout>
   )
 }

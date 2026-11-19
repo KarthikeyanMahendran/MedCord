@@ -100,7 +100,7 @@ export default function Landing() {
         <nav aria-label="Sections">
           <a href="#how">How it works</a><a href="#features">Features</a><a href="#people">Who it is for</a><a href="#nexconn">Real-time</a>
         </nav>
-        <div className="lp-nav-cta"><Link to="/login" className="lp-link">Sign in</Link><Link to="/register" className="lp-btn lp-btn-sm">Get started</Link></div>
+        <div className="lp-nav-cta"><Link to="/login" className="lp-link">Sign in</Link><Link to="/login" className="lp-btn lp-btn-sm">Get started</Link></div>
       </header>
 
       <section className={`lp-hero ${heroVideo ? 'has-video' : ''}`}>
@@ -115,7 +115,7 @@ export default function Landing() {
             <h1>A doctor in every <span>village</span>, one tap away.</h1>
             <p>Rural Case Rooms connects community health workers with verified doctors. Send a case by voice, get triaged in a second, and have an answer in a private live room.</p>
             <div className="lp-hero-btns">
-              <Link to="/register" className="lp-btn">Start a case room <ArrowRight size={16} /></Link>
+              <Link to="/login" className="lp-btn">Start a case room <ArrowRight size={16} /></Link>
               <a href="#how" className="lp-btn lp-btn-ghost">See how it works</a>
             </div>
             <ul className="lp-trust">
@@ -233,7 +233,7 @@ export default function Landing() {
         <div className="lp-wrap">
           <Reveal><h2>Bring a doctor to every village.</h2>
             <p>Create an account and open your first case room in under a minute.</p>
-            <div className="lp-hero-btns lp-center"><Link to="/register" className="lp-btn lp-btn-light">Get started <ArrowRight size={16} /></Link><Link to="/login" className="lp-btn lp-btn-ghost">Sign in</Link></div>
+            <div className="lp-hero-btns lp-center"><Link to="/login" className="lp-btn lp-btn-light">Get started <ArrowRight size={16} /></Link><Link to="/login" className="lp-btn lp-btn-ghost">Sign in</Link></div>
           </Reveal>
         </div>
       </section>
