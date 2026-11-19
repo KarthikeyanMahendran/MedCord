@@ -15,11 +15,13 @@ public class MessageController {
     private final MessageService service;
     private final ThreadService threads;
     private final ReactionService reactions;
+    private final BookmarkService bookmarks;
 
-    public MessageController(MessageService service, ThreadService threads, ReactionService reactions) {
+    public MessageController(MessageService service, ThreadService threads, ReactionService reactions, BookmarkService bookmarks) {
         this.service = service;
         this.threads = threads;
         this.reactions = reactions;
+        this.bookmarks = bookmarks;
     }
 
     private static UUID me(Jwt jwt) { return UUID.fromString(jwt.getSubject()); }
@@ -37,7 +39,7 @@ public class MessageController {
 
     @PatchMapping("/messages/{id}")
     MessageDto edit(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody EditRequest r) {
-        return service.edit(id, me(jwt), r.body());
+        return service.edit(id, me(jwt), r.body(), Boolean.TRUE.equals(r.autoRedact()));
     }
 
     @DeleteMapping("/messages/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -84,4 +86,20 @@ public class MessageController {
 
     @GetMapping("/channels/{channelId}/pins")
     List<MessageDto> pins(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID channelId) { return reactions.pinned(channelId, me(jwt)); }
+
+    // bookmarks
+    @PutMapping("/messages/{id}/bookmark")
+    MessageDto bookmark(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody(required = false) BookmarkRequest r) {
+        return bookmarks.save(id, me(jwt), r == null ? null : r.note());
+    }
+
+    @DeleteMapping("/messages/{id}/bookmark")
+    MessageDto unbookmark(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        return bookmarks.remove(id, me(jwt));
+    }
+
+    @GetMapping("/me/bookmarks")
+    List<BookmarkDto> myBookmarks(@AuthenticationPrincipal Jwt jwt) {
+        return bookmarks.list(me(jwt));
+    }
 }

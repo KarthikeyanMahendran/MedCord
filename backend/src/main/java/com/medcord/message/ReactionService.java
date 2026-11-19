@@ -21,10 +21,13 @@ public class ReactionService {
     private final ChannelAccess access;
     private final MessageService messageService;
     private final com.medcord.audit.AuditService audit;
+    private final com.medcord.realtime.RealtimeHub realtime;
 
     public ReactionService(MessageRepository messages, ReactionRepository reactions, ChannelRepository channels,
-                           ChannelAccess access, MessageService messageService, com.medcord.audit.AuditService audit) {
+                           ChannelAccess access, MessageService messageService, com.medcord.audit.AuditService audit,
+                           com.medcord.realtime.RealtimeHub realtime) {
         this.audit = audit;
+        this.realtime = realtime;
         this.messages = messages; this.reactions = reactions; this.channels = channels;
         this.access = access; this.messageService = messageService;
     }
@@ -44,6 +47,7 @@ public class ReactionService {
             r.setEmoji(emoji);
             reactions.saveAndFlush(r);
         }
+        realtime.publishToChannel(m.getChannelId(), com.medcord.realtime.RealtimeEvent.of("MESSAGE_UPDATED", m.getChannelId(), null, java.util.Map.of("messageId", m.getId())));
         return messageService.dto(m, userId);
     }
 
@@ -53,6 +57,7 @@ public class ReactionService {
         Message m = writable(messageId, userId);
         reactions.deleteById(new Reaction.Key(messageId, userId, emoji));
         reactions.flush();
+        realtime.publishToChannel(m.getChannelId(), com.medcord.realtime.RealtimeEvent.of("MESSAGE_UPDATED", m.getChannelId(), null, java.util.Map.of("messageId", m.getId())));
         return messageService.dto(m, userId);
     }
 
@@ -60,7 +65,11 @@ public class ReactionService {
     public MessageDto pin(UUID messageId, UUID userId, boolean pin) {
         Message m = messages.findById(messageId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Message not found"));
         Channel ch = channel(m.getChannelId());
-        access.require(ch, userId, Permission.MODERATE_MESSAGES);
+        if (ch.getType() == Channel.Type.DM) {
+            access.assertCanPost(ch, userId);
+        } else {
+            access.require(ch, userId, Permission.MODERATE_MESSAGES);
+        }
         if (m.isDeleted()) throw new ApiException(HttpStatus.CONFLICT, "Message was deleted");
         if (m.getThreadId() != null) throw new ApiException(HttpStatus.BAD_REQUEST, "Thread replies cannot be pinned");
         if (pin && m.getPinnedAt() == null) {
@@ -73,6 +82,7 @@ public class ReactionService {
         }
         messages.saveAndFlush(m);
         audit.record(ch.getCommunityId(), userId, pin ? "MESSAGE_PINNED" : "MESSAGE_UNPINNED", "MESSAGE", m.getId(), (pin ? "Pinned" : "Unpinned") + " a message in #" + ch.getName());
+        realtime.publishToChannel(ch.getId(), com.medcord.realtime.RealtimeEvent.of("MESSAGE_UPDATED", ch.getId(), ch.getCommunityId(), java.util.Map.of("messageId", m.getId())));
         return messageService.dto(m, userId);
     }
 

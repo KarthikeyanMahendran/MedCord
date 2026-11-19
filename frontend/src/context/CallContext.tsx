@@ -17,6 +17,7 @@ export interface CallState {
   remoteMicOn: boolean
   remoteCamOn: boolean
   connectedAt: number | null
+  screenSharing?: boolean
 }
 
 interface CallApi {
@@ -26,12 +27,14 @@ interface CallApi {
   error: string | null
   /** Short summary of the call that just ended ("Video call · 1:23"), shown briefly. */
   lastEnded: string | null
+  screenStream?: MediaStream | null
   startCall: (channelId: string, media: CallMedia) => Promise<void>
   accept: () => Promise<void>
   decline: () => Promise<void>
   hangup: () => Promise<void>
   toggleMic: () => Promise<void>
   toggleCam: () => Promise<void>
+  toggleScreenShare?: () => Promise<void>
   bindVideo: (local: HTMLVideoElement | null, remote: HTMLVideoElement | null) => void
   dismiss: () => void
 }
@@ -56,10 +59,13 @@ export function CallProvider({ children }: { children: ReactNode }) {
   /** Why background set-up failed. Shown only when the user actually tries to call, so a blocked network does not nag on every page. */
   const setupError = useRef<string | null>(null)
   const [lastEnded, setLastEnded] = useState<string | null>(null)
+  const [screenStream, setScreenStream] = useState<MediaStream | null>(null)
+  const screenRef = useRef<MediaStream | null>(null)
   const stateRef = useRef(state)
   const providerCallId = useRef<string | null>(null)
   const ringTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   stateRef.current = state
+  screenRef.current = screenStream
 
   const report = useCallback((id: string, outcome: CallStatus) => { endCallRecord(id, outcome).catch(() => undefined) }, [])
 
@@ -68,6 +74,8 @@ export function CallProvider({ children }: { children: ReactNode }) {
     if (ringTimer.current) clearTimeout(ringTimer.current)
     ringTimer.current = null
     providerCallId.current = null
+    screenRef.current?.getTracks().forEach((t) => { try { t.stop() } catch { /* ignore */ } })
+    setScreenStream(null)
     setState(IDLE)
     if (summary) {
       setLastEnded(summary)
@@ -224,6 +232,28 @@ export function CallProvider({ children }: { children: ReactNode }) {
     if (res && res.code === sdk.mods!.call.NCCallCode.SUCCESS) setState((s) => ({ ...s, camOn: next }))
   }, [])
 
+  const toggleScreenShare = useCallback(async () => {
+    if (stateRef.current.screenSharing) {
+      screenRef.current?.getTracks().forEach((t) => { try { t.stop() } catch { /* ignore */ } })
+      setScreenStream(null)
+      setState((s) => ({ ...s, screenSharing: false }))
+      return
+    }
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      setError('Screen sharing is not supported in this browser.')
+      return
+    }
+    try {
+      const display = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false })
+      display.getVideoTracks()[0].onended = () => {
+        setScreenStream(null)
+        setState((s) => ({ ...s, screenSharing: false }))
+      }
+      setScreenStream(display)
+      setState((s) => ({ ...s, screenSharing: true }))
+    } catch { /* user cancelled screen picker */ }
+  }, [])
+
   const bindVideo = useCallback((local: HTMLVideoElement | null, remote: HTMLVideoElement | null) => {
     const engine = sdk.engine
     const call = stateRef.current.call
@@ -234,8 +264,8 @@ export function CallProvider({ children }: { children: ReactNode }) {
   }, [user?.id])
 
   const value = useMemo<CallApi>(() => ({
-    ready, state, error, lastEnded, startCall, accept, decline, hangup, toggleMic, toggleCam, bindVideo, dismiss: () => setError(null),
-  }), [ready, state, error, lastEnded, startCall, accept, decline, hangup, toggleMic, toggleCam, bindVideo])
+    ready, state, error, lastEnded, screenStream, startCall, accept, decline, hangup, toggleMic, toggleCam, toggleScreenShare, bindVideo, dismiss: () => setError(null),
+  }), [ready, state, error, lastEnded, screenStream, startCall, accept, decline, hangup, toggleMic, toggleCam, toggleScreenShare, bindVideo])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

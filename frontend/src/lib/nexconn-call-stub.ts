@@ -4,25 +4,29 @@
  * simply be unavailable until the real package is provided.
  */
 
-export enum NCCallEndReason {
-  NO_ANSWER = 'NO_ANSWER',
-  MISSED = 'MISSED',
-  DECLINED = 'DECLINED',
-  CANCELED = 'CANCELED',
-  FAILED = 'FAILED',
-}
+export const NCCallEndReason = {
+  NO_ANSWER: 'NO_ANSWER',
+  MISSED: 'MISSED',
+  DECLINED: 'DECLINED',
+  CANCELED: 'CANCELED',
+  FAILED: 'FAILED',
+} as const
+export type NCCallEndReason = typeof NCCallEndReason[keyof typeof NCCallEndReason]
 
-export enum NCCallCode {
-  SUCCESS = 0,
-}
+export const NCCallCode = {
+  SUCCESS: 0,
+} as const
+export type NCCallCode = typeof NCCallCode[keyof typeof NCCallCode]
 
-export enum NCCallVideoResolution {
-  RESOLUTION_1280X720 = '1280x720',
-}
+export const NCCallVideoResolution = {
+  RESOLUTION_1280X720: '1280x720',
+} as const
+export type NCCallVideoResolution = typeof NCCallVideoResolution[keyof typeof NCCallVideoResolution]
 
-export enum NCCallVideoFrameRate {
-  FPS_24 = 24,
-}
+export const NCCallVideoFrameRate = {
+  FPS_24: 24,
+} as const
+export type NCCallVideoFrameRate = typeof NCCallVideoFrameRate[keyof typeof NCCallVideoFrameRate]
 
 export type NCCallEventHandler = Record<string, unknown>
 export type NCCallEngine = typeof NCCallEngineStub

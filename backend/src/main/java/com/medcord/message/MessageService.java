@@ -1,9 +1,13 @@
 package com.medcord.message;
 
+import com.medcord.attachment.AttachmentService;
+import com.medcord.attachment.AttachmentService.AttachmentDto;
 import com.medcord.common.ApiException;
 import com.medcord.community.*;
 import com.medcord.message.MessageDtos.*;
 import com.medcord.nexconn.ChannelTransport;
+import com.medcord.notification.NotificationService;
+import com.medcord.safety.SafetyService;
 import com.medcord.user.*;
 import com.medcord.user.ProfessionalProfile.Verification;
 import java.time.Duration;
@@ -22,6 +26,9 @@ public class MessageService {
     private final MessageRevisionRepository revisions;
     private final ThreadRepository threads;
     private final ReactionRepository reactions;
+    private final MessageBookmarkRepository bookmarks;
+    private final AttachmentService attachments;
+    private final NotificationService notifications;
     private final ChannelRepository channels;
     private final UserRepository users;
     private final ProfessionalProfileRepository profiles;
@@ -29,25 +36,34 @@ public class MessageService {
     private final ChannelTransport transport;
     private final com.medcord.moderation.MuteRepository mutes;
     private final com.medcord.audit.AuditService audit;
+    private final SafetyService safety;
     private final Duration editWindow;
 
-    public MessageService(MessageRepository messages, MessageRevisionRepository revisions, ThreadRepository threads, ReactionRepository reactions, ChannelRepository channels,
-                          UserRepository users, ProfessionalProfileRepository profiles, ChannelAccess access,
-                          ChannelTransport transport, com.medcord.moderation.MuteRepository mutes, com.medcord.audit.AuditService audit,
+    public MessageService(MessageRepository messages, MessageRevisionRepository revisions, ThreadRepository threads,
+                          ReactionRepository reactions, MessageBookmarkRepository bookmarks, AttachmentService attachments,
+                          NotificationService notifications, ChannelRepository channels, UserRepository users,
+                          ProfessionalProfileRepository profiles, ChannelAccess access, ChannelTransport transport,
+                          com.medcord.moderation.MuteRepository mutes, com.medcord.audit.AuditService audit,
+                          SafetyService safety,
                           @Value("${medcord.messages.edit-window-minutes:1440}") long editWindowMinutes) {
-        this.messages = messages; this.revisions = revisions; this.threads = threads; this.reactions = reactions; this.channels = channels; this.users = users;
-        this.profiles = profiles; this.access = access; this.transport = transport;
-        this.mutes = mutes; this.audit = audit;
+        this.messages = messages; this.revisions = revisions; this.threads = threads; this.reactions = reactions;
+        this.bookmarks = bookmarks; this.attachments = attachments; this.notifications = notifications;
+        this.channels = channels; this.users = users; this.profiles = profiles; this.access = access;
+        this.transport = transport; this.mutes = mutes; this.audit = audit; this.safety = safety;
         this.editWindow = Duration.ofMinutes(editWindowMinutes);
     }
 
     @Transactional
     public MessageDto send(UUID channelId, UUID userId, SendRequest r) {
-        return post(channel(channelId), userId, r.body(), r.replyToId(), null);
+        return post(channel(channelId), userId, r.body(), r.replyToId(), r.attachmentIds(), null, Boolean.TRUE.equals(r.autoRedact()));
     }
 
     /** Shared posting path for channel messages (threadId == null) and thread replies. */
-    MessageDto post(Channel ch, UUID userId, String rawBody, UUID replyToId, MessageThread thread) {
+    MessageDto post(Channel ch, UUID userId, String rawBody, UUID replyToId, List<UUID> attachmentIds, MessageThread thread) {
+        return post(ch, userId, rawBody, replyToId, attachmentIds, thread, false);
+    }
+
+    MessageDto post(Channel ch, UUID userId, String rawBody, UUID replyToId, List<UUID> attachmentIds, MessageThread thread, boolean autoRedact) {
         Set<Permission> held = access.permissions(ch, userId);
         if (ch.isArchived()) throw new ApiException(HttpStatus.CONFLICT, "This channel is archived and read-only");
         access.assertCanPost(ch, userId);
@@ -63,13 +79,23 @@ public class MessageService {
         }
         User u = users.findById(userId).orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Unknown user"));
         if (u.getStatus() == User.Status.SUSPENDED) throw new ApiException(HttpStatus.FORBIDDEN, "Account suspended");
-        String body = rawBody.trim();
-        if (body.isEmpty()) throw new ApiException(HttpStatus.BAD_REQUEST, "Message cannot be empty");
+
+        String body = rawBody == null ? "" : rawBody.trim();
+        boolean hasAttachments = attachmentIds != null && !attachmentIds.isEmpty();
+        if (body.isEmpty() && !hasAttachments) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Message cannot be empty");
+        }
+        if (!body.isEmpty()) {
+            body = safety.enforceBeforeSend(ch, userId, body, autoRedact).body();
+        }
 
         Message msg = new Message();
         msg.setChannelId(ch.getId());
         msg.setAuthorId(userId);
         msg.setBody(body);
+        if (body.isEmpty() && hasAttachments && attachments.areAllAudio(attachmentIds)) {
+            msg.setKind("VOICE");
+        }
         if (thread != null) msg.setThreadId(thread.getId());
         if (replyToId != null) {
             UUID scope = thread == null ? null : thread.getId();
@@ -80,6 +106,10 @@ public class MessageService {
             msg.setReplyToId(target.getId());
         }
         msg = messages.saveAndFlush(msg);
+        if (hasAttachments) {
+            attachments.linkToMessage(attachmentIds, ch.getId(), userId, msg.getId());
+        }
+        notifications.onMessagePosted(ch, msg, u, held);
         transport.onMessageSent(ch.getCommunityId(), ch.getId(), msg.getId());
         return toDtos(List.of(msg), userId).get(0);
     }
@@ -103,7 +133,7 @@ public class MessageService {
         return new MessagePage(toDtos(slice, userId), hasMore);
     }
 
-    MessageDto dto(Message m, UUID viewerId) { return toDtos(List.of(m), viewerId).get(0); }
+    public MessageDto dto(Message m, UUID viewerId) { return toDtos(List.of(m), viewerId).get(0); }
 
     /** Newest page first in storage order; returned oldest-to-newest for display. Cursor = id of the oldest message already loaded. */
     @Transactional(readOnly = true)
@@ -128,16 +158,22 @@ public class MessageService {
     /** Author-only, inside the edit window. The previous content is snapshotted first. */
     @Transactional
     public MessageDto edit(UUID messageId, UUID userId, String newBody) {
+        return edit(messageId, userId, newBody, false);
+    }
+
+    @Transactional
+    public MessageDto edit(UUID messageId, UUID userId, String newBody, boolean autoRedact) {
         Message msg = message(messageId);
         Channel ch = channel(msg.getChannelId());
         access.permissions(ch, userId);
         if (msg.isDeleted()) throw new ApiException(HttpStatus.CONFLICT, "Message was deleted");
         if (!msg.getAuthorId().equals(userId)) throw new ApiException(HttpStatus.FORBIDDEN, "Only the author can edit a message");
-        if (!"TEXT".equals(msg.getKind())) throw new ApiException(HttpStatus.CONFLICT, "Call records cannot be edited");
+        if (!"TEXT".equals(msg.getKind())) throw new ApiException(HttpStatus.CONFLICT, "This message type cannot be edited");
         if (ch.isArchived()) throw new ApiException(HttpStatus.CONFLICT, "This channel is archived and read-only");
         if (msg.getCreatedAt().plus(editWindow).isBefore(Instant.now())) throw new ApiException(HttpStatus.CONFLICT, "The edit window has passed");
         String body = newBody.trim();
         if (body.isEmpty()) throw new ApiException(HttpStatus.BAD_REQUEST, "Message cannot be empty");
+        body = safety.enforceBeforeSend(ch, userId, body, autoRedact).body();
         if (body.equals(msg.getBody())) throw new ApiException(HttpStatus.BAD_REQUEST, "No changes to save");
 
         snapshot(msg, "EDIT", userId);
@@ -203,22 +239,28 @@ public class MessageService {
         return messages.findById(id).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Message not found"));
     }
 
-    /** Batch-loads authors, profiles and reply targets to avoid N+1 queries. */
+    /** Batch-loads authors, profiles, attachments, bookmarks and reply targets to avoid N+1 queries. */
     List<MessageDto> toDtos(List<Message> list, UUID viewerId) {
+        if (list.isEmpty()) return List.of();
+        List<UUID> ids = list.stream().map(Message::getId).toList();
         Set<UUID> replyIds = list.stream().map(Message::getReplyToId).filter(Objects::nonNull).collect(Collectors.toSet());
-        Map<UUID, Message> replies = messages.findAllById(replyIds).stream().collect(Collectors.toMap(Message::getId, x -> x));
+        Map<UUID, Message> replies = replyIds.isEmpty() ? Map.of()
+            : messages.findAllById(replyIds).stream().collect(Collectors.toMap(Message::getId, x -> x));
         Set<UUID> authorIds = new HashSet<>();
         list.forEach(m -> authorIds.add(m.getAuthorId()));
         replies.values().forEach(m -> authorIds.add(m.getAuthorId()));
         Map<UUID, User> authors = users.findAllById(authorIds).stream().collect(Collectors.toMap(User::getId, x -> x));
-        Map<UUID, MessageThread> threadByRoot = threads.findByRootMessageIdIn(list.stream().map(Message::getId).toList())
+        Map<UUID, MessageThread> threadByRoot = threads.findByRootMessageIdIn(ids)
             .stream().collect(Collectors.toMap(MessageThread::getRootMessageId, x -> x));
         Map<UUID, ThreadRepository.Stats> stats = threadByRoot.isEmpty() ? Map.of()
             : threads.stats(threadByRoot.values().stream().map(MessageThread::getId).toList()).stream().collect(Collectors.toMap(ThreadRepository.Stats::getThreadId, x -> x));
         Map<UUID, List<ReactionDto>> reactionMap = new HashMap<>();
-        reactions.counts(list.stream().map(Message::getId).toList(), viewerId).forEach(c ->
+        reactions.counts(ids, viewerId).forEach(c ->
             reactionMap.computeIfAbsent(c.getMessageId(), k -> new ArrayList<>()).add(new ReactionDto(c.getEmoji(), c.getTotal(), c.getMine() > 0)));
         Map<UUID, ProfessionalProfile> profs = profiles.findAllById(authorIds).stream().collect(Collectors.toMap(ProfessionalProfile::getUserId, x -> x));
+        Map<UUID, List<AttachmentDto>> attachMap = attachments.forMessages(ids);
+        Set<UUID> bookmarkedIds = bookmarks.findByUserIdAndMessageIdIn(viewerId, ids).stream()
+            .map(MessageBookmark::getMessageId).collect(Collectors.toSet());
 
         return list.stream().map(m -> {
             User a = authors.get(m.getAuthorId());
@@ -244,9 +286,14 @@ public class MessageService {
             return new MessageDto(m.getId(), m.getChannelId(), author, m.isDeleted() ? null : m.getBody(),
                 m.getCreatedAt(), m.getEditedAt(), m.isDeleted(), preview, summary, m.getThreadId(),
                 m.isDeleted() ? List.of() : reactionMap.getOrDefault(m.getId(), List.of()), m.getPinnedAt() != null && !m.isDeleted(),
-                m.getKind(), m.getCallId());
+                m.getKind(), m.getCallId(),
+                m.isDeleted() ? List.of() : attachMap.getOrDefault(m.getId(), List.of()),
+                !m.isDeleted() && bookmarkedIds.contains(m.getId()));
         }).toList();
     }
 
-    private static String excerpt(String s) { return s.length() <= 100 ? s : s.substring(0, 100) + "…"; }
+    private static String excerpt(String s) {
+        if (s == null || s.isBlank()) return "Attachment";
+        return s.length() <= 100 ? s : s.substring(0, 100) + "…";
+    }
 }

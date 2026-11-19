@@ -5,7 +5,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @org.springframework.scheduling.annotation.EnableScheduling
-@org.springframework.boot.context.properties.EnableConfigurationProperties(com.medcord.nexconn.NexconnProperties.class)
+@org.springframework.boot.context.properties.EnableConfigurationProperties({
+	com.medcord.nexconn.NexconnProperties.class,
+	com.medcord.copilot.CopilotProperties.class
+})
 public class MedcordBackendApplication {
 
 	public static void main(String[] args) {
