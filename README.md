@@ -13,7 +13,7 @@ A verified doctor picks it up in a **live private room**. The whole village can 
 
 <br>
 
-### 🔗 **[Live demo: med-cord.vercel.app](https://med-cord.vercel.app/welcome)**
+### 🔗 **[Live demo: medcord.devs.surf](https://medcord.devs.surf/welcome)**
 
 <br>
 
@@ -31,7 +31,7 @@ A verified doctor picks it up in a **live private room**. The whole village can 
 <br>
 
 <p>
-<a href="https://med-cord.vercel.app/welcome"><b>Live demo</b></a> ·
+<a href="https://medcord.devs.surf/welcome"><b>Live demo</b></a> ·
 <a href="#what-medcord-does">What it does</a> ·
 <a href="#built-on-nexconn">Nexconn</a> ·
 <a href="#features">Features</a> ·
@@ -56,7 +56,7 @@ A verified doctor picks it up in a **live private room**. The whole village can 
 | **Nexconn** | Chat SDK for live case rooms, Call SDK for voice and video, Server API for tokens |
 | **Also** | Care Fund, Volunteer help, daily check-in, Outbreak Radar, care network map |
 | **Languages** | English, Tamil, Hindi, Malayalam, Telugu, Kannada, Bengali |
-| **Try it now** | [med-cord.vercel.app](https://med-cord.vercel.app/welcome): tap **Worker**, **Doctor** or **Admin** on the sign-in page |
+| **Try it now** | [medcord.devs.surf](https://medcord.devs.surf/welcome): tap **Worker**, **Doctor** or **Admin** on the sign-in page |
 
 ---
 
@@ -227,7 +227,7 @@ cd frontend && npm install && npm run dev
 
 ### Demo accounts
 
-Try the live app at **https://med-cord.vercel.app/welcome** with these accounts.
+Try the live app at **https://medcord.devs.surf/welcome** with these accounts.
 
 | Role | Email | Password |
 |---|---|---|
