@@ -1,32 +1,23 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
 import { Mic, Square } from 'lucide-react'
 import { Input, Textarea } from './ui'
 import type { InputProps } from './ui/Input'
 import type { TextareaProps } from './ui/Textarea'
-import { canDictate, dictate } from '../lib/speech'
+import { useDictation } from '../lib/useDictation'
 
 const savedLang = () => { try { return localStorage.getItem('mc_lang') ?? 'en-IN' } catch { return 'en-IN' } }
 
-/** Microphone button that types what you say into a field. Hidden in browsers that cannot do it. */
+/** Microphone button that types what you say into a field. Hidden if this browser cannot record. */
 export function MicButton({ value, onText, label = 'Speak instead of typing', inline }: { value: string; onText: (text: string) => void; label?: string; inline?: boolean }) {
-  const [listening, setListening] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const stop = useRef<(() => void) | null>(null)
-  useEffect(() => () => stop.current?.(), [])
-  if (!canDictate()) return null
-
-  const toggle = () => {
-    if (listening) { stop.current?.(); return }
-    const base = value ? value.replace(/\s+$/, '') + ' ' : ''
-    setError(null); setListening(true)
-    stop.current = dictate(savedLang(), (t) => onText(base + t), (err) => { setListening(false); if (err) setError(err) })
-  }
-
+  const latest = useRef(value)
+  latest.current = value
+  const { available, listening, working, error, toggle } = useDictation(savedLang(), () => latest.current, onText)
+  if (!available) return null
   return (
     <>
-      <button type="button" className={`vf-mic ${inline ? 'is-inline' : ''} ${listening ? 'is-on' : ''}`} onClick={toggle} aria-pressed={listening}
-        aria-label={listening ? 'Stop listening' : label} title={listening ? 'Tap to stop' : label}>
-        {listening ? <Square size={14} /> : <Mic size={16} />}
+      <button type="button" className={`vf-mic ${inline ? 'is-inline' : ''} ${listening ? 'is-on' : ''}`} onClick={() => void toggle()} aria-pressed={listening} disabled={working}
+        aria-label={listening ? 'Stop listening' : working ? 'Turning your voice into text' : label} title={listening ? 'Tap to stop' : working ? 'Working…' : label}>
+        {listening ? <Square size={14} /> : working ? <span aria-hidden="true">…</span> : <Mic size={16} />}
       </button>
       {error && <span className="vf-err" role="alert">{error}</span>}
     </>

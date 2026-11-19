@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, ShieldAlert } from 'lucide-react'
-import { Alert, Button, Card, FormGroup, Input, Textarea } from '../../components/ui'
+import { Alert, Button, Card, FormGroup, Input } from '../../components/ui'
 import { VoiceInput, VoiceTextarea } from '../../components/VoiceField'
 import { listMine } from '../../api/communities'
 import type { Community } from '../../api/communities'

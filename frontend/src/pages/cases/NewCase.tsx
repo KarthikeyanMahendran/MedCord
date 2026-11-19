@@ -8,7 +8,8 @@ import { submitCase } from '../../api/cases'
 import type { SubmitCase, SubmitResult } from '../../api/cases'
 import { problemMessage } from '../../api/client'
 import { enqueue, isOffline } from '../../lib/offlineQueue'
-import { LANGUAGES, canDictate, dictate } from '../../lib/speech'
+import { LANGUAGES } from '../../lib/speech'
+import { useDictation } from '../../lib/useDictation'
 
 /** Big tap targets for people who can't easily type. The English tag is appended so triage works in any language. */
 const SYMPTOMS = [
@@ -32,22 +33,15 @@ export default function NewCase() {
   const [sex, setSex] = useState('')
   const [village, setVillage] = useState('')
   const [v, setV] = useState({ temperature: '', spo2: '', heartRate: '', systolic: '' })
-  const [listening, setListening] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [queued, setQueued] = useState(false)
   const [result, setResult] = useState<SubmitResult | null>(null)
-  const stopRef = useRef<(() => void) | null>(null)
-
-  useEffect(() => () => stopRef.current?.(), [])
+  const complaintRef = useRef(complaint)
+  complaintRef.current = complaint
+  const voice = useDictation(lang, () => complaintRef.current, setComplaint)
+  const { listening } = voice
   useEffect(() => { try { localStorage.setItem('mc_lang', lang) } catch { /* ignore */ } }, [lang])
-
-  function toggleMic() {
-    if (listening) { stopRef.current?.(); return }
-    const base = complaint ? complaint + ' ' : ''
-    setListening(true); setError(null)
-    stopRef.current = dictate(lang, (t) => setComplaint(base + t), (err) => { setListening(false); if (err) setError(err) })
-  }
 
   const toggleTag = (t: string) => setTags((cur) => (cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]))
 
@@ -146,12 +140,13 @@ export default function NewCase() {
             <div className="mc-dictate">
               <Textarea value={complaint} onChange={(e) => setComplaint(e.target.value)} rows={4} aria-label="Describe the problem"
                 placeholder="Describe the problem in your own words…" />
-              {canDictate() && (
-                <button type="button" className={`mc-mic ${listening ? 'is-live' : ''}`} onClick={toggleMic} aria-label={listening ? 'Stop recording' : 'Speak'}>
+              {voice.available && (
+                <button type="button" className={`mc-mic ${listening ? 'is-live' : ''}`} onClick={() => void voice.toggle()} disabled={voice.working} aria-label={listening ? 'Stop recording' : 'Speak'}>
                   {listening ? <Square size={26} /> : <Mic size={26} />}
-                  <span>{listening ? 'Listening… tap to stop' : 'Tap and speak'}</span>
+                  <span>{listening ? 'Listening… tap to stop' : voice.working ? 'Turning your voice into text…' : 'Tap and speak'}</span>
                 </button>
               )}
+              {voice.error && <p className="mc-error" role="alert">{voice.error}</p>}
             </div>
           </div>
         </Card>

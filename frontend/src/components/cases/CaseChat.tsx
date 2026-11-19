@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Mic, Send, Square, Volume2 } from 'lucide-react'
+import { Languages, Mic, Send, Square, Volume2 } from 'lucide-react'
 import { Button } from '../ui'
 import { listMessages, sendMessage } from '../../api/messages'
 import type { Message } from '../../api/messages'
 import { problemMessage } from '../../api/client'
-import { canDictate, canSpeak, dictate, speak } from '../../lib/speech'
+import { useDictation } from '../../lib/useDictation'
+import { speakSmart, translateText } from '../../lib/sarvam'
 import { connectNexconn, onChannelSignal, onNexconnStatus, signalPeer } from '../../lib/nexconn'
 import type { NexconnStatus } from '../../lib/nexconn'
 
@@ -19,7 +20,6 @@ export function CaseChat({ channelId, lang, meId, peerId, readOnly }: { channelI
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
-  const [listening, setListening] = useState(false)
   const stopRef = useRef<(() => void) | null>(null)
   const scroller = useRef<HTMLDivElement>(null)
   const count = useRef(0)
@@ -55,11 +55,17 @@ export function CaseChat({ channelId, lang, meId, peerId, readOnly }: { channelI
     try { await sendMessage(channelId, body); setText(''); void signalPeer(peerId, channelId); await load() } catch (err) { setError(problemMessage(err)) } finally { setSending(false) }
   }
 
-  function toggleMic() {
-    if (listening) { stopRef.current?.(); return }
-    const base = text ? text + ' ' : ''
-    setListening(true); setError(null)
-    stopRef.current = dictate(lang, (t) => setText(base + t), (err) => { setListening(false); if (err) setError(err) })
+  const textRef = useRef(text)
+  textRef.current = text
+  const voice = useDictation(lang, () => textRef.current, setText)
+  const [translated, setTranslated] = useState<Record<string, string>>({})
+  const [translating, setTranslating] = useState<string | null>(null)
+
+  async function translate(id: string, body: string) {
+    if (translated[id]) { setTranslated(({ [id]: _drop, ...rest }) => rest); return }
+    setTranslating(id); setError(null)
+    try { setTranslated((t) => ({ ...t, [id]: '' })); const out = await translateText(body, lang); setTranslated((t) => ({ ...t, [id]: out })) }
+    catch (err) { setTranslated(({ [id]: _drop, ...rest }) => rest); setError(problemMessage(err)) } finally { setTranslating(null) }
   }
 
   return (
@@ -72,23 +78,27 @@ export function CaseChat({ channelId, lang, meId, peerId, readOnly }: { channelI
             <div className="mc-bubble-meta">
               <strong>{m.author.displayName}</strong>
               <span>{new Date(m.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
-              {canSpeak() && m.body && !m.deleted && (
-                <button type="button" className="mc-bubble-speak" aria-label="Read aloud" title="Read aloud" onClick={() => speak(m.body ?? '', lang)}><Volume2 size={14} /></button>
+              {m.body && !m.deleted && (
+                <>
+                  <button type="button" className="mc-bubble-speak" aria-label="Read aloud" title="Read aloud" onClick={() => void speakSmart(m.body ?? '', lang)}><Volume2 size={14} /></button>
+                  <button type="button" className="mc-bubble-speak" aria-label="Translate to my language" title="Translate to my language" onClick={() => void translate(m.id, m.body ?? '')}><Languages size={14} /></button>
+                </>
               )}
             </div>
             <p>{m.deleted ? 'Message deleted' : m.body}</p>
+            {translated[m.id] !== undefined && <p className="mc-bubble-translated">{translating === m.id && !translated[m.id] ? 'Translating…' : translated[m.id]}</p>}
           </div>
         ))}
       </div>
-      {error && <p className="mc-casechat-error" role="alert">{error}</p>}
+      {(error || voice.error) && <p className="mc-casechat-error" role="alert">{error ?? voice.error}</p>}
       {!readOnly && (
         <form className="mc-casechat-form" onSubmit={send}>
           <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Write a message…" rows={2} aria-label="Message"
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send() } }} />
           <div className="mc-casechat-btns">
-            {canDictate() && (
-              <Button variant="icon" aria-label={listening ? 'Stop dictation' : 'Dictate message'} onClick={toggleMic}>
-                {listening ? <Square size={16} /> : <Mic size={16} />}
+            {voice.available && (
+              <Button variant="icon" aria-label={voice.listening ? 'Stop dictation' : 'Dictate message'} disabled={voice.working} onClick={() => void voice.toggle()}>
+                {voice.listening ? <Square size={16} /> : voice.working ? <span aria-hidden="true">…</span> : <Mic size={16} />}
               </Button>
             )}
             <Button type="submit" loading={sending} disabled={!text.trim()} aria-label="Send"><Send size={15} /></Button>

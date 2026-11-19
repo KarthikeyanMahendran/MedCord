@@ -75,3 +75,4 @@
 
 .mc-live { font-size: 12px; padding: 6px 12px; color: var(--mc-text-2); border-bottom: 1px solid var(--mc-border); }
 .mc-live-live { color: #22c55e; font-weight: 600; }
+.mc-bubble-translated { margin: 6px 0 0; padding: 6px 10px; border-left: 3px solid var(--mc-brand); background: var(--mc-brand-soft); border-radius: 6px; font-size: 13.5px; }
