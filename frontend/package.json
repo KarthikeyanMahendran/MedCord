@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@nexconn/call": "26.2.1",
-    "@nexconn/chat": "26.2.0",
+    "@nexconn/chat": "26.2.1",
     "@nexconn/engine": "26.2.0",
     "axios": "^1.21.1",
     "leaflet": "^1.9.4",
