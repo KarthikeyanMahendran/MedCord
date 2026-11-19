@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { START_TOUR_EVENT, STEPS, roleOf, tourKey } from './steps'
+import { JUST_REGISTERED_KEY, START_TOUR_EVENT, STEPS, roleOf, tourKey } from './steps'
 import './tour.css'
 
 type Box = { top: number; left: number; width: number; height: number }
@@ -21,9 +21,14 @@ export function Tour() {
   const steps = STEPS[roleOf(user)]
   const step = steps[i]
 
-  // Auto-start once per user, shortly after the shell has rendered.
+  // Auto-start only for a brand-new account, right after sign-up — never on an ordinary
+  // sign-in. The flag is set by AuthContext.signUp and consumed here, so it fires once.
   useEffect(() => {
     if (!user || user.status !== 'ACTIVE' || read(user.id)) return
+    let justRegistered = false
+    try { justRegistered = sessionStorage.getItem(JUST_REGISTERED_KEY) === '1' } catch { /* ignore */ }
+    if (!justRegistered) return
+    try { sessionStorage.removeItem(JUST_REGISTERED_KEY) } catch { /* ignore */ }
     const t = setTimeout(() => { setI(0); setOpen(true) }, 900)
     return () => clearTimeout(t)
   }, [user])

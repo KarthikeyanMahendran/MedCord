@@ -71,3 +71,6 @@ export const STEPS: Record<TourRole, TourStep[]> = {
 
 export const tourKey = (userId: string) => `mc_tour_done_${userId}`
 export const START_TOUR_EVENT = 'mc:start-tour'
+// Set once, right after a successful sign-up, so the tour auto-runs only for brand-new
+// accounts — never on an ordinary sign-in (even on a fresh browser with no localStorage).
+export const JUST_REGISTERED_KEY = 'mc:just-registered'

@@ -38,6 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
   const signUp = useCallback(async (input: RegisterInput) => {
     await authApi.register(input)
+    // Flag this session as a fresh sign-up so the first-run tour shows once, now — and
+    // never on a later ordinary sign-in. Consumed by the Tour component.
+    try { sessionStorage.setItem('mc:just-registered', '1') } catch { /* ignore */ }
     setUser(await authApi.fetchMe())
   }, [])
   const signOut = useCallback(async () => {
