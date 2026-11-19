@@ -17,18 +17,27 @@ import { useRealtime } from '../../context/RealtimeContext'
 import { useVoiceRoom } from '../../context/VoiceRoomContext'
 import { UserPanel } from './UserPanel'
 
+const communityCache = new Map<string, { community: Community; channels: Channel[] }>()
+
 function CommunitySidebar({ id }: { id: string }) {
   const location = useLocation()
   const { unreads, subscribe } = useRealtime()
-  const [community, setCommunity] = useState<Community | null>(null)
-  const [channels, setChannels] = useState<Channel[]>([])
+  const cached = communityCache.get(id)
+  const [community, setCommunity] = useState<Community | null>(cached?.community ?? null)
+  const [channels, setChannels] = useState<Channel[]>(cached?.channels ?? [])
   const [voiceRooms, setVoiceRooms] = useState<Record<string, VoiceRoom>>({})
   const active = location.pathname.split('/channels/')[1]
 
   useEffect(() => {
     let alive = true
     Promise.all([getCommunity(id), listChannels(id)])
-      .then(([c, ch]) => { if (alive) { setCommunity(c); setChannels(ch) } })
+      .then(([c, ch]) => {
+        if (alive) {
+          communityCache.set(id, { community: c, channels: ch })
+          setCommunity(c)
+          setChannels(ch)
+        }
+      })
       .catch(() => undefined)
     if (typeof listCommunityVoiceRooms === 'function') {
       Promise.resolve(listCommunityVoiceRooms(id))
@@ -41,7 +50,7 @@ function CommunitySidebar({ id }: { id: string }) {
         .catch(() => undefined)
     }
     return () => { alive = false }
-  }, [id, location.pathname])
+  }, [id])
 
   useEffect(() => {
     return subscribe((ev) => {
@@ -115,21 +124,32 @@ function CommunitySidebar({ id }: { id: string }) {
   )
 }
 
+let cachedConvs: Conversation[] = []
+
 function DmSidebar() {
   const { user } = useAuth()
   const { unreads, subscribe } = useRealtime()
   const channelId = useMatch('/messages/:channelId')?.params.channelId
-  const [convs, setConvs] = useState<Conversation[]>([])
+  const [convs, setConvs] = useState<Conversation[]>(cachedConvs)
 
   useEffect(() => {
-    const load = () => listDms().then(setConvs).catch(() => undefined)
-    void load()
+    let alive = true
+    const load = () => listDms().then((res) => {
+      if (alive) {
+        cachedConvs = res
+        setConvs(res)
+      }
+    }).catch(() => undefined)
+
+    if (cachedConvs.length === 0) void load()
+    else void load() // background refresh while displaying cached
+
     const unsub = subscribe((ev) => {
       if (ev.type === 'MESSAGE_CREATED' && !ev.communityId) void load()
     })
     const t = setInterval(() => { if (document.visibilityState !== 'hidden') void load() }, 30000)
-    return () => { unsub(); clearInterval(t) }
-  }, [channelId, subscribe])
+    return () => { alive = false; unsub(); clearInterval(t) }
+  }, [subscribe])
 
   return (
     <>

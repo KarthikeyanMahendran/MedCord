@@ -25,6 +25,7 @@ public class CallController {
     public record StartRequest(@NotNull UUID channelId, @NotNull Call.Media media) {}
     public record AttachRequest(@NotBlank @Size(max = 128) String providerCallId) {}
     public record EndRequest(@NotNull Call.Status outcome) {}
+    public record SignalRequest(@NotBlank String kind, @NotNull Object data) {}
 
     @PostMapping @ResponseStatus(HttpStatus.CREATED)
     CallDto start(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody StartRequest r) { return service.start(me(jwt), r.channelId(), r.media()); }
@@ -40,4 +41,10 @@ public class CallController {
 
     @PostMapping("/{id}/end")
     CallDto end(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody EndRequest r) { return service.end(id, me(jwt), r.outcome()); }
+
+    @PostMapping("/{id}/signal")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void signal(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody SignalRequest r) {
+        service.signal(id, me(jwt), r.kind(), r.data());
+    }
 }

@@ -15,3 +15,6 @@ export const getCall = async (id: string) => (await api.get<CallRecord>(`/calls/
 export const attachCall = async (id: string, providerCallId: string) => (await api.post<CallRecord>(`/calls/${id}/attach`, { providerCallId })).data
 export const markConnected = async (id: string) => (await api.post<CallRecord>(`/calls/${id}/connected`)).data
 export const endCallRecord = async (id: string, outcome: CallStatus) => (await api.post<CallRecord>(`/calls/${id}/end`, { outcome })).data
+export const sendCallSignal = async (callId: string, kind: string, data: unknown) => {
+  await api.post(`/calls/${callId}/signal`, { kind, data })
+}

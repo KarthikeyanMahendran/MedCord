@@ -39,7 +39,8 @@ public class DmService {
     /** One user -> 1:1 DM, several -> group DM (max 10 people including you). Reuses an existing DM with the same people. */
     @Transactional
     public ConversationDto start(UUID me, Set<UUID> others) {
-        Set<UUID> all = new TreeSet<>(others);
+        if (others == null || others.isEmpty()) throw new ApiException(HttpStatus.BAD_REQUEST, "Choose at least one other person");
+        Set<UUID> all = others.stream().filter(java.util.Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));
         all.remove(me);
         if (all.isEmpty()) throw new ApiException(HttpStatus.BAD_REQUEST, "Choose at least one other person");
         if (all.size() + 1 > MAX_PARTICIPANTS) throw new ApiException(HttpStatus.BAD_REQUEST, "A group DM can have at most " + MAX_PARTICIPANTS + " people");
@@ -74,12 +75,80 @@ public class DmService {
 
     @Transactional(readOnly = true)
     public List<ConversationDto> list(UUID me) {
-        List<Channel> mine = channels.findAllById(participants.channelIdsOf(me)).stream()
-            .filter(c -> c.getType() == Channel.Type.DM).toList();   // case rooms have their own screens
+        return list(me, 50, 0);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConversationDto> list(UUID me, int limit, int offset) {
+        List<UUID> myChannelIds = participants.channelIdsOf(me);
+        if (myChannelIds.isEmpty()) return List.of();
+
+        List<Channel> mine = channels.findAllById(myChannelIds).stream()
+            .filter(c -> c.getType() == Channel.Type.DM).toList();
+        if (mine.isEmpty()) return List.of();
+
+        List<UUID> channelIds = mine.stream().map(Channel::getId).toList();
+
+        // 1. Batch load all participants across all channels in one query
+        List<DmParticipant> allParts = participants.findByChannelIdIn(channelIds);
+        Map<UUID, List<UUID>> usersByChannel = new HashMap<>();
+        Set<UUID> allUserIds = new HashSet<>();
+        for (DmParticipant p : allParts) {
+            usersByChannel.computeIfAbsent(p.getChannelId(), k -> new ArrayList<>()).add(p.getUserId());
+            allUserIds.add(p.getUserId());
+        }
+
+        // 2. Batch load all users and profiles in two queries
+        Map<UUID, User> userMap = users.findAllById(allUserIds).stream()
+            .collect(Collectors.toMap(User::getId, u -> u));
+        Map<UUID, ProfessionalProfile> profMap = profiles.findAllById(allUserIds).stream()
+            .collect(Collectors.toMap(ProfessionalProfile::getUserId, p -> p));
+
+        // 3. Batch load all blocks involving 'me' in two queries
+        Set<UUID> blockedByMe = blocks.findByBlockerIdOrderByCreatedAtDesc(me).stream()
+            .map(UserBlock::getBlockedId).collect(Collectors.toSet());
+        Set<UUID> blockedMe = blocks.findByBlockedId(me).stream()
+            .map(UserBlock::getBlockerId).collect(Collectors.toSet());
+
+        // 4. Batch load latest message per channel in one native query
+        Map<UUID, Message> latestByChannel = messages.latestMessagesForChannels(channelIds).stream()
+            .collect(Collectors.toMap(Message::getChannelId, m -> m, (a, b) -> a));
+
         List<ConversationDto> out = new ArrayList<>();
-        for (Channel c : mine) out.add(toDto(c, me));
+        for (Channel c : mine) {
+            List<UUID> ids = usersByChannel.getOrDefault(c.getId(), List.of());
+            List<Participant> people = ids.stream().filter(userMap::containsKey).map(id -> {
+                User u = userMap.get(id);
+                ProfessionalProfile p = profMap.get(id);
+                return new Participant(id, u.getDisplayName(), p == null ? null : p.getSpecialty(),
+                    p != null && p.getVerificationStatus() == Verification.APPROVED, Presence.online(u));
+            }).sorted(Comparator.comparing(Participant::displayName, String.CASE_INSENSITIVE_ORDER)).toList();
+
+            List<Participant> others = people.stream().filter(p -> !p.id().equals(me)).toList();
+            boolean group = people.size() > 2;
+            String name = others.isEmpty() ? "Just you" : others.stream().map(Participant::displayName).collect(Collectors.joining(", "));
+
+            Message m = latestByChannel.get(c.getId());
+            LastMessage last = null;
+            if (m != null) {
+                User a = userMap.get(m.getAuthorId());
+                last = new LastMessage(a == null ? "Unknown" : a.getDisplayName(), preview(m), m.getCreatedAt());
+            }
+
+            boolean byMe = false, byThem = false;
+            if (!group && others.size() == 1) {
+                UUID other = others.get(0).id();
+                byMe = blockedByMe.contains(other);
+                byThem = blockedMe.contains(other);
+            }
+            out.add(new ConversationDto(c.getId(), group, name, people, last, byMe, byThem));
+        }
+
         out.sort(Comparator.comparing((ConversationDto d) -> d.lastMessage() == null ? java.time.Instant.EPOCH : d.lastMessage().at()).reversed());
-        return out;
+
+        int from = Math.min(Math.max(offset, 0), out.size());
+        int to = Math.min(from + Math.max(limit, 1), out.size());
+        return out.subList(from, to);
     }
 
     @Transactional(readOnly = true)

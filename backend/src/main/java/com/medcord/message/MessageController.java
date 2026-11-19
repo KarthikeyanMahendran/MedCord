@@ -37,6 +37,11 @@ public class MessageController {
         return service.list(channelId, me(jwt), before, limit);
     }
 
+    @GetMapping("/messages/{id}")
+    MessageDto get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        return service.get(id, me(jwt));
+    }
+
     @PatchMapping("/messages/{id}")
     MessageDto edit(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody EditRequest r) {
         return service.edit(id, me(jwt), r.body(), Boolean.TRUE.equals(r.autoRedact()));
