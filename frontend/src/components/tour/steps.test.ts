@@ -9,6 +9,8 @@ describe('tour', () => {
     expect(roleOf(null)).toBe('worker')
     expect(roleOf(me({}))).toBe('worker')
     expect(roleOf(me({ verificationStatus: 'APPROVED' }))).toBe('doctor')
+    expect(roleOf(me({ accountType: 'HEALTH_WORKER' }))).toBe('worker')
+    expect(roleOf(me({ accountType: 'DOCTOR', verificationStatus: 'PENDING' }))).toBe('doctor')
     expect(roleOf(me({ platformRole: 'ADMIN', verificationStatus: 'APPROVED' }))).toBe('admin')
   })
   it('every role has a welcome card and an ending, and each target is a selector', () => {

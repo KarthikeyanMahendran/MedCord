@@ -19,6 +19,14 @@ public class GlobalExceptionHandler {
         return pd;
     }
 
+    @ExceptionHandler(FieldValidationException.class)
+    ProblemDetail fields(FieldValidationException e) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
+        pd.setTitle("Bad Request");
+        pd.setProperty("errors", e.errors());
+        return pd;
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ProblemDetail invalid(MethodArgumentNotValidException e) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");

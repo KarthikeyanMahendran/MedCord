@@ -7,7 +7,7 @@ import { tokenStore } from '../api/client'
 interface AuthState {
   user: Me | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<void>
+  signIn: (email: string, password: string, role?: authApi.LoginRole) => Promise<void>
   signUp: (input: RegisterInput) => Promise<void>
   signOut: () => Promise<void>
   setUser: (u: Me) => void
@@ -31,8 +31,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('mc:session-expired', expired)
   }, [])
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    await authApi.login(email, password)
+  const signIn = useCallback(async (email: string, password: string, role?: authApi.LoginRole) => {
+    await authApi.login(email, password, role)
     setUser(await authApi.fetchMe())
   }, [])
   const signUp = useCallback(async (input: RegisterInput) => {

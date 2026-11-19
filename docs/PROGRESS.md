@@ -90,3 +90,23 @@ Health workers send a case; verified specialists answer in a per-case chat room.
 - [ ] T-030 Case photo and voice-note attachments (builds on T-020)
 
 Notes: migrations V12/V13 were renumbered after `V11__calls.sql` landed on main. Seed demo data with `scripts/seed-cases.sql` after `seed-dev.sql`.
+
+## M9 – Outbreak Radar
+
+Early-warning layer on top of the case rooms. Rule-based, no AI, no patient identity in the alert (ADR 0006).
+
+- [x] T-031 Radar schema (V20): `outbreak_alerts`, `outbreak_alert_cases`, `cases.is_demo`; RLS on both tables
+- [x] T-032 Detection: 5 symptom groups (fever + rash, diarrhoea/vomiting, cough/breathing, jaundice, fever + body ache); 3+ similar cases (4+ for the broader groups) in one region within 72 h opens an alert; WATCH becomes ALERT at double the threshold or 2+ urgent cases; alerts fade when no case remains in the window. Runs after each case and once a minute
+- [x] T-033 Radar API `/api/v1/outbreaks`: list + map points, detail (guidance, 12 h timeline, anonymised cases for staff only), acknowledge (doctor/admin), resolve (admin), admin demo run/reset
+- [x] T-034 Radar UI: dotted India map with pulsing markers, alert list, detail with "what to do", home banner, notifications (doctors, admins, health workers of that area), tour step
+- [ ] Next: real district surveillance contact per region; SMS to the district officer; more regions
+
+Notes: Flyway `out-of-order` is now on so migrations added on other branches still apply after V20. Demo: sign in as an admin, open Outbreak radar, press Simulate outbreak (3 fever-and-rash cases in Wayanad Hills), then Reset demo.
+
+## M10 – Role-first sign-in and sign-up
+
+- [x] Sign-in window picks the role: health worker, ASHA worker, doctor or admin. ASHA workers give their ASHA / NHM ID; doctors give speciality and licence number; the server checks them after the password so emails cannot be probed
+- [x] Sign-up opens straight on the form for that role (no role cards): health worker / ASHA worker (area, language, health centre; ASHA also the NHM ID) or doctor (speciality, licence, country). Health workers are active at once; doctors wait for licence review
+- [x] Field-level errors from the server, live password rules, "sign in instead" for duplicate emails, Back to home link, autofill of the ID details used on this device, demo quick-fill (dev only)
+- [x] `GET /api/v1/auth/regions` and `/auth/specialties` for the form; `/me` returns accountType and preferredLanguage
+

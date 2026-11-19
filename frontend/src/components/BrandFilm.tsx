@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Activity, CheckCircle2, Siren, Stethoscope } from 'lucide-react'
+import { KX, LAT0, LAT1, LON0, LON1, inside } from '../lib/indiaMap'
 import './brandFilm.css'
 
 const PHASE_MS = 4500
@@ -11,16 +12,6 @@ const CAPTIONS = [
   'The answer is saved, so the next village is helped too.',
 ]
 
-/** Coarse outline of India as [lon, lat]. Used only to draw a dotted map. */
-const OUTLINE: [number, number][] = [
-  [74.3, 34.5], [77.8, 35.5], [79, 32], [81, 30.2], [84, 28.5], [88, 27.2], [88.5, 26.6], [92, 27.8], [96, 28.3], [97, 27], [95, 25],
-  [93.5, 22], [92.2, 23.5], [91.3, 22.5], [89, 22], [87, 21.5], [85, 19.5], [82, 16.5], [80.3, 15.5], [80.3, 13], [79.8, 10.3], [78.2, 8.1],
-  [77.5, 8.1], [76.3, 9.5], [75.3, 12], [74.4, 14.8], [73.5, 17], [72.8, 19.3], [72.8, 21], [70.5, 20.8], [69, 22.3], [70.2, 22.9],
-  [68.2, 23.7], [70, 25.5], [71, 27.5], [73.5, 29.5], [74.5, 31.5],
-]
-const LON0 = 68, LON1 = 97.5, LAT0 = 8, LAT1 = 35.8
-const KX = Math.cos((22 * Math.PI) / 180)
-
 type Place = { name: string; lon: number; lat: number }
 const VILLAGES: Place[] = [
   { name: 'Wayanad', lon: 76.1, lat: 11.7 }, { name: 'Pudukkottai', lon: 78.8, lat: 10.4 }, { name: 'Barmer', lon: 71.4, lat: 25.7 },
@@ -30,15 +21,6 @@ const VILLAGES: Place[] = [
 const HUBS: Place[] = [
   { name: 'Delhi', lon: 77.2, lat: 28.6 }, { name: 'Mumbai', lon: 72.9, lat: 19.1 }, { name: 'Chennai', lon: 80.3, lat: 13.1 }, { name: 'Kolkata', lon: 88.4, lat: 22.6 },
 ]
-
-function inside(lon: number, lat: number) {
-  let c = false
-  for (let i = 0, j = OUTLINE.length - 1; i < OUTLINE.length; j = i++) {
-    const [xi, yi] = OUTLINE[i], [xj, yj] = OUTLINE[j]
-    if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) c = !c
-  }
-  return c
-}
 
 type Arc = { a: number; h: number; t0: number; dur: number; hero: boolean }
 

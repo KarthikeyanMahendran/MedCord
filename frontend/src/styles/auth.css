@@ -40,3 +40,52 @@
 .mc-auth-copy h1 em { color: #8fc2ff; }
 .mc-auth-copy p { color: #dbe7ff; }
 .mc-auth-foot { margin-top: auto; color: #b7cbf0; position: relative; z-index: 4; }
+
+/* Sign-up: role cards, password rules, steps */
+.mc-step { margin: 0 0 6px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--mc-brand-text); font-weight: 600; }
+.mc-back { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 10px; padding: 4px 8px 4px 4px; border: 0; background: transparent; color: var(--mc-text-muted); font: inherit; font-size: 13px; cursor: pointer; border-radius: var(--mc-radius); }
+.mc-back:hover { color: var(--mc-text); background: var(--mc-hover); }
+.mc-roles { display: grid; gap: 12px; }
+.mc-role { display: flex; gap: 14px; align-items: flex-start; width: 100%; padding: 16px; text-align: left; font: inherit; color: var(--mc-text); background: var(--mc-surface); border: 1px solid var(--mc-border-strong); border-radius: var(--mc-radius-lg); cursor: pointer; transition: border-color .15s, background .15s, transform .15s; }
+.mc-role:hover { border-color: var(--mc-brand); background: var(--mc-brand-soft); transform: translateY(-1px); }
+.mc-role:focus-visible { outline: 2px solid var(--mc-brand-ring); outline-offset: 2px; }
+.mc-role-icon { flex: none; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--mc-brand-soft); color: var(--mc-brand-text); }
+.mc-role-body { display: grid; gap: 2px; min-width: 0; }
+.mc-role-body strong { font-size: 16px; font-weight: 600; }
+.mc-role-body small { font-size: 13px; color: var(--mc-text-muted); }
+.mc-role-body ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 5px; }
+.mc-role-body li { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--mc-text-2); }
+.mc-role-body li svg { color: var(--mc-success); flex: none; }
+.mc-meter { height: 4px; border-radius: 4px; background: var(--mc-border); margin-top: 8px; overflow: hidden; }
+.mc-meter span { display: block; height: 100%; border-radius: 4px; transition: width .25s var(--mc-ease), background .25s; background: var(--mc-danger); }
+.mc-meter .s2 { background: var(--mc-warning); } .mc-meter .s3 { background: var(--mc-info); } .mc-meter .s4 { background: var(--mc-success); }
+.mc-rules { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--mc-text-faint); }
+.mc-rules li { display: inline-flex; align-items: center; gap: 5px; }
+.mc-rules li svg { opacity: .35; }
+.mc-rules li.is-ok { color: var(--mc-success); } .mc-rules li.is-ok svg { opacity: 1; }
+.mc-rules-score { margin-left: auto; color: var(--mc-text-muted); }
+.mc-select-block { width: 100%; height: 40px; }
+.mc-linkbtn { border: 0; background: transparent; color: inherit; text-decoration: underline; font: inherit; cursor: pointer; padding: 0; }
+
+/* Sign-in extras */
+.mc-demo { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 12px; color: var(--mc-text-muted); }
+.mc-demo button { border: 1px solid var(--mc-border-strong); background: var(--mc-surface-2); color: var(--mc-text); font: inherit; font-size: 12px; padding: 5px 10px; border-radius: 99px; cursor: pointer; }
+.mc-demo button:hover { border-color: var(--mc-brand); background: var(--mc-brand-soft); }
+.mc-join { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mc-join a { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 12px; font-size: 13px; font-weight: 500; text-decoration: none !important; color: var(--mc-text); background: var(--mc-surface-2); border: 1px solid var(--mc-border-strong); border-radius: var(--mc-radius); transition: border-color .15s, background .15s; }
+.mc-join a:hover { border-color: var(--mc-brand); background: var(--mc-brand-soft); }
+@media (max-width: 420px) { .mc-join { grid-template-columns: 1fr; } }
+
+/* Sign-in: who are you? */
+.mc-signin-roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.mc-signin-role { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 12px; font: inherit; font-size: 13px; font-weight: 500; color: var(--mc-text-2); background: var(--mc-surface-2); border: 1px solid var(--mc-border-strong); border-radius: var(--mc-radius); cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
+.mc-signin-role:hover { border-color: var(--mc-brand); color: var(--mc-text); }
+.mc-signin-role.is-on { border-color: var(--mc-brand); background: var(--mc-brand-soft); color: var(--mc-text); box-shadow: 0 0 0 1px var(--mc-brand) inset; }
+.mc-signin-role:focus-visible { outline: 2px solid var(--mc-brand-ring); outline-offset: 2px; }
+
+/* Back to the landing page */
+.mc-auth-form { position: relative; }
+.mc-auth-home { position: absolute; top: 20px; left: 24px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px 7px 8px; font-size: 13px; font-weight: 500; color: var(--mc-text-2); text-decoration: none !important; border: 1px solid var(--mc-border-strong); border-radius: 99px; background: var(--mc-surface-2); transition: border-color .15s, color .15s, background .15s; }
+.mc-auth-home:hover { color: var(--mc-text); border-color: var(--mc-brand); background: var(--mc-brand-soft); }
+.mc-auth-home:focus-visible { outline: 2px solid var(--mc-brand-ring); outline-offset: 2px; }
+@media (max-width: 960px) { .mc-auth-home { top: 14px; left: 14px; } .mc-auth-form { padding-top: 64px; align-items: start; } }
