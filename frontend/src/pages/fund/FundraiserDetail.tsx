@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, BadgeCheck, CheckCircle2, Copy, Heart, ShieldCheck } from 'lucide-react'
-import { Alert, Badge, Button, Card, EmptyState, FormGroup, Input, Textarea } from '../../components/ui'
+import { Alert, Badge, Button, Card, EmptyState, FormGroup, Input, PageLoader, Textarea } from '../../components/ui'
 import { VoiceTextarea } from '../../components/VoiceField'
 import { ProgressBar } from '../../components/fund/FundCardView'
 import { ago } from '../../components/cases/UrgencyBadge'
@@ -41,7 +41,7 @@ export default function FundraiserDetail() {
     setThanks(given); setMessage('')
   })
 
-  if (!d) return <div className="mc-page"><Link to="/fund" className="fd-back"><ArrowLeft size={14} /> Care Fund</Link>{err ? <Alert tone="danger">{err}</Alert> : <p className="mc-hint">Loading…</p>}</div>
+  if (!d) return <div className="mc-page"><Link to="/fund" className="fd-back"><ArrowLeft size={14} /> Care Fund</Link>{err ? <Alert tone="danger">{err}</Alert> : <PageLoader />}</div>
 
   const c = d.card
   const p = percent(c.raisedAmount, c.goalAmount)

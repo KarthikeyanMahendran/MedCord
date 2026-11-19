@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Flame, Heart } from 'lucide-react'
-import { Alert, Button, Card, EmptyState, FormGroup, PageHeader } from '../../components/ui'
+import { Alert, Button, Card, EmptyState, FormGroup, PageHeader, SkeletonCard } from '../../components/ui'
 import { ago } from '../../components/cases/UrgencyBadge'
 import { VoiceInput } from '../../components/VoiceField'
 import { checkIn, cheer, circle, myCheckins } from '../../api/support'
@@ -74,7 +74,9 @@ export default function CheckinPage() {
 
         <div>
           <h2 className="ck-h">Your circle</h2>
-          {people === null && !err && <p className="mc-hint">Loading…</p>}
+          {people === null && !err && (
+            <div className="mc-skel-grid" aria-busy="true">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+          )}
           {people?.length === 0 && <EmptyState icon={<Heart size={22} />} title="No one has checked in lately">When people in your communities check in, you will see them here and can send a kind word.</EmptyState>}
           <ul className="ck-circle">
             {people?.map((p) => (

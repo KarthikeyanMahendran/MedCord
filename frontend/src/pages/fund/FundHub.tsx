@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { HeartHandshake, Plus } from 'lucide-react'
-import { Alert, Button, EmptyState, PageHeader, Tabs } from '../../components/ui'
+import { Alert, Button, EmptyState, PageHeader, SkeletonCard, Tabs } from '../../components/ui'
 import { FundCardView } from '../../components/fund/FundCardView'
 import { fundSummary, listFunds } from '../../api/fundraisers'
 import type { FundCard, FundScope, FundSummary } from '../../api/fundraisers'
@@ -47,7 +47,9 @@ export default function FundHub() {
           ...(pending > 0 ? [{ value: 'pending' as FundScope, label: 'Needs review', count: pending }] : [])]} />
 
       {err && <Alert tone="danger">{err}</Alert>}
-      {cards === null && !err && <p className="mc-hint">Loading…</p>}
+      {cards === null && !err && (
+        <div className="mc-skel-grid" aria-busy="true">{Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+      )}
       {cards && cards.length === 0 && (
         scope === 'live' ? (
           <div className="fd-how">

@@ -102,6 +102,19 @@ select.mc-input {
 
 /* ---- Feedback ---- */
 .mc-skeleton { display: block; height: 12px; border-radius: 4px; background: linear-gradient(90deg, var(--mc-surface-2) 0%, var(--mc-surface-3) 50%, var(--mc-surface-2) 100%); background-size: 200% 100%; animation: mc-shimmer 1.4s linear infinite; }
+
+/* Skeleton composition */
+.mc-skel-text { display: grid; gap: 8px; }
+.mc-skel-card { border: 1px solid var(--mc-border); border-radius: var(--mc-radius-lg); padding: 16px; display: grid; gap: 12px; background: var(--mc-surface); }
+.mc-skel-card-head { display: flex; align-items: center; gap: 12px; }
+.mc-skel-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+
+/* Spinner + full-area loader */
+.mc-spinner { display: inline-block; box-sizing: border-box; border: 2.5px solid var(--mc-surface-3); border-top-color: var(--mc-brand); border-radius: 50%; animation: mc-spin 0.7s linear infinite; vertical-align: middle; }
+.mc-pageloader { min-height: 240px; display: grid; place-content: center; justify-items: center; gap: 12px; color: var(--mc-text-muted); }
+.mc-pageloader-label { font-size: 13px; }
+@keyframes mc-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .mc-spinner { animation-duration: 1.6s; } .mc-skeleton { animation: none; } }
 .mc-empty { display: grid; justify-items: center; gap: 6px; text-align: center; padding: 48px 16px; color: var(--mc-text-muted); }
 .mc-empty strong { color: var(--mc-text); font-weight: 600; font-size: 14px; }
 .mc-empty p { max-width: 42ch; font-size: 13px; }

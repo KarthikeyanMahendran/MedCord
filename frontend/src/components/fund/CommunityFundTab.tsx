@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { HeartHandshake, Plus } from 'lucide-react'
-import { Alert, Button, EmptyState } from '../ui'
+import { Alert, Button, EmptyState, SkeletonCard } from '../ui'
 import { FundCardView } from './FundCardView'
 import { listFunds } from '../../api/fundraisers'
 import type { FundCard } from '../../api/fundraisers'
@@ -21,7 +21,9 @@ export function CommunityFundTab({ communityId, canStart }: { communityId: strin
         {canStart && <Link to={`/fund/new?communityId=${communityId}`} style={{ textDecoration: 'none' }}><Button><Plus size={16} /> Start a fundraiser</Button></Link>}
       </div>
       {err && <Alert tone="danger">{err}</Alert>}
-      {cards === null && !err && <p className="mc-hint">Loading…</p>}
+      {cards === null && !err && (
+        <div className="mc-skel-grid" aria-busy="true">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+      )}
       {cards?.length === 0 && <EmptyState icon={<HeartHandshake size={22} />} title="No fundraiser in this community yet">
         {canStart ? 'When someone needs help paying for care, start one here.' : 'A doctor or health worker can start one when a patient needs help.'}</EmptyState>}
       {cards && cards.length > 0 && <div className="fd-grid" style={{ marginTop: 0 }}>{cards.map((c) => <FundCardView key={c.id} c={c} />)}</div>}

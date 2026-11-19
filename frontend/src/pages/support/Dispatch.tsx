@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { HandHeart, MessageCircle, Plus } from 'lucide-react'
-import { Alert, Badge, Button, Card, EmptyState, FormGroup, Input, Modal, PageHeader, Tabs } from '../../components/ui'
+import { Alert, Badge, Button, Card, EmptyState, FormGroup, Input, Modal, PageHeader, SkeletonCard, Tabs } from '../../components/ui'
 import { ago } from '../../components/cases/UrgencyBadge'
 import { VoiceInput, VoiceTextarea } from '../../components/VoiceField'
 import { cancelDispatch, claimDispatch, createDispatch, finishDispatch, listDispatch } from '../../api/support'
@@ -55,7 +55,9 @@ export default function DispatchPage() {
 
       <Tabs<Scope> label="Requests" value={scope} onChange={setScope} items={[{ value: 'open', label: 'People who need help' }, { value: 'mine', label: 'My requests and offers' }]} />
       {err && <Alert tone="danger">{err}</Alert>}
-      {items === null && !err && <p className="mc-hint">Loading…</p>}
+      {items === null && !err && (
+        <div className="mc-skel-grid" aria-busy="true">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+      )}
       {items?.length === 0 && <EmptyState icon={<HandHeart size={22} />} title={scope === 'open' ? 'No one is waiting for help' : 'Nothing here yet'}>
         {scope === 'open' ? 'When someone asks for help, you will see it here. You can take one with a single tap.' : 'Requests you make, and requests you take, show here.'}</EmptyState>}
 
