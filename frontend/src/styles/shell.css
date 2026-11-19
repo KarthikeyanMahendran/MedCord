@@ -95,4 +95,36 @@ a.mc-list-row:hover { background: var(--mc-hover); }
 @media (max-width: 1000px) { .mc-layout-2 { grid-template-columns: 1fr; } }
 @media (max-width: 900px) { .mc-shell { grid-template-columns: 64px minmax(0, 1fr); } .mc-side { display: none; } .mc-page { padding: 24px 16px 48px; } }
 @media (max-width: 640px) { .mc-stats { grid-template-columns: 1fr; } .mc-stat + .mc-stat { border-left: 0; border-top: 1px solid var(--mc-border); } .mc-grid-2 { grid-template-columns: 1fr; } }
-button.mc-rail-btn { background: none; border: 0; padding: 0; cursor: pointer; color: inherit; }
+/* ---- Unread badges, Notification Center & Toasts ---- */
+button.mc-rail-btn { border: 0; background: transparent; cursor: pointer; padding: 0; color: inherit; }
+.mc-rail-btn.has-unread:not(.is-active) .mc-rail-pill { height: 8px; }
+.mc-rail-badge { position: absolute; right: 6px; bottom: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--mc-danger); color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center; box-shadow: 0 0 0 2px var(--mc-rail); }
+
+.mc-chan.is-unread { color: var(--mc-text); font-weight: 600; }
+.mc-chan.is-unread svg { color: var(--mc-text-2); }
+.mc-chan-badge { flex: none; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--mc-surface-3); color: var(--mc-text-2); font-size: 11px; font-weight: 600; display: grid; place-items: center; font-variant-numeric: tabular-nums; }
+.mc-chan-badge.is-mention { background: var(--mc-danger); color: #fff; }
+
+.mc-side-voice-users { display: grid; gap: 2px; padding: 2px 0 4px 26px; }
+.mc-side-voice-user { display: flex; align-items: center; gap: 6px; padding: 2px 6px; font-size: 12px; color: var(--mc-text-muted); }
+.mc-side-voice-user .is-live { color: var(--mc-success); }
+.mc-side-voice-user .is-muted { color: var(--mc-danger); }
+
+.mc-voice-dock { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--mc-surface); border-top: 1px solid var(--mc-border); flex: none; }
+.mc-voice-dock-status { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--mc-success); }
+.mc-voice-dock-room { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--mc-text-2); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-voice-dock-room:hover { color: var(--mc-text); }
+
+.mc-notif-list { display: grid; gap: 6px; max-height: 420px; overflow-y: auto; }
+.mc-notif-item { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid var(--mc-border); border-radius: var(--mc-radius-md); background: var(--mc-surface); color: var(--mc-text); text-align: left; cursor: pointer; transition: background var(--mc-transition), border-color var(--mc-transition); }
+.mc-notif-item:hover { background: var(--mc-surface-2); border-color: var(--mc-border-strong); }
+.mc-notif-item.is-unread { border-left: 3px solid var(--mc-brand); }
+.mc-notif-excerpt { font-size: 13px; color: var(--mc-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-pref-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 12px; border: 1px solid var(--mc-border); border-radius: var(--mc-radius-md); background: var(--mc-surface-2); }
+
+.mc-toast-stack { position: fixed; right: 20px; top: 20px; z-index: 1080; display: grid; gap: 8px; width: 320px; max-width: calc(100vw - 32px); }
+.mc-toast { display: flex; align-items: flex-start; gap: 8px; padding: 10px 10px 10px 12px; border-radius: var(--mc-radius-lg); background: var(--mc-surface); border: 1px solid var(--mc-border-strong); box-shadow: var(--mc-shadow-lg); animation: mc-fade 160ms var(--mc-ease); }
+.mc-toast-main { flex: 1; min-width: 0; border: 0; background: transparent; padding: 0; text-align: left; color: var(--mc-text); cursor: pointer; display: grid; gap: 3px; }
+.mc-toast-head { display: flex; align-items: center; gap: 6px; font-size: 12.5px; }
+.mc-toast-head svg { color: var(--mc-brand-text); flex: none; }
+.mc-toast-body { font-size: 12.5px; color: var(--mc-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

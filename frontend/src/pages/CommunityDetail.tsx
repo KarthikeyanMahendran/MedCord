@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Archive, Copy, Hash, Megaphone, MessageCircle, Trash2 } from 'lucide-react'
+import { Archive, Copy, Hash, Megaphone, MessageCircle, Trash2, Volume2 } from 'lucide-react'
 import { ModerationPanel } from '../components/community/ModerationPanel'
 import { AuditPanel } from '../components/community/AuditPanel'
 import { muteMember } from '../api/moderation'
@@ -33,7 +33,7 @@ export default function CommunityDetail() {
   const [modal, setModal] = useState<null | 'channel' | 'role' | 'assign' | 'delete'>(null)
   const [assignFor, setAssignFor] = useState<Member | null>(null)
   const [assignIds, setAssignIds] = useState<Set<string>>(new Set())
-  const [chForm, setChForm] = useState({ name: '', topic: '', type: 'TEXT' as 'TEXT' | 'ANNOUNCEMENT' })
+  const [chForm, setChForm] = useState({ name: '', topic: '', type: 'TEXT' as 'TEXT' | 'ANNOUNCEMENT' | 'VOICE' })
   const [roleForm, setRoleForm] = useState({ name: '', position: 4, permissions: new Set<Permission>(['SEND_MESSAGES']) })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
@@ -119,7 +119,7 @@ export default function CommunityDetail() {
                   {channels.map((c) => (
                     <li key={c.id} className="mc-row" style={{ justifyContent: 'space-between', padding: '8px 10px', border: '1px solid var(--mc-border)', borderRadius: 8, opacity: c.archived ? 0.6 : 1 }}>
                       <div className="mc-row">
-                        {c.type === 'ANNOUNCEMENT' ? <Megaphone size={16} /> : <Hash size={16} />}
+                        {c.type === 'ANNOUNCEMENT' ? <Megaphone size={16} /> : c.type === 'VOICE' ? <Volume2 size={16} /> : <Hash size={16} />}
                         <div><Link to={`/communities/${id}/channels/${c.id}`} style={{ color: 'var(--mc-text)' }}><strong style={{ fontWeight: 500 }}>{c.name}</strong></Link> {c.archived && <Badge tone="neutral">archived</Badge>}<div className="mc-muted-sub">{c.topic}</div></div>
                       </div>
                       {can('MANAGE_CHANNELS') && <Button variant="ghost" size="sm" onClick={() => run(() => api.updateChannel(id, c.id, { archived: !c.archived }))}><Archive size={14} /> {c.archived ? 'Unarchive' : 'Archive'}</Button>}
@@ -162,7 +162,7 @@ export default function CommunityDetail() {
                 </div>))}</div>
             </>)}
 
-            {tab === 'moderation' && <ModerationPanel communityId={id} canModerate={can('MODERATE_MESSAGES')} canManageMembers={can('MANAGE_MEMBERS')} />}
+            {tab === 'moderation' && <ModerationPanel communityId={id} canModerate={can('MODERATE_MESSAGES')} canManageMembers={can('MANAGE_MEMBERS')} canManageCommunity={can('MANAGE_COMMUNITY')} />}
             {tab === 'audit' && <AuditPanel communityId={id} />}
 
             {tab === 'invites' && (<>
@@ -192,7 +192,7 @@ export default function CommunityDetail() {
         <form onSubmit={submitChannel} style={{ display: 'grid', gap: 14 }}>
           <FormGroup id="chname" label="Name" hint="Lowercase letters, digits and dashes" error={errors.name}><Input id="chname" value={chForm.name} onChange={(e) => setChForm({ ...chForm, name: e.target.value.toLowerCase() })} invalid={!!errors.name} required /></FormGroup>
           <FormGroup id="chtopic" label="Topic"><Input id="chtopic" value={chForm.topic} onChange={(e) => setChForm({ ...chForm, topic: e.target.value })} /></FormGroup>
-          <FormGroup id="chtype" label="Type"><select id="chtype" className="mc-input" value={chForm.type} onChange={(e) => setChForm({ ...chForm, type: e.target.value as 'TEXT' | 'ANNOUNCEMENT' })}><option value="TEXT">Text</option><option value="ANNOUNCEMENT">Announcement</option></select></FormGroup>
+          <FormGroup id="chtype" label="Type"><select id="chtype" className="mc-input" value={chForm.type} onChange={(e) => setChForm({ ...chForm, type: e.target.value as 'TEXT' | 'ANNOUNCEMENT' | 'VOICE' })}><option value="TEXT">Text</option><option value="ANNOUNCEMENT">Announcement</option><option value="VOICE">Voice / Video room</option></select></FormGroup>
           <div className="mc-row" style={{ justifyContent: 'flex-end' }}><Button variant="secondary" onClick={() => setModal(null)}>Cancel</Button><Button type="submit" loading={busy}>Create</Button></div>
         </form>
       </Modal>

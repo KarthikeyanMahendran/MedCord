@@ -15,6 +15,7 @@ public class GlobalExceptionHandler {
     ProblemDetail api(ApiException e) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(e.status(), e.getMessage());
         pd.setTitle(e.status().getReasonPhrase());
+        e.properties().forEach(pd::setProperty);
         return pd;
     }
 

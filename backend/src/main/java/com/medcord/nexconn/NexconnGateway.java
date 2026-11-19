@@ -66,6 +66,65 @@ public class NexconnGateway {
         return r.result();
     }
 
+    /**
+     * Best-effort sync of a community restricted term to Nexconn's content-safety profanity filter.
+     * Returns true if Nexconn accepted the word; false if unconfigured or unreachable (e.g. behind hospital firewall).
+     */
+    public boolean addProfanityWord(String word) {
+        if (!props.configured() || word == null || word.isBlank()) return false;
+        try {
+            ApiResult<Object> r = post("/v4/profanity-word/add",
+                Map.of("word", word.trim(), "replaceWord", "[REDACTED]"),
+                new org.springframework.core.ParameterizedTypeReference<>() {});
+            return r.code() == 0;
+        } catch (ApiException ex) {
+            log.debug("Nexconn profanity-word/add skipped for term: {}", ex.getMessage());
+            return false;
+        }
+    }
+
+    /** Best-effort removal of a restricted term from Nexconn's content-safety filter. */
+    public boolean removeProfanityWord(String word) {
+        if (!props.configured() || word == null || word.isBlank()) return false;
+        try {
+            ApiResult<Object> r = post("/v4/profanity-word/delete",
+                Map.of("words", java.util.List.of(word.trim())),
+                new org.springframework.core.ParameterizedTypeReference<>() {});
+            return r.code() == 0;
+        } catch (ApiException ex) {
+            log.debug("Nexconn profanity-word/delete skipped: {}", ex.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Best-effort mirror of an AI Co-Pilot streaming message (RC:StreamMsg) through Nexconn Server API
+     * so native @nexconn/chat SDK listeners also receive StreamMessage updates alongside MedCord SSE.
+     */
+    public boolean mirrorStreamMessage(boolean directChannel, String targetId, String senderId,
+                                       String streamId, String content, boolean completed) {
+        if (!props.configured()) return false;
+        String path = directChannel ? "/v4/direct-channel/message/send" : "/v4/group-channel/message/send";
+        try {
+            Map<String, Object> body = Map.of(
+                "senderId", senderId,
+                "targetId", targetId,
+                "objectName", "RC:StreamMsg",
+                "content", Map.of(
+                    "type", "markdown",
+                    "content", content,
+                    "complete", completed,
+                    "streamId", streamId
+                )
+            );
+            ApiResult<Object> r = post(path, body, new org.springframework.core.ParameterizedTypeReference<>() {});
+            return r.code() == 0;
+        } catch (ApiException ex) {
+            log.debug("Nexconn StreamMessage mirror skipped: {}", ex.getMessage());
+            return false;
+        }
+    }
+
     private <T> ApiResult<T> post(String path, Object body, org.springframework.core.ParameterizedTypeReference<ApiResult<T>> type) {
         if (!props.configured()) throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "Chat service is not configured");
         NexconnSigner.Signed s = NexconnSigner.next(props.appSecret());

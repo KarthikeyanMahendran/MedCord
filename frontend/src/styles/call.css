@@ -38,3 +38,30 @@
 .mc-call-record { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--mc-border); background: var(--mc-surface); font-size: 13px; color: var(--mc-text-2); }
 .mc-call-record svg { color: var(--mc-success); }
 .mc-call-record.is-missed svg { color: var(--mc-danger); }
+
+.mc-call-screen { position: absolute; left: 10px; bottom: 10px; width: 36%; aspect-ratio: 16 / 9; object-fit: contain; border-radius: 6px; border: 1px solid var(--mc-brand); background: #000; }
+.mc-call-ctl.is-active-share { background: var(--mc-brand); color: #fff; }
+
+/* ---- Community Voice/Video Rooms ---- */
+.mc-voice-panel { flex: none; padding: 16px 20px; border-bottom: 1px solid var(--mc-border); background: var(--mc-side); display: grid; gap: 12px; }
+.mc-voice-lobby { display: grid; justify-items: center; text-align: center; gap: 8px; padding: 14px 16px; border-radius: var(--mc-radius-lg); border: 1px solid var(--mc-border); background: var(--mc-surface); }
+.mc-voice-lobby-icon { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; background: var(--mc-brand-soft); color: var(--mc-brand-text); }
+.mc-voice-lobby h3 { margin: 0; font-size: 16px; }
+.mc-voice-lobby-who { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 4px; }
+.mc-voice-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 4px; border-radius: 999px; background: var(--mc-surface-2); border: 1px solid var(--mc-border); font-size: 12px; }
+
+.mc-voice-spotlight { position: relative; border-radius: var(--mc-radius-lg); overflow: hidden; background: #0b0c0f; border: 1px solid var(--mc-brand); max-height: 360px; display: grid; place-items: center; }
+.mc-voice-spotlight-badge { position: absolute; left: 10px; top: 10px; z-index: 2; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(0, 0, 0, 0.72); color: #fff; font-size: 12px; font-weight: 500; }
+.mc-voice-spotlight-video { width: 100%; max-height: 360px; object-fit: contain; }
+
+.mc-voice-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.mc-voice-tile { position: relative; aspect-ratio: 16 / 10; border-radius: var(--mc-radius-lg); overflow: hidden; background: var(--mc-surface); border: 1px solid var(--mc-border-strong); display: grid; place-items: center; }
+.mc-voice-tile.is-sharing { border-color: var(--mc-brand); }
+.mc-voice-video { width: 100%; height: 100%; object-fit: cover; background: #0b0c0f; }
+.mc-voice-video.is-hidden { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.mc-voice-avatar { display: grid; place-items: center; }
+.mc-voice-tile-bar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 5px 8px; background: linear-gradient(transparent, rgba(0, 0, 0, 0.72)); color: #fff; font-size: 12px; }
+.mc-voice-tile-name { display: inline-flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.mc-voice-tile-icons { display: inline-flex; align-items: center; gap: 5px; flex: none; }
+.mc-voice-tile-icons .is-muted { color: #ef5d6c; }
+.mc-voice-controls { display: flex; justify-content: center; gap: 10px; padding-top: 2px; }

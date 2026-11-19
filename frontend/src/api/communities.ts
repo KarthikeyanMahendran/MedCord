@@ -9,7 +9,7 @@ export interface Community {
   id: string; name: string; slug: string; description: string | null; specialtyTag: string | null
   visibility: 'PUBLIC' | 'PRIVATE'; ownerId: string; memberCount: number; myPermissions: Permission[]
 }
-export interface Channel { id: string; name: string; topic: string | null; type: 'TEXT' | 'ANNOUNCEMENT'; position: number; archived: boolean }
+export interface Channel { id: string; name: string; topic: string | null; type: 'TEXT' | 'ANNOUNCEMENT' | 'VOICE'; position: number; archived: boolean }
 export interface Role { id: string; name: string; position: number; system: boolean; permissions: Permission[] }
 export interface RoleRef { id: string; name: string }
 export interface Member { userId: string; displayName: string; specialty: string | null; verified: boolean; roles: RoleRef[]; joinedAt: string; online: boolean }
@@ -28,7 +28,7 @@ export const leaveCommunity = async (id: string) => { await api.delete(`${c(id)}
 export const deleteCommunity = async (id: string) => { await api.delete(c(id)) }
 
 export const listChannels = async (id: string) => (await api.get<Channel[]>(`${c(id)}/channels`)).data
-export const createChannel = async (id: string, b: { name: string; topic?: string; type: 'TEXT' | 'ANNOUNCEMENT' }) =>
+export const createChannel = async (id: string, b: { name: string; topic?: string; type: 'TEXT' | 'ANNOUNCEMENT' | 'VOICE' }) =>
   (await api.post<Channel>(`${c(id)}/channels`, b)).data
 export const updateChannel = async (id: string, ch: string, b: { archived?: boolean; topic?: string; name?: string }) =>
   (await api.patch<Channel>(`${c(id)}/channels/${ch}`, b)).data

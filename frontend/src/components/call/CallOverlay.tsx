@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Maximize2, Mic, MicOff, Minimize2, Phone, PhoneOff, Video, VideoOff, X } from 'lucide-react'
+import { Maximize2, Mic, MicOff, Minimize2, Monitor, MonitorOff, Phone, PhoneOff, Video, VideoOff, X } from 'lucide-react'
 import { Avatar, Button } from '../ui'
 import { useCall } from '../../context/CallContext'
 import { useAuth } from '../../context/AuthContext'
@@ -15,10 +15,11 @@ const clock = (ms: number) => {
  */
 export function CallOverlay() {
   const { user } = useAuth()
-  const { state, error, lastEnded, accept, decline, hangup, toggleMic, toggleCam, bindVideo, dismiss } = useCall()
-  const { phase, call, micOn, camOn, remoteCamOn, remoteMicOn, connectedAt } = state
+  const { state, error, lastEnded, screenStream, accept, decline, hangup, toggleMic, toggleCam, toggleScreenShare, bindVideo, dismiss } = useCall()
+  const { phase, call, micOn, camOn, remoteCamOn, remoteMicOn, connectedAt, screenSharing } = state
   const localRef = useRef<HTMLVideoElement>(null)
   const remoteRef = useRef<HTMLVideoElement>(null)
+  const screenRef = useRef<HTMLVideoElement>(null)
   const [expanded, setExpanded] = useState(false)
   const [now, setNow] = useState(() => Date.now())
 
@@ -26,6 +27,10 @@ export function CallOverlay() {
   useEffect(() => {
     if (phase === 'connected' || phase === 'outgoing') bindVideo(localRef.current, remoteRef.current)
   }, [phase, expanded, bindVideo])
+
+  useEffect(() => {
+    if (screenRef.current) screenRef.current.srcObject = screenStream ?? null
+  }, [screenStream, expanded])
 
   useEffect(() => {
     if (phase !== 'connected') return
@@ -88,6 +93,7 @@ export function CallOverlay() {
               </div>
             )}
             {video && <video ref={localRef} className="mc-call-local" autoPlay playsInline muted hidden={!camOn} aria-label="Your camera" />}
+            {screenSharing && screenStream && <video ref={screenRef} className="mc-call-screen" autoPlay playsInline muted aria-label="Shared screen preview" />}
           </div>
 
           <footer className="mc-call-controls">
@@ -99,6 +105,11 @@ export function CallOverlay() {
                 {video && (
                   <button type="button" className={`mc-call-ctl ${camOn ? '' : 'is-off'}`} onClick={toggleCam} aria-pressed={!camOn} aria-label={camOn ? 'Turn camera off' : 'Turn camera on'} title={camOn ? 'Camera off' : 'Camera on'}>
                     {camOn ? <Video size={18} /> : <VideoOff size={18} />}
+                  </button>
+                )}
+                {toggleScreenShare && (
+                  <button type="button" className={`mc-call-ctl ${screenSharing ? 'is-active-share' : ''}`} onClick={toggleScreenShare} aria-pressed={!!screenSharing} aria-label={screenSharing ? 'Stop sharing screen' : 'Share screen'} title={screenSharing ? 'Stop sharing' : 'Share screen'}>
+                    {screenSharing ? <MonitorOff size={18} /> : <Monitor size={18} />}
                   </button>
                 )}
               </>
