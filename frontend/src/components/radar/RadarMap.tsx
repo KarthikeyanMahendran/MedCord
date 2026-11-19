@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { KX } from '../../lib/indiaMap'
 import { STATES } from '../../lib/indiaStates'
@@ -35,6 +35,13 @@ export function RadarMap({ regions, alerts, selectedId, onSelect }: Props) {
     return { name: st.name, d, c: proj.project(st.c[0], st.c[1]), width }
   }), [proj])
   const [active, setActive] = useState<string | null>(null)
+  const [view, setView] = useState({ rx: 48, rz: -10 })
+  const drag = useRef<{ x: number; y: number; rx: number; rz: number } | null>(null)
+  const onDown = (e: React.PointerEvent) => { if ((e.target as Element).closest('.rd-alert, .rd-state')) return; drag.current = { x: e.clientX, y: e.clientY, ...view } }
+  const onMove = (e: React.PointerEvent) => {
+    const d = drag.current; if (!d) return
+    setView({ rz: Math.max(-45, Math.min(45, d.rz + (e.clientX - d.x) * 0.25)), rx: Math.max(0, Math.min(70, d.rx - (e.clientY - d.y) * 0.25)) })
+  }
   const [pinned, setPinned] = useState(false)   // a click/tap keeps the state selected until another is chosen
 
   const live = alerts.filter(isLive)
@@ -60,6 +67,13 @@ export function RadarMap({ regions, alerts, selectedId, onSelect }: Props) {
           </>
         ) : <span>Touch or hover a state to see its name and status.</span>}
       </div>
+      <div className="rd-stage" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={() => { drag.current = null }} onPointerLeave={() => { drag.current = null }}>
+      <div className="rd-scene" style={{ transform: `rotateX(${view.rx}deg) rotateZ(${view.rz}deg)` }}>
+      {Array.from({ length: 12 }, (_, i) => (
+        <svg key={i} viewBox={`0 0 ${W} ${H}`} className="rd-depth" aria-hidden="true" style={{ transform: `translateZ(${-(i + 1) * 2.5}px)` }}>
+          {shapes.map((st) => <path key={st.name} d={st.d} />)}
+        </svg>
+      ))}
       <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label="Map of monitored areas and outbreak alerts" preserveAspectRatio="xMidYMid meet">
         <g className="rd-states">
           {shapes.map((st) => {
@@ -111,6 +125,9 @@ export function RadarMap({ regions, alerts, selectedId, onSelect }: Props) {
           )
         }))}
       </svg>
+      </div>
+      </div>
+      <p className="rd-hint">Drag the map to tilt and turn it.</p>
       <ul className="rd-legend" aria-label="Legend">
         <li><i className="is-alert" /> Alert</li>
         <li><i className="is-watch" /> Watch</li>

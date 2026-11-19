@@ -89,3 +89,12 @@
 @keyframes rd-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 @media (max-width: 1100px) { .rd-grid { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .rd-ring, .rd-fresh { animation: none !important; } .rd-bar i { transition: none; } }
+
+.rd-stage { perspective: 1200px; touch-action: pan-y; cursor: grab; padding: 10px 0 30px; }
+.rd-stage:active { cursor: grabbing; }
+.rd-scene { position: relative; transform-style: preserve-3d; transition: transform .12s ease-out; }
+.rd-scene > svg { transform-style: preserve-3d; }
+.rd-depth { position: absolute; inset: 0; pointer-events: none; }
+.rd-depth path { fill: color-mix(in srgb, var(--mc-brand-text) 30%, #0b1220); stroke: none; }
+.rd-hint { margin: 0; text-align: center; font-size: 12px; color: var(--mc-text-muted, #5b6b7f); }
+@media (prefers-reduced-motion: reduce) { .rd-scene { transition: none; } }
