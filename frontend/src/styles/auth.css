@@ -89,3 +89,4 @@
 .mc-auth-home:hover { color: var(--mc-text); border-color: var(--mc-brand); background: var(--mc-brand-soft); }
 .mc-auth-home:focus-visible { outline: 2px solid var(--mc-brand-ring); outline-offset: 2px; }
 @media (max-width: 960px) { .mc-auth-home { top: 14px; left: 14px; } .mc-auth-form { padding-top: 64px; align-items: start; } }
+.mc-link-btn { background: none; border: 0; padding: 0; font: inherit; color: var(--mc-brand-text); cursor: pointer; text-decoration: underline; }

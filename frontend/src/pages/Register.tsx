@@ -126,13 +126,6 @@ export default function Register() {
           {isDoctor ? 'We review your licence before your profile shows the verified mark. You can browse while you wait.' : 'You can send your first case as soon as you finish.'}
         </p>
       </div>
-      <div className="mc-signin-roles" role="radiogroup" aria-label="I am a" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
-        {(['HEALTH_WORKER', 'ASHA', 'DOCTOR'] as LoginRole[]).map((id) => (
-          <button key={id} type="button" role="radio" aria-checked={role === id} className={`mc-signin-role ${role === id ? 'is-on' : ''}`} onClick={() => { setChosen(id); setErrors({}); setError(null) }}>
-            <span>{ROLE_TITLE[id]}</span>
-          </button>
-        ))}
-      </div>
       {error && <Alert tone="danger">{error}</Alert>}
       {emailTaken && <Alert tone="info">An account with this email already exists. <Link to="/login">Sign in instead</Link></Alert>}
       <form ref={formRef} onSubmit={onSubmit} style={{ display: 'grid', gap: 14 }} noValidate>
@@ -181,6 +174,12 @@ export default function Register() {
         )}
 
         <Button type="submit" full loading={busy}>{isDoctor ? 'Create account' : 'Create account and start'}</Button>
+        <p className="mc-hint" style={{ textAlign: 'center', margin: 0 }}>
+          Registering as {ROLE_NOUN[role] === 'doctor' ? 'a doctor' : `a ${ROLE_NOUN[role]}`}.{' '}
+          {(['HEALTH_WORKER', 'ASHA', 'DOCTOR'] as LoginRole[]).filter((r) => r !== role).map((r, n) => (
+            <span key={r}>{n > 0 && ' · '}<button type="button" className="mc-link-btn" onClick={() => { setChosen(r); setErrors({}); setError(null) }}>I am {r === 'DOCTOR' ? 'a doctor' : r === 'ASHA' ? 'an ASHA worker' : 'a health worker'}</button></span>
+          ))}
+        </p>
         <p className="mc-hint">Use test data only. Never enter real patient details. By continuing you agree to use this demo responsibly.</p>
       </form>
       <p className="mc-hint">Already registered? <Link to="/login">Sign in</Link></p>
