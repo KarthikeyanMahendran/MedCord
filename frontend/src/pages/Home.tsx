@@ -79,6 +79,7 @@ export default function Home() {
   const first = user.displayName.replace(/^(dr|mr|mrs|ms|prof)\.?\s+/i, '').split(' ')[0]
   const today = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })
   const verified = user.verificationStatus === 'APPROVED'
+  const isWorker = user.accountType === 'HEALTH_WORKER'
 
   return (
     <main className="mc-page mc-page-wide">
@@ -86,7 +87,7 @@ export default function Home() {
         actions={<Link to="/communities"><Button variant="secondary"><Compass size={15} /> Browse communities</Button></Link>} />
 
       {notice && <Alert tone="success">{notice}</Alert>}
-      {user.verificationStatus === 'REJECTED' && (
+      {!isWorker && user.verificationStatus === 'REJECTED' && (
         <Alert tone="danger">
           <div style={{ flex: 1 }}>
             <strong>Your licence could not be verified.</strong>{user.rejectionReason && <> Reason: {user.rejectionReason}</>}
@@ -94,15 +95,15 @@ export default function Home() {
           <Button size="sm" variant="secondary" onClick={() => { setLic({ number: '', country: user.licenseCountry ?? '' }); setErrors({}); setError(null); setResubmitting(true) }}>Correct and resubmit</Button>
         </Alert>
       )}
-      {user.verificationStatus === 'PENDING' && (
+      {!isWorker && user.verificationStatus === 'PENDING' && (
         <Alert tone="info">Your licence is under review. You can browse and join communities now; creating communities unlocks once you&apos;re verified.</Alert>
       )}
 
       <section className="mc-stats" aria-label="Summary">
         <div className="mc-stat"><span>Communities</span><strong>{mine ? mine.length : '–'}</strong></div>
         <div className="mc-stat"><span>Conversations</span><strong>{convs ? convs.length : '–'}</strong></div>
-        <div className="mc-stat"><span>Licence status</span><strong style={{ fontSize: 15, paddingTop: 6 }}>
-          {user.verificationStatus ? <Badge tone={verifyTone[user.verificationStatus]}>{verifyLabel[user.verificationStatus]}</Badge> : '–'}
+        <div className="mc-stat"><span>{isWorker ? 'Role' : 'Licence status'}</span><strong style={{ fontSize: 15, paddingTop: 6 }}>
+          {isWorker ? <Badge tone="info">Health worker</Badge> : user.verificationStatus ? <Badge tone={verifyTone[user.verificationStatus]}>{verifyLabel[user.verificationStatus]}</Badge> : '–'}
         </strong></div>
       </section>
 

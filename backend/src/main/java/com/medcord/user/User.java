@@ -35,6 +35,13 @@ public class User {
     @Column(name = "platform_role", nullable = false)
     private PlatformRole platformRole = PlatformRole.USER;
 
+    /** DOCTOR or HEALTH_WORKER. A health worker is active at once; a doctor waits for licence review. */
+    @Column(name = "account_type", nullable = false)
+    private String accountType = "DOCTOR";
+
+    @Column(name = "preferred_language", nullable = false)
+    private String preferredLanguage = "en";
+
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
 
