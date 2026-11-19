@@ -48,7 +48,7 @@ describe('Outbreak radar page', () => {
     expect((await screen.findAllByText('Fever with rash')).length).toBeGreaterThan(0)
     expect(await screen.findByText(/Report the cluster to the district surveillance officer/)).toBeInTheDocument()
     expect(screen.getByText(/Meppadi/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Alert: |Watch: /i })).toBeInTheDocument()   // map marker
+    expect(screen.getByRole('application', { name: /Map of monitored areas/i })).toBeInTheDocument()   // real map
 
     await userEvent.click(await screen.findByRole('button', { name: 'Acknowledge' }))
     await waitFor(() => expect(acknowledgeAlert).toHaveBeenCalledWith('a1', ''))

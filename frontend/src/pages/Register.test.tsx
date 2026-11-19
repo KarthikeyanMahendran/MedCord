@@ -42,10 +42,10 @@ describe('Register page', () => {
     vi.mocked(authApi.listSpecialties).mockResolvedValue(['Cardiology'])
   })
 
-  it('has no role cards: the role comes from the sign-in window and the form opens at once', async () => {
+  it('lets you pick the role here, since sign-in no longer asks', async () => {
     setup('/register?role=worker')
     expect(screen.getByRole('heading', { name: /Create your account/i })).toBeInTheDocument()
-    expect(screen.queryByRole('radiogroup')).toBeNull()
+    expect(screen.getAllByRole('radio')).toHaveLength(3)
     expect(screen.getByText(/Signing up as health worker/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Back to sign in/i })).toHaveAttribute('href', '/login')
   })

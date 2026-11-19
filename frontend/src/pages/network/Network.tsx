@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
+import { useEffect, useMemo, useState } from 'react'
+import { GeoMap } from '../../components/GeoMap'
+import type { GeoMarker } from '../../components/GeoMap'
 import { Stethoscope, Users } from 'lucide-react'
 import { Alert, Badge, Card, EmptyState, PageHeader } from '../../components/ui'
 import { ago } from '../../components/cases/UrgencyBadge'
@@ -17,33 +17,12 @@ export default function NetworkPage() {
   const [data, setData] = useState<Network | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [sel, setSel] = useState<string | null>(null)
-  const el = useRef<HTMLDivElement>(null)
-  const map = useRef<L.Map | null>(null)
 
   useEffect(() => { getNetwork().then(setData).catch((e) => setErr(problemMessage(e))) }, [])
 
-  useEffect(() => {
-    if (!data || !el.current) return
-    const dark = document.documentElement.dataset.theme !== 'light'
-    const m = L.map(el.current, { minZoom: 4, maxZoom: 14 }).setView([21.5, 79], 5)
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 14,
-      className: dark ? 'nw-tiles-dark' : '',
-    }).addTo(m)
-    const pts: L.LatLngExpression[] = []
-    for (const a of data.areas) {
-      if (a.lat == null || a.lng == null) continue
-      pts.push([a.lat, a.lng])
-      const icon = L.divIcon({ className: 'nw-pin-wrap', html: pinHtml(a, a.id === data.myAreaId), iconSize: [34, 34], iconAnchor: [17, 17] })
-      const mk = L.marker([a.lat, a.lng], { icon, title: `${a.name}, ${a.district}`, keyboard: true }).addTo(m)
-      mk.bindTooltip(`${a.name} · ${a.district}`, { direction: 'top', offset: [0, -14] })
-      mk.on('click', () => { setSel(a.id); m.flyTo([a.lat!, a.lng!], Math.max(m.getZoom(), 8), { duration: 0.7 }) })
-    }
-    if (pts.length > 1) m.fitBounds(L.latLngBounds(pts), { padding: [50, 50], maxZoom: 8 })
-    else if (pts.length === 1) m.setView(pts[0], 9)
-    map.current = m
-    return () => { m.remove(); map.current = null }
-  }, [data])
+  const markers = useMemo<GeoMarker[]>(() => (data?.areas ?? []).filter((a) => a.lat != null && a.lng != null).map((a) => ({
+    id: a.id, lat: a.lat!, lng: a.lng!, size: 36, label: `${a.name} · ${a.district}`, html: pinHtml(a, a.id === data?.myAreaId),
+  })), [data])
 
   const area = data?.areas.find((a) => a.id === sel) ?? null
   const people = data ? data.areas.reduce((n, a) => n + a.people.length, 0) : 0
@@ -56,7 +35,7 @@ export default function NetworkPage() {
       {data && (
         <div className="nw-grid">
           <Card className="nw-mapcard">
-            <div className="nw-map" ref={el} role="application" aria-label="Map of care areas. Choose a pin to see the people there." />
+            <GeoMap markers={markers} selectedId={sel} onPick={setSel} ariaLabel="Map of care areas. Choose a pin to see the people there." />
             <ul className="rd-legend" aria-label="Legend">
               <li><i className="is-alert" /> Live alert</li><li><i className="is-watch" /> Recent cases</li><li><i className="is-quiet" /> Quiet</li>
               <li>Number on a pin = health workers in the area</li>

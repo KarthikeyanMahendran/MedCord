@@ -32,7 +32,8 @@ export default function Register() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const picked = roleFromParam(params.get('role')) ?? savedRole()
-  const role: LoginRole = picked === 'ADMIN' ? 'HEALTH_WORKER' : picked
+  const [chosen, setChosen] = useState<LoginRole>(picked === 'ADMIN' ? 'HEALTH_WORKER' : picked)
+  const role: LoginRole = chosen
   const isDoctor = role === 'DOCTOR'
   const isAsha = role === 'ASHA'
 
@@ -123,8 +124,14 @@ export default function Register() {
         <h2>Create your account</h2>
         <p className="mc-hint">
           {isDoctor ? 'We review your licence before your profile shows the verified mark. You can browse while you wait.' : 'You can send your first case as soon as you finish.'}
-          {' '}Not {ROLE_TITLE[role].toLowerCase()}? <Link to="/login">Pick another role on the sign-in page</Link>.
         </p>
+      </div>
+      <div className="mc-signin-roles" role="radiogroup" aria-label="I am a" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+        {(['HEALTH_WORKER', 'ASHA', 'DOCTOR'] as LoginRole[]).map((id) => (
+          <button key={id} type="button" role="radio" aria-checked={role === id} className={`mc-signin-role ${role === id ? 'is-on' : ''}`} onClick={() => { setChosen(id); setErrors({}); setError(null) }}>
+            <span>{ROLE_TITLE[id]}</span>
+          </button>
+        ))}
       </div>
       {error && <Alert tone="danger">{error}</Alert>}
       {emailTaken && <Alert tone="info">An account with this email already exists. <Link to="/login">Sign in instead</Link></Alert>}

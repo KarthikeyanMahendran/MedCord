@@ -4,7 +4,7 @@
 .rd-hot { color: var(--mc-danger); }
 
 .rd-map { padding: 8px 12px 16px; background: radial-gradient(ellipse at 50% 40%, var(--mc-brand-soft), transparent 70%); }
-.rd-map svg { display: block; width: 100%; max-height: 640px; height: auto; }
+.rd-map .leaflet-container svg { width: auto; max-height: none; }
 .rd-readout { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; min-height: 34px; padding: 6px 4px; font-size: 13px; color: var(--mc-text-muted, #5b6b7f); }
 .rd-readout strong { color: var(--mc-text, #0e1b2c); font-size: 14px; }
 .rd-readout button { border: 1px solid var(--mc-border, #cfd9e6); background: var(--mc-surface, #fff); border-radius: 999px; padding: 3px 10px; font-size: 12px; cursor: pointer; color: inherit; }

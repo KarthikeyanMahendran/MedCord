@@ -1,16 +1,24 @@
-/* Care network map */
+/* Shared real map */
+.geo-map { height: min(66vh, 600px); min-height: 380px; border-radius: 12px; overflow: hidden; background: var(--mc-surface-2, #e8edf3); z-index: 0; }
+.rd-geo { height: min(60vh, 540px); }
+.geo-pin-wrap { background: none; border: 0; }
+.geo-dot { width: 12px; height: 12px; border-radius: 50%; background: #3b82f6; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); margin: 2px; }
+.geo-dot.has-cases { background: #f59e0b; }
+.geo-alert { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 700 15px/1 system-ui, sans-serif; border: 3px solid #fff; box-shadow: 0 3px 12px rgba(0,0,0,.5); }
+.geo-alert.is-alert { background: #ef4444; animation: geopulse 1.8s infinite; }
+.geo-alert.is-watch { background: #f59e0b; }
+.geo-alert.is-selected { outline: 3px solid #2563eb; outline-offset: 3px; }
+@keyframes geopulse { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,.6); } 100% { box-shadow: 0 0 0 20px rgba(239,68,68,0); } }
+@media (prefers-reduced-motion: reduce) { .geo-alert.is-alert { animation: none; } }
+
+/* Care network page */
 .nw-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 @media (max-width: 900px) { .nw-grid { grid-template-columns: 1fr; } }
-.nw-map { height: min(68vh, 620px); min-height: 380px; border-radius: 12px; overflow: hidden; background: #0b1220; }
-.nw-tiles-dark { filter: invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.8); }
 .nw-side { display: grid; gap: 16px; }
-.nw-pin-wrap { background: none; border: 0; }
-.nw-pin { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 700 13px/1 system-ui, sans-serif; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,.45); background: #3b82f6; }
+.nw-pin { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 700 14px/1 system-ui, sans-serif; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,.45); background: #3b82f6; }
 .nw-pin.is-watch { background: #f59e0b; }
-.nw-pin.is-alert { background: #ef4444; animation: nwpulse 1.8s infinite; }
+.nw-pin.is-alert { background: #ef4444; animation: geopulse 1.8s infinite; }
 .nw-pin.is-mine { outline: 3px solid #22c55e; outline-offset: 2px; }
-@keyframes nwpulse { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,.6); } 100% { box-shadow: 0 0 0 16px rgba(239,68,68,0); } }
-@media (prefers-reduced-motion: reduce) { .nw-pin.is-alert { animation: none; } }
 .nw-detail { padding: 16px; }
 .nw-detail h3 { margin: 0 0 4px; display: flex; gap: 6px; align-items: center; }
 .nw-sub { margin: 0 0 10px; font-size: 13px; color: var(--mc-text-muted, #5b6b7f); }
