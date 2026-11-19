@@ -15,6 +15,7 @@ function RailButton({ to, label, end, badge, hasUnread, isMention, children }: {
     <NavLink to={to} end={end} className={({ isActive }) => `mc-rail-btn ${isActive ? 'is-active' : ''} ${hasUnread ? 'has-unread' : ''}`} aria-label={label} data-tip={label}>
       <span className="mc-rail-pill" aria-hidden="true" />
       {children}
+      <span className="mc-rail-label" aria-hidden="true">{label}</span>
       {badge && badge > 0 ? (
         <span className={`mc-rail-badge ${isMention ? 'is-mention' : ''}`} aria-hidden="true">
           {isMention ? '@' : (badge > 99 ? '99+' : badge)}
@@ -75,6 +76,7 @@ export function ServerRail() {
       <div className="mc-rail-grow" />
       <button type="button" className="mc-rail-btn" aria-label="Take a tour" data-tip="Take a tour" onClick={() => window.dispatchEvent(new Event(START_TOUR_EVENT))}>
         <span className="mc-rail-icon"><CircleHelp size={17} /></span>
+        <span className="mc-rail-label" aria-hidden="true">Take a tour</span>
       </button>
       <RailButton to="/library" label="Verified answer library"><span className="mc-rail-icon"><BookOpenCheck size={17} /></span></RailButton>
       <RailButton to="/impact" label="Impact"><span className="mc-rail-icon"><BarChart3 size={17} /></span></RailButton>
@@ -82,6 +84,7 @@ export function ServerRail() {
         onClick={() => setDrawerOpen(true)}>
         <span className="mc-rail-pill" aria-hidden="true" />
         <span className="mc-rail-icon">{prefs?.dndActiveNow ? <BellOff size={17} /> : <Bell size={17} />}</span>
+        <span className="mc-rail-label" aria-hidden="true">Notifications</span>
         {totalMentions > 0 && <span className="mc-rail-badge is-mention" aria-hidden="true">@</span>}
       </button>
       <RailButton to="/bookmarks" label="Saved messages"><span className="mc-rail-icon"><Bookmark size={17} /></span></RailButton>
