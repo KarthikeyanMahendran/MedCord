@@ -5,8 +5,8 @@
 .mc-content { min-width: 0; min-height: 0; overflow-y: auto; position: relative; background: var(--mc-bg); }
 
 /* ---- Rail ---- */
-.mc-rail { background: var(--mc-rail); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; overflow-y: auto; overflow-x: hidden; }
-.mc-rail::-webkit-scrollbar { width: 0; }
+.mc-rail { background: var(--mc-rail); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none; }
+.mc-rail::-webkit-scrollbar { width: 0; height: 0; display: none; }
 .mc-rail-grow { flex: 1; min-height: 8px; }
 .mc-rail-sep { width: 24px; height: 1px; background: var(--mc-border-strong); margin: 4px 0; flex: none; }
 .mc-rail-btn { position: relative; display: grid; place-items: center; width: 64px; height: 40px; flex: none; text-decoration: none !important; }
@@ -131,16 +131,21 @@ button.mc-rail-btn { border: 0; background: transparent; cursor: pointer; paddin
 
 /* ---- Rail that opens into a labelled menu on hover or keyboard focus ---- */
 .mc-rail { position: relative; z-index: 60; width: 64px; align-items: stretch; transition: width 180ms var(--mc-ease), box-shadow 180ms var(--mc-ease); }
-.mc-rail:hover, .mc-rail:focus-within { width: 236px; box-shadow: 8px 0 28px rgba(0, 0, 0, .35); }
+.mc-rail:hover, .mc-rail:focus-within:has(:focus-visible) { width: 236px; box-shadow: 8px 0 28px rgba(0, 0, 0, .35); }
 .mc-rail .mc-rail-btn { width: 100%; height: 44px; display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 0 0 0 12px; }
 .mc-rail .mc-rail-icon { flex: none; }
 .mc-rail-label { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 500; color: var(--mc-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; opacity: 0; transform: translateX(-6px); transition: opacity 120ms ease, transform 160ms var(--mc-ease); padding-right: 14px; }
-.mc-rail:hover .mc-rail-label, .mc-rail:focus-within .mc-rail-label { opacity: 1; transform: none; transition-delay: 60ms; }
+.mc-rail:hover .mc-rail-label, .mc-rail:focus-within:has(:focus-visible) .mc-rail-label { opacity: 1; transform: none; transition-delay: 60ms; }
 .mc-rail-btn.is-active .mc-rail-label, .mc-rail-btn:hover .mc-rail-label { color: var(--mc-text); }
 .mc-rail-btn::after { display: none; }
 .mc-rail .mc-rail-sep { align-self: center; }
 .mc-rail .mc-rail-grow { flex: 1; }
 .mc-rail .mc-rail-badge { right: auto; left: 38px; bottom: 4px; }
+.mc-rail:hover, .mc-rail:focus-within:has(:focus-visible), .mc-rail.is-open { scrollbar-width: thin; scrollbar-color: var(--mc-surface-3) transparent; }
+.mc-rail:hover::-webkit-scrollbar, .mc-rail:focus-within:has(:focus-visible)::-webkit-scrollbar, .mc-rail.is-open::-webkit-scrollbar { width: 6px; display: block; }
+.mc-rail:hover::-webkit-scrollbar-track, .mc-rail:focus-within:has(:focus-visible)::-webkit-scrollbar-track, .mc-rail.is-open::-webkit-scrollbar-track { background: transparent; }
+.mc-rail:hover::-webkit-scrollbar-thumb, .mc-rail:focus-within:has(:focus-visible)::-webkit-scrollbar-thumb, .mc-rail.is-open::-webkit-scrollbar-thumb { background: var(--mc-surface-3); border-radius: 99px; }
+.mc-rail:hover::-webkit-scrollbar-thumb:hover, .mc-rail:focus-within:has(:focus-visible)::-webkit-scrollbar-thumb:hover, .mc-rail.is-open::-webkit-scrollbar-thumb:hover { background: var(--mc-text-faint); }
 @media (hover: none) { .mc-rail:hover { width: 64px; box-shadow: none; } }
 @media (prefers-reduced-motion: reduce) { .mc-rail, .mc-rail-label { transition: none; } }
 
@@ -154,8 +159,8 @@ html[data-text="xlarge"] .mc-shell { height: calc(100vh / 1.3); }
 .mc-rail-group { flex: none; position: relative; height: 22px; margin: 8px 0 2px; padding: 0 0 0 16px; display: flex; align-items: flex-end; }
 .mc-rail-group::before { content: ''; position: absolute; left: 20px; right: 20px; top: 6px; height: 1px; background: var(--mc-border-strong); transition: opacity 120ms ease; }
 .mc-rail-group span { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--mc-text-faint, var(--mc-text-2)); white-space: nowrap; opacity: 0; transition: opacity 120ms ease; }
-.mc-rail:hover .mc-rail-group span, .mc-rail:focus-within .mc-rail-group span { opacity: 1; transition-delay: 60ms; }
-.mc-rail:hover .mc-rail-group::before, .mc-rail:focus-within .mc-rail-group::before { opacity: 0; }
+.mc-rail:hover .mc-rail-group span, .mc-rail:focus-within:has(:focus-visible) .mc-rail-group span { opacity: 1; transition-delay: 60ms; }
+.mc-rail:hover .mc-rail-group::before, .mc-rail:focus-within:has(:focus-visible) .mc-rail-group::before { opacity: 0; }
 .mc-rail .mc-rail-sep { display: none; }
 
 /* Home: what would you like to do */

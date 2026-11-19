@@ -5,15 +5,14 @@ import com.medcord.community.Channel;
 import com.medcord.community.ChannelRepository;
 import com.medcord.community.MembershipRepository;
 import com.medcord.dm.DmDtos.*;
-import com.medcord.message.Message;
 import com.medcord.message.MessageRepository;
 import com.medcord.user.*;
-import com.medcord.user.ProfessionalProfile.Verification;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,12 +27,14 @@ public class DmService {
     private final MessageRepository messages;
     private final UserRepository users;
     private final ProfessionalProfileRepository profiles;
+    private final JdbcClient jdbc;
 
     public DmService(ChannelRepository channels, DmParticipantRepository participants, UserBlockRepository blocks,
                      MembershipRepository memberships, MessageRepository messages, UserRepository users,
-                     ProfessionalProfileRepository profiles) {
+                     ProfessionalProfileRepository profiles, JdbcClient jdbc) {
         this.channels = channels; this.participants = participants; this.blocks = blocks;
         this.memberships = memberships; this.messages = messages; this.users = users; this.profiles = profiles;
+        this.jdbc = jdbc;
     }
 
     /** One user -> 1:1 DM, several -> group DM (max 10 people including you). Reuses an existing DM with the same people. */
@@ -55,7 +56,7 @@ public class DmService {
         all.add(me);
         String key = all.stream().map(UUID::toString).collect(Collectors.joining(","));
         Channel ch = channels.findByDmKey(key).orElseGet(() -> create(key, all));
-        return toDto(ch, me);
+        return get(ch.getId(), me);
     }
 
     private Channel create(String key, Set<UUID> all) {
@@ -80,59 +81,103 @@ public class DmService {
 
     @Transactional(readOnly = true)
     public List<ConversationDto> list(UUID me, int limit, int offset) {
-        List<UUID> myChannelIds = participants.channelIdsOf(me);
-        if (myChannelIds.isEmpty()) return List.of();
+        record ChannelLast(UUID channelId, String dmKey, String lastBody, Instant lastAt, boolean lastDeleted, String lastAuthorName) {}
+        List<ChannelLast> paged = jdbc.sql("""
+            SELECT 
+                c.id AS channel_id,
+                c.dm_key,
+                lm.body AS last_body,
+                lm.created_at AS last_created_at,
+                (lm.deleted_at IS NOT NULL) AS last_deleted,
+                lm.author_name AS last_author_name
+            FROM dm_participants my_dp
+            JOIN channels c ON c.id = my_dp.channel_id AND c.type = 'DM'
+            LEFT JOIN LATERAL (
+                SELECT m.body, m.created_at, m.deleted_at, u.display_name AS author_name
+                FROM messages m
+                JOIN users u ON u.id = m.author_id
+                WHERE m.channel_id = c.id AND m.thread_id IS NULL
+                ORDER BY m.created_at DESC, m.id DESC
+                LIMIT 1
+            ) lm ON true
+            WHERE my_dp.user_id = :me
+            ORDER BY COALESCE(lm.created_at, my_dp.joined_at, '1970-01-01'::timestamptz) DESC
+            LIMIT :limit OFFSET :offset
+            """)
+            .param("me", me)
+            .param("limit", Math.max(limit, 1))
+            .param("offset", Math.max(offset, 0))
+            .query((rs, rowNum) -> new ChannelLast(
+                (UUID) rs.getObject("channel_id"),
+                rs.getString("dm_key"),
+                rs.getString("last_body"),
+                rs.getTimestamp("last_created_at") == null ? null : rs.getTimestamp("last_created_at").toInstant(),
+                rs.getBoolean("last_deleted"),
+                rs.getString("last_author_name")
+            )).list();
 
-        List<Channel> mine = channels.findAllById(myChannelIds).stream()
-            .filter(c -> c.getType() == Channel.Type.DM).toList();
-        if (mine.isEmpty()) return List.of();
+        if (paged.isEmpty()) return List.of();
 
-        List<UUID> channelIds = mine.stream().map(Channel::getId).toList();
+        List<UUID> channelIds = paged.stream().map(ChannelLast::channelId).toList();
 
-        // 1. Batch load all participants across all channels in one query
-        List<DmParticipant> allParts = participants.findByChannelIdIn(channelIds);
-        Map<UUID, List<UUID>> usersByChannel = new HashMap<>();
-        Set<UUID> allUserIds = new HashSet<>();
-        for (DmParticipant p : allParts) {
-            usersByChannel.computeIfAbsent(p.getChannelId(), k -> new ArrayList<>()).add(p.getUserId());
-            allUserIds.add(p.getUserId());
+        record PartRow(UUID channelId, UUID userId, String displayName, Instant lastSeenAt, String specialty, String verificationStatus) {}
+        List<PartRow> allParts = jdbc.sql("""
+            SELECT dp.channel_id, dp.user_id, u.display_name, u.last_seen_at, p.specialty, p.verification_status
+            FROM dm_participants dp
+            JOIN users u ON u.id = dp.user_id
+            LEFT JOIN professional_profiles p ON p.user_id = u.id
+            WHERE dp.channel_id IN (:channelIds)
+            """)
+            .param("channelIds", channelIds)
+            .query((rs, rowNum) -> new PartRow(
+                (UUID) rs.getObject("channel_id"),
+                (UUID) rs.getObject("user_id"),
+                rs.getString("display_name"),
+                rs.getTimestamp("last_seen_at") == null ? null : rs.getTimestamp("last_seen_at").toInstant(),
+                rs.getString("specialty"),
+                rs.getString("verification_status")
+            )).list();
+
+        Map<UUID, List<PartRow>> partsByChannel = new HashMap<>();
+        for (PartRow pr : allParts) {
+            partsByChannel.computeIfAbsent(pr.channelId(), k -> new ArrayList<>()).add(pr);
         }
 
-        // 2. Batch load all users and profiles in two queries
-        Map<UUID, User> userMap = users.findAllById(allUserIds).stream()
-            .collect(Collectors.toMap(User::getId, u -> u));
-        Map<UUID, ProfessionalProfile> profMap = profiles.findAllById(allUserIds).stream()
-            .collect(Collectors.toMap(ProfessionalProfile::getUserId, p -> p));
+        Set<UUID> blockedByMe = new HashSet<>();
+        Set<UUID> blockedMe = new HashSet<>();
+        jdbc.sql("SELECT blocker_id, blocked_id FROM user_blocks WHERE blocker_id = :me OR blocked_id = :me")
+            .param("me", me)
+            .query((rs, rowNum) -> {
+                UUID blocker = (UUID) rs.getObject("blocker_id");
+                UUID blocked = (UUID) rs.getObject("blocked_id");
+                if (blocker.equals(me)) blockedByMe.add(blocked);
+                if (blocked.equals(me)) blockedMe.add(blocker);
+                return null;
+            }).list();
 
-        // 3. Batch load all blocks involving 'me' in two queries
-        Set<UUID> blockedByMe = blocks.findByBlockerIdOrderByCreatedAtDesc(me).stream()
-            .map(UserBlock::getBlockedId).collect(Collectors.toSet());
-        Set<UUID> blockedMe = blocks.findByBlockedId(me).stream()
-            .map(UserBlock::getBlockerId).collect(Collectors.toSet());
-
-        // 4. Batch load latest message per channel in one native query
-        Map<UUID, Message> latestByChannel = messages.latestMessagesForChannels(channelIds).stream()
-            .collect(Collectors.toMap(Message::getChannelId, m -> m, (a, b) -> a));
-
+        Instant onlineCutoff = Instant.now().minus(Presence.WINDOW);
         List<ConversationDto> out = new ArrayList<>();
-        for (Channel c : mine) {
-            List<UUID> ids = usersByChannel.getOrDefault(c.getId(), List.of());
-            List<Participant> people = ids.stream().filter(userMap::containsKey).map(id -> {
-                User u = userMap.get(id);
-                ProfessionalProfile p = profMap.get(id);
-                return new Participant(id, u.getDisplayName(), p == null ? null : p.getSpecialty(),
-                    p != null && p.getVerificationStatus() == Verification.APPROVED, Presence.online(u));
-            }).sorted(Comparator.comparing(Participant::displayName, String.CASE_INSENSITIVE_ORDER)).toList();
+        for (ChannelLast cl : paged) {
+            List<PartRow> pRows = partsByChannel.getOrDefault(cl.channelId(), List.of());
+            List<Participant> people = pRows.stream().map(p -> new Participant(
+                p.userId(),
+                p.displayName(),
+                p.specialty(),
+                "APPROVED".equals(p.verificationStatus()),
+                p.lastSeenAt() != null && p.lastSeenAt().isAfter(onlineCutoff)
+            )).sorted(Comparator.comparing(Participant::displayName, String.CASE_INSENSITIVE_ORDER)).toList();
 
             List<Participant> others = people.stream().filter(p -> !p.id().equals(me)).toList();
             boolean group = people.size() > 2;
             String name = others.isEmpty() ? "Just you" : others.stream().map(Participant::displayName).collect(Collectors.joining(", "));
 
-            Message m = latestByChannel.get(c.getId());
             LastMessage last = null;
-            if (m != null) {
-                User a = userMap.get(m.getAuthorId());
-                last = new LastMessage(a == null ? "Unknown" : a.getDisplayName(), preview(m), m.getCreatedAt());
+            if (cl.lastAt() != null) {
+                last = new LastMessage(
+                    cl.lastAuthorName() == null ? "Unknown" : cl.lastAuthorName(),
+                    preview(cl.lastBody(), cl.lastDeleted()),
+                    cl.lastAt()
+                );
             }
 
             boolean byMe = false, byThem = false;
@@ -141,20 +186,89 @@ public class DmService {
                 byMe = blockedByMe.contains(other);
                 byThem = blockedMe.contains(other);
             }
-            out.add(new ConversationDto(c.getId(), group, name, people, last, byMe, byThem));
+
+            out.add(new ConversationDto(cl.channelId(), group, name, people, last, byMe, byThem));
         }
 
-        out.sort(Comparator.comparing((ConversationDto d) -> d.lastMessage() == null ? java.time.Instant.EPOCH : d.lastMessage().at()).reversed());
-
-        int from = Math.min(Math.max(offset, 0), out.size());
-        int to = Math.min(from + Math.max(limit, 1), out.size());
-        return out.subList(from, to);
+        return out;
     }
 
     @Transactional(readOnly = true)
     public ConversationDto get(UUID channelId, UUID me) {
-        if (!participants.existsByChannelIdAndUserId(channelId, me)) throw new ApiException(HttpStatus.NOT_FOUND, "Conversation not found");
-        return toDto(channels.findById(channelId).orElseThrow(), me);
+        record PartRow(UUID userId, String displayName, Instant lastSeenAt, String specialty, String verificationStatus) {}
+        List<PartRow> parts = jdbc.sql("""
+            SELECT dp.user_id, u.display_name, u.last_seen_at, p.specialty, p.verification_status
+            FROM dm_participants dp
+            JOIN channels c ON c.id = dp.channel_id AND c.type = 'DM'
+            JOIN users u ON u.id = dp.user_id
+            LEFT JOIN professional_profiles p ON p.user_id = u.id
+            WHERE dp.channel_id = :channelId
+            """)
+            .param("channelId", channelId)
+            .query((rs, rowNum) -> new PartRow(
+                (UUID) rs.getObject("user_id"),
+                rs.getString("display_name"),
+                rs.getTimestamp("last_seen_at") == null ? null : rs.getTimestamp("last_seen_at").toInstant(),
+                rs.getString("specialty"),
+                rs.getString("verification_status")
+            )).list();
+
+        if (parts.isEmpty() || parts.stream().noneMatch(p -> p.userId().equals(me))) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Conversation not found");
+        }
+
+        Instant onlineCutoff = Instant.now().minus(Presence.WINDOW);
+        List<Participant> people = parts.stream().map(p -> new Participant(
+            p.userId(),
+            p.displayName(),
+            p.specialty(),
+            "APPROVED".equals(p.verificationStatus()),
+            p.lastSeenAt() != null && p.lastSeenAt().isAfter(onlineCutoff)
+        )).sorted(Comparator.comparing(Participant::displayName, String.CASE_INSENSITIVE_ORDER)).toList();
+
+        List<Participant> others = people.stream().filter(p -> !p.id().equals(me)).toList();
+        boolean group = people.size() > 2;
+        String name = others.isEmpty() ? "Just you" : others.stream().map(Participant::displayName).collect(Collectors.joining(", "));
+
+        record MsgRow(String body, Instant createdAt, boolean deleted, String authorName) {}
+        Optional<MsgRow> lastMsgRow = jdbc.sql("""
+            SELECT m.body, m.created_at, (m.deleted_at IS NOT NULL) AS deleted, u.display_name AS author_name
+            FROM messages m
+            JOIN users u ON u.id = m.author_id
+            WHERE m.channel_id = :channelId AND m.thread_id IS NULL
+            ORDER BY m.created_at DESC, m.id DESC
+            LIMIT 1
+            """)
+            .param("channelId", channelId)
+            .query((rs, rowNum) -> new MsgRow(
+                rs.getString("body"),
+                rs.getTimestamp("created_at").toInstant(),
+                rs.getBoolean("deleted"),
+                rs.getString("author_name")
+            )).optional();
+
+        LastMessage last = lastMsgRow.map(m -> new LastMessage(
+            m.authorName() == null ? "Unknown" : m.authorName(),
+            preview(m.body(), m.deleted()),
+            m.createdAt()
+        )).orElse(null);
+
+        boolean byMe = false, byThem = false;
+        if (!group && others.size() == 1) {
+            UUID other = others.get(0).id();
+            List<UUID> blockers = jdbc.sql("""
+                SELECT blocker_id FROM user_blocks
+                WHERE (blocker_id = :me AND blocked_id = :other)
+                   OR (blocker_id = :other AND blocked_id = :me)
+                """)
+                .param("me", me)
+                .param("other", other)
+                .query((rs, rowNum) -> (UUID) rs.getObject("blocker_id")).list();
+            byMe = blockers.contains(me);
+            byThem = blockers.contains(other);
+        }
+
+        return new ConversationDto(channelId, group, name, people, last, byMe, byThem);
     }
 
     // ---- blocks ----
@@ -185,40 +299,9 @@ public class DmService {
             byId.containsKey(b.getBlockedId()) ? byId.get(b.getBlockedId()).getDisplayName() : "Unknown", b.getCreatedAt())).toList();
     }
 
-    // ---- mapping ----
-
-    private ConversationDto toDto(Channel c, UUID me) {
-        List<UUID> ids = participants.findByChannelId(c.getId()).stream().map(DmParticipant::getUserId).toList();
-        Map<UUID, User> byId = users.findAllById(ids).stream().collect(Collectors.toMap(User::getId, u -> u));
-        Map<UUID, ProfessionalProfile> profs = profiles.findAllById(ids).stream().collect(Collectors.toMap(ProfessionalProfile::getUserId, p -> p));
-        List<Participant> people = ids.stream().filter(byId::containsKey).map(id -> {
-            User u = byId.get(id);
-            ProfessionalProfile p = profs.get(id);
-            return new Participant(id, u.getDisplayName(), p == null ? null : p.getSpecialty(),
-                p != null && p.getVerificationStatus() == Verification.APPROVED, Presence.online(u));
-        }).sorted(Comparator.comparing(Participant::displayName, String.CASE_INSENSITIVE_ORDER)).toList();
-
-        List<Participant> others = people.stream().filter(p -> !p.id().equals(me)).toList();
-        boolean group = people.size() > 2;
-        String name = others.isEmpty() ? "Just you" : others.stream().map(Participant::displayName).collect(Collectors.joining(", "));
-
-        LastMessage last = messages.latest(c.getId(), PageRequest.of(0, 1)).stream().findFirst().map(m -> {
-            User a = byId.get(m.getAuthorId());
-            return new LastMessage(a == null ? "Unknown" : a.getDisplayName(), preview(m), m.getCreatedAt());
-        }).orElse(null);
-
-        boolean byMe = false, byThem = false;
-        if (!group && others.size() == 1) {
-            UUID other = others.get(0).id();
-            byMe = blocks.existsById(new UserBlock.Key(me, other));
-            byThem = blocks.existsById(new UserBlock.Key(other, me));
-        }
-        return new ConversationDto(c.getId(), group, name, people, last, byMe, byThem);
-    }
-
-    private static String preview(Message m) {
-        if (m.isDeleted()) return "Message deleted";
-        String b = m.getBody();
+    private static String preview(String b, boolean deleted) {
+        if (deleted) return "Message deleted";
+        if (b == null) return "";
         return b.length() <= 80 ? b : b.substring(0, 80) + "…";
     }
 }

@@ -15,7 +15,7 @@ function RailButton({ to, label, end, badge, hasUnread, isMention, primary, chil
   to: string; label: string; end?: boolean; badge?: number; hasUnread?: boolean; isMention?: boolean; primary?: boolean; children: React.ReactNode
 }) {
   return (
-    <NavLink to={to} end={end} className={({ isActive }) => `mc-rail-btn ${isActive ? 'is-active' : ''} ${hasUnread ? 'has-unread' : ''} ${primary ? 'mc-rail-primary' : ''}`} aria-label={label} data-tip={label}>
+    <NavLink to={to} end={end} onClick={(e) => { e.currentTarget.blur() }} className={({ isActive }) => `mc-rail-btn ${isActive ? 'is-active' : ''} ${hasUnread ? 'has-unread' : ''} ${primary ? 'mc-rail-primary' : ''}`} aria-label={label} data-tip={label}>
       <span className="mc-rail-pill" aria-hidden="true" />
       {children}
       <span className="mc-rail-label" aria-hidden="true">{label}</span>
@@ -60,7 +60,12 @@ export function ServerRail() {
   }, [unreads])
 
   return (
-    <nav className={`mc-rail ${menuOpen ? 'is-open' : ''}`} aria-label="Main menu">
+    <nav className={`mc-rail ${menuOpen ? 'is-open' : ''}`} aria-label="Main menu"
+      onMouseLeave={() => {
+        if (document.activeElement && document.activeElement.closest('.mc-rail')) {
+          (document.activeElement as HTMLElement).blur()
+        }
+      }}>
       <RailButton to="/" end label="Home" primary><span className="mc-rail-icon mc-rail-home"><LogoMark size={36} /></span></RailButton>
 
       <RailGroup title="Patient care" />

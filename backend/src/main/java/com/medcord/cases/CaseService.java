@@ -51,20 +51,24 @@ public class CaseService {
         // No region given: use the reporter's home area so the impact map counts the case.
         UUID regionId = r.regionId() != null ? r.regionId()
             : jdbc.sql("SELECT region_id FROM health_worker_profiles WHERE user_id = :u").param("u", me).query(UUID.class).optional().orElse(null);
-        int minutes = switch (t.urgency()) { case "RED" -> 5; case "AMBER" -> 15; default -> 60; };
+        Instant escalateAt = switch (t.urgency()) {
+            case "RED" -> Instant.now().plus(java.time.Duration.ofMinutes(5));
+            case "AMBER" -> Instant.now().plus(java.time.Duration.ofMinutes(15));
+            default -> null;
+        };
         String lang = r.language() == null ? "en" : r.language();
         jdbc.sql("""
             INSERT INTO cases (id, channel_id, reporter_id, village, region_id, patient_age, patient_sex, chief_complaint, vitals,
                                original_language, original_text, sbar, urgency, red_flags, specialty_needed, status, escalate_at, is_demo)
             VALUES (:id, :ch, :me, :village, :region, :age, :sex, :cc, CAST(:vitals AS jsonb), :lang, :cc,
-                    CAST(:sbar AS jsonb), :urgency, CAST(:flags AS jsonb), :spec, 'OPEN', now() + make_interval(mins => :mins), :demo)
+                    CAST(:sbar AS jsonb), :urgency, CAST(:flags AS jsonb), :spec, 'OPEN', :esc, :demo)
             """)
             .param("id", caseId).param("ch", ch.getId()).param("me", me)
             .param("village", r.village()).param("region", regionId)
             .param("age", r.patientAge()).param("sex", r.patientSex()).param("cc", r.chiefComplaint())
             .param("vitals", write(vitals)).param("lang", lang)
             .param("sbar", write(t.sbar())).param("urgency", t.urgency()).param("flags", write(t.flags()))
-            .param("spec", t.specialty()).param("mins", minutes).param("demo", demo).update();
+            .param("spec", t.specialty()).param("esc", escalateAt != null ? Timestamp.from(escalateAt) : null).param("demo", demo).update();
 
         event(caseId, me, "SUBMITTED", Map.of("language", lang));
         event(caseId, null, "STRUCTURED", Map.of("urgency", t.urgency(), "flags", t.flags().size(), "specialty", t.specialty()));
@@ -225,7 +229,33 @@ public class CaseService {
 
     @Transactional(readOnly = true)
     public List<NotificationDto> notifications(UUID me) {
-        return jdbc.sql("SELECT * FROM notifications WHERE user_id = :u ORDER BY created_at DESC LIMIT 50").param("u", me)
+        return jdbc.sql("""
+            SELECT n.* FROM notifications n
+            LEFT JOIN cases c ON c.id = n.case_id
+            LEFT JOIN professional_profiles p ON p.user_id = :u
+            LEFT JOIN users u ON u.id = :u
+            WHERE n.user_id = :u
+              AND (
+                n.case_id IS NULL
+                OR (
+                  (n.kind IN ('CASE_ACCEPTED', 'CASE_ANSWERED', 'FOLLOWUP') AND c.reporter_id = :u)
+                  OR (n.kind = 'CASE_REOPENED' AND c.assigned_doctor_id = :u)
+                  OR (n.kind IN ('CASE_OFFER', 'CASE_ESCALATED') AND c.status = 'OPEN' AND (
+                      (u.platform_role = 'ADMIN' AND n.kind = 'CASE_ESCALATED')
+                      OR (
+                          NOT (c.urgency = 'GREEN' AND n.kind = 'CASE_ESCALATED')
+                          AND (
+                              c.urgency = 'RED'
+                              OR p.specialty IS NULL
+                              OR lower(p.specialty) = 'general medicine'
+                              OR lower(p.specialty) = lower(c.specialty_needed)
+                          )
+                      )
+                  ))
+                )
+              )
+            ORDER BY n.created_at DESC LIMIT 50
+            """).param("u", me)
             .query((rs, i) -> new NotificationDto(rs.getObject("id", UUID.class), rs.getString("kind"), rs.getObject("case_id", UUID.class),
                 rs.getObject("fundraiser_id", UUID.class), rs.getString("title"), rs.getString("body"), rs.getTimestamp("read_at") != null, rs.getTimestamp("created_at").toInstant())).list();
     }
@@ -237,17 +267,19 @@ public class CaseService {
 
     // ---------- scheduled jobs ----------
 
-    /** Escalates open cases nobody has accepted: first to every on-duty doctor, then to platform admins. */
+    /** Escalates open urgent cases nobody has accepted: first to relevant on-duty doctors, then to platform admins. */
     @Transactional
     public int escalateOverdue() {
-        List<UUID> due = jdbc.sql("SELECT id FROM cases WHERE status = 'OPEN' AND escalate_at IS NOT NULL AND escalate_at <= now() ORDER BY escalate_at LIMIT 50").query(UUID.class).list();
+        List<UUID> due = jdbc.sql("SELECT id FROM cases WHERE status = 'OPEN' AND urgency IN ('RED', 'AMBER') AND escalate_at IS NOT NULL AND escalate_at <= now() ORDER BY escalate_at LIMIT 50").query(UUID.class).list();
         for (UUID id : due) {
             CaseDto c = load(id);
             int level = c.escalationLevel() + 1;
             jdbc.sql("UPDATE cases SET escalation_level = :l, escalate_at = CASE WHEN :l < 2 THEN now() + interval '5 minutes' ELSE NULL END WHERE id = :id")
                 .param("l", level).param("id", id).update();
             List<UUID> targets = level == 1
-                ? jdbc.sql("SELECT u.id FROM users u JOIN doctor_availability a ON a.user_id = u.id JOIN professional_profiles p ON p.user_id = u.id WHERE a.on_duty AND u.status = 'ACTIVE' AND p.verification_status = 'APPROVED' LIMIT 20").query(UUID.class).list()
+                ? ("RED".equals(c.urgency())
+                    ? jdbc.sql("SELECT u.id FROM users u JOIN doctor_availability a ON a.user_id = u.id JOIN professional_profiles p ON p.user_id = u.id WHERE a.on_duty AND u.status = 'ACTIVE' AND p.verification_status = 'APPROVED' LIMIT 20").query(UUID.class).list()
+                    : candidates(c.specialtyNeeded(), 10))
                 : jdbc.sql("SELECT id FROM users WHERE platform_role = 'ADMIN' AND status = 'ACTIVE'").query(UUID.class).list();
             for (UUID t : targets) notify(t, "CASE_ESCALATED", id, "ESCALATED: " + c.urgency() + " case still unanswered", String.valueOf(c.sbar() == null ? "" : c.sbar().get("situation")));
             event(id, null, "ESCALATED", Map.of("level", level, "notified", targets.size()));

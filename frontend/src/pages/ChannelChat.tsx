@@ -16,7 +16,7 @@ import { getCommunity, listChannels, listMembers, listRoles } from '../api/commu
 import type { Channel, Community, Member, Role } from '../api/communities'
 import { invokeCopilot } from '../api/copilot'
 import type { CopilotMode } from '../api/copilot'
-import { blockUser, getDm, unblockUser } from '../api/dms'
+import { blockUser, getCachedDm, getDm, unblockUser } from '../api/dms'
 import type { Conversation } from '../api/dms'
 import {
   deleteMessage, editMessage, getMessage, listMessages, listPins, messageHistory,
@@ -69,7 +69,7 @@ export default function ChannelChat() {
   const [members, setMembers] = useState<Member[]>([])
   const [roles, setRoles] = useState<Role[]>([])
   const [showMembers, setShowMembers] = useState(true)
-  const [conv, setConv] = useState<Conversation | null>(null)
+  const [conv, setConv] = useState<Conversation | null>(() => (dmMode && channelId ? (getCachedDm?.(channelId) ?? null) : null))
   const [voiceRoom, setVoiceRoom] = useState<VoiceRoom | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [hasMore, setHasMore] = useState(false)
@@ -142,6 +142,8 @@ export default function ChannelChat() {
 
   useEffect(() => {
     if (!dmMode || !channelId) { setConv(null); return }
+    const cached = getCachedDm?.(channelId)
+    if (cached) setConv(cached)
     getDm(channelId).then(setConv).catch((e) => setError(problemMessage(e)))
   }, [dmMode, channelId])
 

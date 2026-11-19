@@ -7,9 +7,27 @@ export interface Conversation {
 }
 export interface BlockedUser { id: string; displayName: string; blockedAt: string }
 
-export const listDms = async (limit = 50, offset = 0) => (await api.get<Conversation[]>('/dms', { params: { limit, offset } })).data
-export const getDm = async (id: string) => (await api.get<Conversation>(`/dms/${id}`)).data
-export const startDm = async (userIds: string[]) => (await api.post<Conversation>('/dms', { userIds })).data
+const dmCache = new Map<string, Conversation>()
+
+export const getCachedDm = (id: string): Conversation | null => dmCache.get(id) ?? null
+
+export const listDms = async (limit = 50, offset = 0) => {
+  const data = (await api.get<Conversation[]>('/dms', { params: { limit, offset } })).data
+  if (Array.isArray(data)) data.forEach((c) => dmCache.set(c.id, c))
+  return data
+}
+
+export const getDm = async (id: string) => {
+  const data = (await api.get<Conversation>(`/dms/${id}`)).data
+  if (data && data.id) dmCache.set(data.id, data)
+  return data
+}
+
+export const startDm = async (userIds: string[]) => {
+  const data = (await api.post<Conversation>('/dms', { userIds })).data
+  if (data && data.id) dmCache.set(data.id, data)
+  return data
+}
 export const blockUser = async (id: string) => { await api.put(`/users/${id}/block`) }
 export const unblockUser = async (id: string) => { await api.delete(`/users/${id}/block`) }
 export const listBlocked = async () => (await api.get<BlockedUser[]>('/users/blocks')).data
