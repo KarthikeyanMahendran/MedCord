@@ -83,11 +83,42 @@ select.mc-input {
 .mc-modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--mc-border); }
 
 /* ---- Tabs ---- */
-.mc-tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--mc-border); overflow-x: auto; }
-.mc-tab { position: relative; background: none; border: 0; padding: 10px 0; font-size: 13px; font-weight: 500; color: var(--mc-text-muted); cursor: pointer; white-space: nowrap; transition: color var(--mc-transition); }
+.mc-tabs {
+  display: flex;
+  gap: 20px;
+  border-bottom: 1px solid var(--mc-border);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.mc-tabs::-webkit-scrollbar {
+  display: none;
+}
+.mc-tab {
+  position: relative;
+  background: none;
+  border: 0;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mc-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--mc-transition);
+}
 .mc-tab:hover { color: var(--mc-text); }
 .mc-tab.is-active { color: var(--mc-text); }
-.mc-tab.is-active::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--mc-brand); border-radius: 2px 2px 0 0; }
+.mc-tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--mc-brand);
+  border-radius: 2px 2px 0 0;
+}
 .mc-tab-count { margin-left: 6px; color: var(--mc-text-faint); font-variant-numeric: tabular-nums; }
 
 /* ---- Table ---- */
