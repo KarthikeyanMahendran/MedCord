@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, HeartHandshake, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, HeartHandshake, Phone, TriangleAlert, Video } from 'lucide-react'
 import { Alert, Button, Card, EmptyState, Textarea } from '../../components/ui'
 import { CaseChat } from '../../components/cases/CaseChat'
 import { StatusBadge, UrgencyBadge, ago } from '../../components/cases/UrgencyBadge'
@@ -8,10 +8,12 @@ import { acceptCase, answerCase, followUp, getCase } from '../../api/cases'
 import type { CaseRoom as CaseRoomDto } from '../../api/cases'
 import { problemMessage } from '../../api/client'
 import { useAuth } from '../../context/AuthContext'
+import { useCall } from '../../context/CallContext'
 
 export default function CaseRoom() {
   const { id = '' } = useParams()
   const { user } = useAuth()
+  const calls = useCall()
   const [c, setC] = useState<CaseRoomDto | null>(null)
   const [missing, setMissing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -71,7 +73,13 @@ export default function CaseRoom() {
             </dl>
           </Card>
 
-          <div className="mc-row" style={{ justifyContent: 'flex-end' }}>
+          <div className="mc-row" style={{ justifyContent: 'flex-end', gap: 8 }}>
+            {c.assignedDoctorId && c.status !== 'CLOSED' && (
+              <>
+                <Button variant="secondary" disabled={calls.state.phase !== 'idle'} title={calls.ready ? 'Start a voice call' : 'Connecting to calling…'} onClick={() => calls.startCall(c.channelId, 'AUDIO')}><Phone size={15} /> Voice call</Button>
+                <Button variant="secondary" disabled={calls.state.phase !== 'idle'} title={calls.ready ? 'Start a video call' : 'Connecting to calling…'} onClick={() => calls.startCall(c.channelId, 'VIDEO')}><Video size={15} /> Video call</Button>
+              </>
+            )}
             <Link to={`/fund/new?caseId=${c.id}`} style={{ textDecoration: 'none' }}><Button variant="secondary"><HeartHandshake size={15} /> Raise funds for this patient</Button></Link>
           </div>
 

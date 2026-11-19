@@ -1,10 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { NCCallEngine, NCCallEventHandler } from '@nexconn/call'
-import { attachCall, createCall, endCallRecord, getCall, getChatToken, markConnected } from '../api/calls'
+import { attachCall, createCall, endCallRecord, getCall, markConnected } from '../api/calls'
 import type { CallMedia, CallRecord, CallStatus } from '../api/calls'
 import { problemMessage } from '../api/client'
 import { useAuth } from './AuthContext'
+import { beforeNexconnConnect, connectNexconn, disconnectNexconn } from '../lib/nexconn'
 import { startTone, stopTone } from '../components/call/ringtone'
 
 export type CallPhase = 'idle' | 'outgoing' | 'incoming' | 'connected'
@@ -135,24 +136,26 @@ export function CallProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     ;(async () => {
       try {
-        const [token, chat, call] = await Promise.all([getChatToken(), import('@nexconn/chat'), import('@nexconn/call')])
+        const call = await import('@nexconn/call')
         if (cancelled) return
-        if (!sdk.initialized) {
-          chat.NCEngine.initialize({ appKey: token.appKey })
-          call.NCCallEngine.install()
-          sdk.engine = call.NCCallEngine.initialize({})
-          sdk.mods = { chat, call }
-          sdk.initialized = true
-        }
-        const engine = sdk.engine!
-        engine.setCallEventHandler(handlers)                                  // must be set before connecting
-        engine.setVideoConfig(engine.createVideoConfigBuilder()
-          .setResolution(call.NCCallVideoResolution.RESOLUTION_1280X720)       // HD: good quality without burning FHD/2K minutes
-          .setFrameRate(call.NCCallVideoFrameRate.FPS_24).build())
-        const res = await chat.NCEngine.connect({ token: token.token })
+        // One Nexconn connection is shared with the chat. Call set-up runs after the SDK starts and before it connects.
+        beforeNexconnConnect('calls', (chat) => {
+          if (!sdk.initialized) {
+            call.NCCallEngine.install()
+            sdk.engine = call.NCCallEngine.initialize({})
+            sdk.mods = { chat, call }
+            sdk.initialized = true
+          }
+          const engine = sdk.engine!
+          engine.setCallEventHandler(handlers)                                // must be set before connecting
+          engine.setVideoConfig(engine.createVideoConfigBuilder()
+            .setResolution(call.NCCallVideoResolution.RESOLUTION_1280X720)     // HD: good quality without burning FHD/2K minutes
+            .setFrameRate(call.NCCallVideoFrameRate.FPS_24).build())
+        })
+        const ok = await connectNexconn()
         if (cancelled) return
-        if (res.isOk) { setupError.current = null; setReady(true) }
-        else setupError.current = `Calling is unavailable (connection code ${res.code}).`
+        if (ok && sdk.engine) { sdk.engine.setCallEventHandler(handlers); setupError.current = null; setReady(true) }
+        else setupError.current = 'Calling is unavailable: could not reach Nexconn. Check your network.'
       } catch (e) {
         if (!cancelled) setupError.current = `Calling is unavailable: ${problemMessage(e)}`
       }
@@ -160,7 +163,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
       setReady(false)
-      sdk.mods?.chat.NCEngine.disconnect().catch(() => undefined)
+      void disconnectNexconn()
     }
   }, [user, handlers])
 

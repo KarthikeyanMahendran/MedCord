@@ -42,9 +42,12 @@ public class CallService {
     private final UserRepository users;
     private final MessageRepository messages;
     private final ChannelTransport transport;
+    private final org.springframework.jdbc.core.simple.JdbcClient jdbc;
 
     public CallService(CallRepository calls, ChannelRepository channels, DmParticipantRepository participants,
-                       UserBlockRepository blocks, UserRepository users, MessageRepository messages, ChannelTransport transport) {
+                       UserBlockRepository blocks, UserRepository users, MessageRepository messages, ChannelTransport transport,
+                       org.springframework.jdbc.core.simple.JdbcClient jdbc) {
+        this.jdbc = jdbc;
         this.calls = calls; this.channels = channels; this.participants = participants; this.blocks = blocks;
         this.users = users; this.messages = messages; this.transport = transport;
     }
@@ -56,8 +59,17 @@ public class CallService {
     @Transactional
     public CallDto start(UUID userId, UUID channelId, Media media) {
         Channel ch = channels.findById(channelId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Conversation not found"));
-        if (ch.getType() != Channel.Type.DM) throw new ApiException(HttpStatus.BAD_REQUEST, "Calls are available in direct messages");
-        List<UUID> people = participants.findByChannelId(channelId).stream().map(DmParticipant::getUserId).toList();
+        List<UUID> people;
+        if (ch.getType() == Channel.Type.CASE) {
+            // A case room is a conversation between the health worker who reported it and the doctor who accepted it.
+            List<java.util.Map<String, Object>> rows = jdbc.sql("SELECT reporter_id, assigned_doctor_id FROM cases WHERE channel_id = :c").param("c", channelId).query().listOfRows();
+            if (rows.isEmpty() || rows.get(0).get("assigned_doctor_id") == null) throw new ApiException(HttpStatus.CONFLICT, "You can call once a doctor has accepted this case");
+            people = List.of((UUID) rows.get(0).get("reporter_id"), (UUID) rows.get(0).get("assigned_doctor_id"));
+        } else if (ch.getType() == Channel.Type.DM) {
+            people = participants.findByChannelId(channelId).stream().map(DmParticipant::getUserId).toList();
+        } else {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Calls are available in direct messages and case rooms");
+        }
         if (!people.contains(userId)) throw new ApiException(HttpStatus.NOT_FOUND, "Conversation not found");
         if (people.size() != 2) throw new ApiException(HttpStatus.BAD_REQUEST, "Calls are available in one-to-one conversations");
         UUID calleeId = people.stream().filter(p -> !p.equals(userId)).findFirst().orElseThrow();

@@ -15,11 +15,15 @@ let status: NexconnStatus = 'off'
 let connecting: Promise<boolean> | null = null
 let sdk: Chat | null = null
 let myNexconnId: string | null = null
+let initialized = false
+const beforeConnect = new Map<string, (chat: Chat) => Promise<void> | void>()
 const statusListeners = new Set<(s: NexconnStatus) => void>()
 const signalListeners = new Set<(channelId: string, from: string) => void>()
 
 const setStatus = (s: NexconnStatus) => { status = s; statusListeners.forEach((f) => f(s)) }
 export const nexconnStatus = () => status
+/** Other features (calls) register set-up that must run after the SDK starts and before it connects. */
+export function beforeNexconnConnect(key: string, fn: (chat: Chat) => Promise<void> | void) { beforeConnect.set(key, fn) }
 export const toNexconnId = (uuid: string) => uuid.replace(/-/g, '')
 
 export function onNexconnStatus(cb: (s: NexconnStatus) => void) { statusListeners.add(cb); cb(status); return () => { statusListeners.delete(cb) } }
@@ -35,7 +39,7 @@ export function connectNexconn(): Promise<boolean> {
       const { data } = await api.get<ChatToken>('/chat/token')
       const mod = await import('@nexconn/chat')
       if (!mod.NCEngine?.initialize || !mod.MessageHandler) throw new Error('Nexconn SDK is not available')
-      mod.NCEngine.initialize({ appKey: data.appKey, areaCode: mod.AreaCode?.SG })
+      if (!initialized) { mod.NCEngine.initialize({ appKey: data.appKey, areaCode: mod.AreaCode?.SG }); initialized = true }
       mod.NCEngine.addMessageHandler('medcord', new mod.MessageHandler({
         onMessageReceived: ({ messages }) => {
           for (const m of messages) {
@@ -44,6 +48,7 @@ export function connectNexconn(): Promise<boolean> {
           }
         },
       }))
+      for (const fn of beforeConnect.values()) await fn(mod)
       const res = await mod.NCEngine.connect({ token: data.token })
       if (!res.isOk) throw new Error('Nexconn connect failed')
       sdk = mod; myNexconnId = data.userId
