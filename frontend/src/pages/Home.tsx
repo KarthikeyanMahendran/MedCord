@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRight, Compass, MessageCircle, Pencil, Users } from 'lucide-react'
+import { ChevronRight, MessageCircle, Pencil, Users } from 'lucide-react'
 import { Alert, Avatar, Badge, Button, Card, EmptyState, FormGroup, Input, Modal, PageHeader, Textarea, VerifiedMark } from '../components/ui'
 import type { Tone } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
+import { TaskGrid } from '../components/home/TaskGrid'
 import { resubmitVerification, updateProfile } from '../api/auth'
 import { listMine } from '../api/communities'
 import type { Community } from '../api/communities'
@@ -83,8 +84,7 @@ export default function Home() {
 
   return (
     <main className="mc-page mc-page-wide">
-      <PageHeader eyebrow={today} title={`${greeting()}, ${first}`} description="Your communities, conversations and profile at a glance."
-        actions={<Link to="/communities"><Button variant="secondary"><Compass size={15} /> Browse communities</Button></Link>} />
+      <PageHeader eyebrow={today} title={`${greeting()}, ${first}`} description="Pick what you want to do. Everything else is in the menu on the left." />
 
       {notice && <Alert tone="success">{notice}</Alert>}
       {!isWorker && user.verificationStatus === 'REJECTED' && (
@@ -98,6 +98,8 @@ export default function Home() {
       {!isWorker && user.verificationStatus === 'PENDING' && (
         <Alert tone="info">Your licence is under review. You can browse and join communities now; creating communities unlocks once you&apos;re verified.</Alert>
       )}
+
+      <TaskGrid />
 
       <section className="mc-stats" aria-label="Summary">
         <div className="mc-stat"><span>Communities</span><strong>{mine ? mine.length : '–'}</strong></div>

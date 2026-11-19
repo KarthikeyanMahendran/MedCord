@@ -27,10 +27,11 @@ export function AppShell() {
     <RealtimeProvider>
       <VoiceRoomProvider>
         <CallProvider>
+          <a href="#main-content" className="mc-skip">Skip to main content</a>
           <div className="mc-shell">
             <ServerRail />
             <SideColumn />
-            <div className="mc-content"><Outlet /></div>
+            <div className="mc-content" id="main-content" tabIndex={-1}><Outlet /></div>
             <MedCordAiWidget />
             <Tour />
           </div>

@@ -44,18 +44,18 @@ describe('ServerRail', () => {
   it('shows home, DMs and one icon per community with links', async () => {
     render(<MemoryRouter><ServerRail /></MemoryRouter>)
     expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link', { name: 'Direct messages' })).toHaveAttribute('href', '/messages')
+    expect(screen.getByRole('link', { name: 'Messages' })).toHaveAttribute('href', '/messages')
     const c = await screen.findByRole('link', { name: 'Cardiology Collective' })
     expect(c).toHaveAttribute('href', '/communities/c1')
     expect(c).toHaveTextContent('CC')
     expect(screen.getByRole('link', { name: 'Emergency Hub' })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Verification queue' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Verify doctors' })).toBeNull()
   })
 
   it('shows the verification shortcut only to platform admins', async () => {
     role = 'ADMIN'
     render(<MemoryRouter><ServerRail /></MemoryRouter>)
-    expect(await screen.findByRole('link', { name: 'Verification queue' })).toHaveAttribute('href', '/admin/verifications')
+    expect(await screen.findByRole('link', { name: 'Verify doctors' })).toHaveAttribute('href', '/admin/verifications')
   })
 
   it('marks the active community', async () => {
