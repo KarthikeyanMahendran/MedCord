@@ -75,7 +75,8 @@ class DmFlowTest extends ApiTestSupport {
         api(HttpMethod.PUT, "/api/v1/messages/" + id + "/reactions/👍", bob, null, 200);
         String tid = api(HttpMethod.POST, "/api/v1/messages/" + id + "/thread", bob, "{}", 200).get("id").asText();
         api(HttpMethod.POST, "/api/v1/threads/" + tid + "/messages", alice, "{\"body\":\"sure\"}", 201);
-        api(HttpMethod.PUT, "/api/v1/messages/" + id + "/pin", alice, null, 403);   // no moderation rights in DMs
+        api(HttpMethod.PUT, "/api/v1/messages/" + id + "/pin", alice, null, 200);   // either person in a DM can pin
+        api(HttpMethod.DELETE, "/api/v1/messages/" + id + "/pin", bob, null, 200);
         api(HttpMethod.DELETE, "/api/v1/messages/" + id, bob, null, 403);            // only the author deletes
         api(HttpMethod.DELETE, "/api/v1/messages/" + id, alice, null, 204);
     }

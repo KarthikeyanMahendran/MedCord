@@ -17,7 +17,8 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /** Shared helpers for HTTP-level integration tests. Each test runs in a rolled-back transaction. */
-@SpringBootTest
+// Tests never call the real Sarvam service: a key in .env must not change what they see.
+@SpringBootTest(properties = "medcord.ai.sarvam-api-key=")
 @AutoConfigureMockMvc
 @Transactional
 public abstract class ApiTestSupport {
