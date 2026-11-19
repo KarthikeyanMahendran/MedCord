@@ -59,7 +59,7 @@ public class ThreadService {
     public MessageDto reply(UUID threadId, UUID userId, SendRequest r) {
         MessageThread t = thread(threadId);
         if (t.isArchived()) throw new ApiException(HttpStatus.CONFLICT, "This thread is archived");
-        return messageService.post(channel(t.getChannelId()), userId, r.body(), r.replyToId(), t);
+        return messageService.post(channel(t.getChannelId()), userId, r.body(), r.replyToId(), r.attachmentIds(), t, Boolean.TRUE.equals(r.autoRedact()));
     }
 
     /** Creator or a moderator may rename/archive. */

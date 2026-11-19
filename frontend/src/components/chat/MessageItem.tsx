@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { CornerUpLeft, Flag, History, MessageSquareText, Pencil, Phone, PhoneMissed, Pin, PinOff, SmilePlus, Trash2, Video } from 'lucide-react'
+import { CornerUpLeft, Flag, History, MessageSquareText, Pencil, Phone, PhoneMissed, Pin, PinOff, ShieldCheck, SmilePlus, Sparkles, Trash2, Video } from 'lucide-react'
 import { Avatar, Badge, Button, VerifiedMark } from '../ui'
 import type { Message } from '../../api/messages'
+import { MarkdownBody } from './MarkdownBody'
+import { AttachmentList } from './AttachmentView'
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 const full = (iso: string) => new Date(iso).toLocaleString([], { dateStyle: 'full', timeStyle: 'short' })
@@ -15,6 +17,9 @@ export interface MessageItemProps {
   moderator: boolean
   /** Continues the previous author's run: hides avatar and name. */
   compact?: boolean
+  /** True while an AI Co-Pilot message is actively streaming live tokens. */
+  streaming?: boolean
+  isUnread?: boolean
   onReply?: (m: Message) => void
   onEdit: (m: Message) => void
   onDelete: (m: Message) => void
@@ -26,11 +31,12 @@ export interface MessageItemProps {
 }
 
 /** One message row with a hover toolbar. Shared by the channel timeline and the thread panel. */
-export function MessageItem({ m, userId, canPost, moderator, compact, onReply, onEdit, onDelete, onHistory, onThread, onReact, onPin, onReport }: MessageItemProps) {
+export function MessageItem({ m, userId, canPost, moderator, compact, streaming, isUnread, onReply, onEdit, onDelete, onHistory, onThread, onReact, onPin, onReport }: MessageItemProps) {
   const [picker, setPicker] = useState(false)
   const pickerRef = useRef<HTMLSpanElement>(null)
   const mine = m.author.id === userId
-  const showHead = !compact || !!m.replyTo
+  const isAi = m.kind === 'AI'
+  const showHead = isAi || !compact || !!m.replyTo
 
   // Close the emoji picker on outside click or Escape.
   useEffect(() => {
@@ -61,10 +67,14 @@ export function MessageItem({ m, userId, canPost, moderator, compact, onReply, o
     )
   }
 
+  const editedTag = m.editedAt ? <span className="mc-edited" title={`Edited ${full(m.editedAt)}`}>(edited)</span> : null
+
   return (
-    <article className={`mc-msg ${compact && !m.replyTo ? 'is-compact' : ''}`} aria-label={`Message from ${m.author.displayName}`}>
+    <article className={`mc-msg ${compact && !m.replyTo && !isAi ? 'is-compact' : ''} ${isAi ? 'is-ai' : ''} ${isUnread ? 'is-unread' : ''}`.trim()} aria-label={isAi ? 'Clinical Co-Pilot message' : `Message from ${m.author.displayName}`}>
       <div className="mc-msg-gutter">
-        {showHead
+        {isAi ? (
+          <span className="mc-ai-avatar" aria-hidden="true"><Sparkles size={16} /></span>
+        ) : showHead
           ? <Avatar name={m.author.displayName} size="md" />
           : <time className="mc-msg-hovertime" dateTime={m.createdAt} title={full(m.createdAt)}>{time(m.createdAt)}</time>}
       </div>
@@ -74,9 +84,21 @@ export function MessageItem({ m, userId, canPost, moderator, compact, onReply, o
         )}
         {showHead && (
           <div className="mc-msg-meta">
-            <span className="mc-msg-name">{m.author.displayName}</span>
-            {m.author.verified && <VerifiedMark />}
-            {m.author.specialty && <span className="mc-msg-role">{m.author.specialty}</span>}
+            {isAi ? (
+              <>
+                <span className="mc-msg-name">MedCord Clinical Co-Pilot</span>
+                <span className="mc-ai-badge"><Sparkles size={10} /> AI Stream</span>
+                <span className="mc-att-exif"><ShieldCheck size={10} /> De-identified</span>
+                <span className="mc-msg-role">Requested by {m.author.displayName}</span>
+                {streaming && <span className="mc-ai-streaming">Streaming live…</span>}
+              </>
+            ) : (
+              <>
+                <span className="mc-msg-name">{m.author.displayName}</span>
+                {m.author.verified && <VerifiedMark />}
+                {m.author.specialty && <span className="mc-msg-role">{m.author.specialty}</span>}
+              </>
+            )}
             <time className="mc-msg-time" dateTime={m.createdAt} title={full(m.createdAt)}>{time(m.createdAt)}</time>
             {m.pinned && <span className="mc-pinned-tag"><Pin size={11} /> pinned</span>}
           </div>
@@ -84,7 +106,17 @@ export function MessageItem({ m, userId, canPost, moderator, compact, onReply, o
         {!showHead && m.pinned && <span className="mc-pinned-tag"><Pin size={11} /> pinned</span>}
         {m.deleted
           ? <div className="mc-msg-body mc-msg-deleted">This message was deleted.</div>
-          : <div className="mc-msg-body">{m.body}{m.editedAt && <span className="mc-edited" title={`Edited ${full(m.editedAt)}`}>(edited)</span>}</div>}
+          : (
+            <>
+              {m.body && (
+                <div className="mc-msg-body">
+                  <MarkdownBody text={m.body} suffix={streaming ? <span className="mc-stream-cursor" aria-hidden="true" /> : editedTag} />
+                </div>
+              )}
+              {!m.body && editedTag}
+              {m.attachments && m.attachments.length > 0 && <AttachmentList attachments={m.attachments} />}
+            </>
+          )}
         {m.reactions.length > 0 && (
           <div className="mc-reactions" role="group" aria-label="Reactions">
             {m.reactions.map((r) => (
@@ -117,11 +149,14 @@ export function MessageItem({ m, userId, canPost, moderator, compact, onReply, o
           )}
           {canPost && onReply && <Button variant="icon" size="sm" aria-label="Reply" onClick={() => onReply(m)}><CornerUpLeft size={16} /></Button>}
           {canPost && onThread && !m.thread && !m.threadId && <Button variant="icon" size="sm" aria-label="Start thread" onClick={() => onThread(m)}><MessageSquareText size={16} /></Button>}
-          {mine && canPost && <Button variant="icon" size="sm" aria-label="Edit" onClick={() => onEdit(m)}><Pencil size={15} /></Button>}
-          {m.editedAt && (mine || moderator) && <Button variant="icon" size="sm" aria-label="Edit history" onClick={() => onHistory(m)}><History size={16} /></Button>}
           {moderator && onPin && !m.threadId && (
-            <Button variant="icon" size="sm" aria-label={m.pinned ? 'Unpin message' : 'Pin message'} onClick={() => onPin(m)}>{m.pinned ? <PinOff size={15} /> : <Pin size={15} />}</Button>
+            <Button variant="icon" size="sm" aria-label={m.pinned ? 'Unpin message' : 'Pin message'} aria-pressed={!!m.pinned} onClick={() => onPin(m)}
+              style={m.pinned ? { color: 'var(--mc-brand-text)' } : undefined} title={m.pinned ? 'Unpin message' : 'Pin message'}>
+              {m.pinned ? <PinOff size={15} /> : <Pin size={15} />}
+            </Button>
           )}
+          {mine && canPost && (!m.kind || m.kind === 'TEXT') && <Button variant="icon" size="sm" aria-label="Edit" onClick={() => onEdit(m)}><Pencil size={15} /></Button>}
+          {m.editedAt && (mine || moderator) && <Button variant="icon" size="sm" aria-label="Edit history" onClick={() => onHistory(m)}><History size={16} /></Button>}
           {(!mine && onReport) || destructive ? <span className="mc-tools-sep" aria-hidden="true" /> : null}
           {!mine && onReport && <Button variant="icon" size="sm" aria-label="Report message" onClick={() => onReport(m)}><Flag size={15} /></Button>}
           {destructive && <Button variant="icon" size="sm" aria-label="Delete" onClick={() => onDelete(m)} style={{ color: 'var(--mc-danger)' }}><Trash2 size={15} /></Button>}

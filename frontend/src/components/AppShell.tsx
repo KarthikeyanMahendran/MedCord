@@ -3,10 +3,14 @@ import { Outlet } from 'react-router-dom'
 import { heartbeat } from '../api/dms'
 import { ServerRail } from './shell/ServerRail'
 import { SideColumn } from './shell/SideColumn'
+import { NotificationDrawer } from './shell/NotificationDrawer'
+import { ToastStack } from './shell/ToastStack'
 import { CallOverlay } from './call/CallOverlay'
 import { CallProvider } from '../context/CallContext'
 import { MedCordAiWidget } from './ai/MedCordAiWidget'
 import { Tour } from './tour/Tour'
+import { RealtimeProvider } from '../context/RealtimeContext'
+import { VoiceRoomProvider } from '../context/VoiceRoomContext'
 
 /** Discord-style frame: server rail | contextual sidebar | content. */
 export function AppShell() {
@@ -20,15 +24,21 @@ export function AppShell() {
   }, [])
 
   return (
-    <CallProvider>
-      <div className="mc-shell">
-        <ServerRail />
-        <SideColumn />
-        <div className="mc-content"><Outlet /></div>
-        <MedCordAiWidget />
-        <Tour />
-      </div>
-      <CallOverlay />
-    </CallProvider>
+    <RealtimeProvider>
+      <VoiceRoomProvider>
+        <CallProvider>
+          <div className="mc-shell">
+            <ServerRail />
+            <SideColumn />
+            <div className="mc-content"><Outlet /></div>
+            <MedCordAiWidget />
+            <Tour />
+          </div>
+          <NotificationDrawer />
+          <ToastStack />
+          <CallOverlay />
+        </CallProvider>
+      </VoiceRoomProvider>
+    </RealtimeProvider>
   )
 }
