@@ -7,11 +7,11 @@ import { AuthLayout } from '../components/AuthLayout'
 import { useAuth } from '../context/AuthContext'
 import { fieldErrors, problemMessage } from '../api/client'
 
-// Quick-fill buttons for demos. Shown in development, or when VITE_DEMO_LOGINS=true. Only the public demo seed accounts are listed.
-const DEMO_LOGINS = import.meta.env.DEV || import.meta.env.VITE_DEMO_LOGINS === 'true'
-const DEMOS: { label: string; email: string; password: string }[] = [
-  { label: 'Health worker', email: 'kavitha.worker@medcord.dev', password: 'Passw0rd!Med' },
-  { label: 'Doctor', email: 'priya.raman@medcord.dev', password: 'Passw0rd!Med' },
+// Demo accounts for judges and visitors. They hold test data only.
+const DEMOS: { role: string; hint: string; email: string; password: string }[] = [
+  { role: 'Health worker', hint: 'Send a patient case, ask for help, check in', email: 'worker@medcord.com', password: 'Worker1234' },
+  { role: 'Doctor', hint: 'Accept cases, answer, raise funds', email: 'doctor@medcord.com', password: 'Doctor1234' },
+  { role: 'Admin', hint: 'Verify doctors, outbreak radar, impact', email: 'admin@gmail.com', password: 'Admin1234' },
 ]
 
 function loginMessage(err: unknown): string {
@@ -34,6 +34,12 @@ export default function Login() {
   const [busy, setBusy] = useState(false)
 
   if (user) return <Navigate to="/" replace />
+
+  async function quickSignIn(d: { email: string; password: string }) {
+    setEmail(d.email); setPassword(d.password); setError(null); setErrors({}); setBusy(true)
+    try { await signIn(d.email, d.password); navigate((location.state as { from?: string } | null)?.from ?? '/', { replace: true }) }
+    catch (err) { setError(loginMessage(err)) } finally { setBusy(false) }
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -69,12 +75,16 @@ export default function Login() {
         <Button type="submit" full loading={busy} disabled={!email || !password}>Sign in</Button>
       </form>
 
-      {DEMO_LOGINS && (
-        <div className="mc-demo" aria-label="Demo accounts">
-          <span>Try a demo account</span>
-          {DEMOS.map((d) => <button key={d.label} type="button" onClick={() => { setEmail(d.email); setPassword(d.password); setError(null) }}>{d.label}</button>)}
-        </div>
-      )}
+      <div className="mc-demo-panel" aria-label="Demo accounts">
+        <p className="mc-demo-title">Just visiting? Try a demo account</p>
+        {DEMOS.map((d) => (
+          <button key={d.role} type="button" className="mc-demo-card" disabled={busy} onClick={() => void quickSignIn(d)}>
+            <span className="mc-demo-role"><strong>{d.role}</strong><small>{d.hint}</small></span>
+            <span className="mc-demo-cred"><code>{d.email}</code><code>{d.password}</code></span>
+            <span className="mc-demo-go">Sign in →</span>
+          </button>
+        ))}
+      </div>
 
       <div className="mc-auth-divider">New user?</div>
       <Link to="/register" style={{ textDecoration: 'none' }}><Button variant="secondary" full>Create a new account</Button></Link>

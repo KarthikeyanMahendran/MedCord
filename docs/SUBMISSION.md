@@ -22,6 +22,13 @@ MedCord shortens the time to a doctor, makes every answer reusable for the next 
 - **Call SDK:** one-to-one voice and video calls in private messages (tested live on the deployed app), plus the same buttons in the case room, sharing the same connection.
 - **Resilience:** PostgreSQL remains the record of every message, so chat degrades to a slow refresh if Nexconn is unreachable.
 
+## Demo accounts (also shown on the sign-in page, one click)
+| Role | Email | Password |
+|---|---|---|
+| Health worker | worker@medcord.com | Worker1234 |
+| Doctor | doctor@medcord.com | Doctor1234 |
+| Admin | admin@gmail.com | Admin1234 |
+
 ## Features judges can try (5 minutes)
 | Feature | Where |
 |---|---|

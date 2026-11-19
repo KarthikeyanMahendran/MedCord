@@ -96,3 +96,16 @@
 .mc-area-list li.is-active { background: var(--mc-brand-soft); color: var(--mc-brand-text); }
 .mc-area-list li[aria-selected="true"] { font-weight: 600; }
 .mc-area-empty { color: var(--mc-text-2); cursor: default !important; }
+
+/* Demo accounts on the sign-in page */
+.mc-demo-panel { display: grid; gap: 8px; padding: 14px; border: 1px dashed var(--mc-border-strong); border-radius: 14px; background: var(--mc-surface-2); }
+.mc-demo-title { margin: 0 0 2px; font-size: 13px; font-weight: 600; color: var(--mc-text-2); }
+.mc-demo-card { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; text-align: left; padding: 10px 12px; font: inherit; color: inherit; background: var(--mc-surface); border: 1px solid var(--mc-border); border-radius: 10px; cursor: pointer; transition: border-color .15s, transform .15s; }
+.mc-demo-card:hover:not(:disabled) { border-color: var(--mc-brand); transform: translateY(-1px); }
+.mc-demo-card:disabled { opacity: .6; cursor: wait; }
+.mc-demo-role { display: grid; gap: 1px; }
+.mc-demo-role strong { font-size: 14px; }
+.mc-demo-role small { font-size: 12px; color: var(--mc-text-2); }
+.mc-demo-go { font-size: 12.5px; font-weight: 600; color: var(--mc-brand-text); white-space: nowrap; }
+.mc-demo-cred { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.mc-demo-cred code { font-size: 12px; padding: 2px 7px; border-radius: 6px; background: var(--mc-surface-3, var(--mc-surface-2)); color: var(--mc-text); }

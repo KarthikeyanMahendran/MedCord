@@ -208,9 +208,11 @@ Try the live app at **https://med-cord.vercel.app/welcome** with these accounts.
 
 | Role | Email | Password |
 |---|---|---|
-| Health worker (ASHA) | `kavitha.worker@medcord.dev` | `Passw0rd!Med` |
-| Verified doctor (Cardiology) | `priya.raman@medcord.dev` | `Passw0rd!Med` |
-| Admin | see `docs/dev-accounts.md` | |
+| Health worker | `worker@medcord.com` | `Worker1234` |
+| Verified doctor (Cardiology) | `doctor@medcord.com` | `Doctor1234` |
+| Admin | `admin@gmail.com` | `Admin1234` |
+
+The sign-in page also shows these three accounts with a one-click **Sign in** button, so anyone can try the app straight away.
 
 Sign-in is email and password only. New people create an account first; doctors choose **Join as a doctor** and give their speciality and licence number.
 
