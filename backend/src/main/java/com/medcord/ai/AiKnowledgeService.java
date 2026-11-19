@@ -210,8 +210,7 @@ public class AiKnowledgeService {
             accessibleCommunities = jdbc.query(
                 """
                 SELECT DISTINCT c.id FROM communities c
-                WHERE c.visibility = 'PUBLIC'
-                   OR EXISTS (SELECT 1 FROM memberships m WHERE m.community_id = c.id AND m.user_id = :uid)
+                WHERE EXISTS (SELECT 1 FROM memberships m WHERE m.community_id = c.id AND m.user_id = :uid)
                 """,
                 Map.of("uid", userId),
                 (rs, i) -> rs.getObject("id", UUID.class)
