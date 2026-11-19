@@ -73,7 +73,8 @@ BEGIN
 
   INSERT INTO channels (community_id, name, topic, type, position) VALUES
     (cid,'general','General discussion','TEXT',0), (cid,'announcements','Official announcements','ANNOUNCEMENT',1),
-    (cid,'case-discussions','Anonymised case discussions','TEXT',2), (cid,'journal-club','Papers and reviews','TEXT',3);
+    (cid,'case-discussions','Anonymised case discussions','TEXT',2), (cid,'journal-club','Papers and reviews','TEXT',3),
+    (cid,'voice-rounds','Live clinical huddles & slide sharing','VOICE',4);
 
   INSERT INTO memberships (community_id, user_id) VALUES (cid, oid) RETURNING id INTO mid;
   INSERT INTO membership_roles VALUES (mid, r_owner), (mid, r_member);
@@ -131,6 +132,15 @@ BEGIN
   SELECT id INTO ch FROM channels WHERE community_id = cid AND name = 'announcements';
   IF NOT EXISTS (SELECT 1 FROM messages WHERE channel_id = ch) THEN
     INSERT INTO messages (channel_id, author_id, body, created_at) VALUES (ch, priya, 'Journal club this Friday 18:00 IST: updates in HFpEF therapy. Link will be shared here.', t + interval '2 hours');
+  END IF;
+
+  SELECT id INTO ch FROM channels WHERE community_id = cid AND name = 'journal-club';
+  IF ch IS NOT NULL AND NOT EXISTS (SELECT 1 FROM messages WHERE channel_id = ch) THEN
+    INSERT INTO messages (channel_id, author_id, body, created_at) VALUES (
+      ch, priya,
+      E'### HFpEF Trial Summary (EMPEROR-Preserved & DELIVER)\n> Key pearl: SGLT2 inhibitors reduce HF hospitalisation consistently across LVEF >40%.\n\n| Trial | Drug | Primary HR | 95% CI |\n| --- | --- | --- | --- |\n| EMPEROR-Preserved | `Empagliflozin` | **0.79** | 0.69–0.90 |\n| DELIVER | `Dapagliflozin` | **0.82** | 0.73–0.92 |\n\n@Dr. Arjun Mehta — let us walk through subgroup renal outcomes in **#voice-rounds**!',
+      t + interval '2 hours 10 min'
+    );
   END IF;
 END $$;
 

@@ -8,6 +8,7 @@ import Impact from './pages/cases/Impact'
 import Library from './pages/cases/Library'
 import NewCase from './pages/cases/NewCase'
 import Verifications from './pages/admin/Verifications'
+import Bookmarks from './pages/Bookmarks'
 import ChannelChat from './pages/ChannelChat'
 import CommunityDetail from './pages/CommunityDetail'
 import Communities from './pages/Communities'
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/library" element={<Library />} />
           <Route path="/impact" element={<Impact />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/bookmarks" element={<Bookmarks />} />
           <Route path="/messages" element={<ChannelChat />} />
           <Route path="/messages/:channelId" element={<ChannelChat />} />
           <Route path="/invite/:code" element={<JoinInvite />} />
