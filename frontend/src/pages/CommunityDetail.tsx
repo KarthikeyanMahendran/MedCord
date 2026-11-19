@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Archive, Copy, Hash, Megaphone, MessageCircle, Trash2, Volume2 } from 'lucide-react'
 import { ModerationPanel } from '../components/community/ModerationPanel'
 import { AuditPanel } from '../components/community/AuditPanel'
+import { CommunityFundTab } from '../components/fund/CommunityFundTab'
 import { muteMember } from '../api/moderation'
 import { PageHeader } from '../components/ui'
 import { Alert, Avatar, Badge, Button, Card, CardBody, EmptyState, FormGroup, Input, Modal, Tabs } from '../components/ui'
@@ -15,7 +16,7 @@ import { PresenceDot } from '../components/chat/PresenceDot'
 import { fieldErrors, problemMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 
-type Tab = 'channels' | 'members' | 'roles' | 'invites' | 'moderation' | 'audit'
+type Tab = 'channels' | 'fund' | 'members' | 'roles' | 'invites' | 'moderation' | 'audit'
 const label = (p: string) => p.toLowerCase().replace(/_/g, ' ')
 
 export default function CommunityDetail() {
@@ -86,6 +87,7 @@ export default function CommunityDetail() {
   if (!community) return <main className="mc-page">{error ? <Alert tone="danger">{error}</Alert> : <div className="mc-skeleton" style={{ height: 80 }} />}</main>
 
   const tabs: { value: Tab; label: string }[] = [{ value: 'channels', label: 'Channels' }, { value: 'members', label: 'Members' }]
+  if (isMember) tabs.splice(1, 0, { value: 'fund', label: 'Care Fund' })
   if (isMember) tabs.push({ value: 'roles', label: 'Roles' })
   if (can('CREATE_INVITE')) tabs.push({ value: 'invites', label: 'Invites' })
   if (can('MODERATE_MESSAGES') || can('MANAGE_MEMBERS')) tabs.push({ value: 'moderation', label: 'Moderation' })
@@ -129,6 +131,7 @@ export default function CommunityDetail() {
               )}
             </>)}
 
+            {tab === 'fund' && <CommunityFundTab communityId={id} canStart={user?.platformRole === 'ADMIN' || user?.accountType === 'DOCTOR' || user?.accountType === 'HEALTH_WORKER' || user?.verificationStatus === 'APPROVED'} />}
             {tab === 'members' && (
               <div className="mc-table-wrap"><table className="mc-table">
                 <thead><tr><th>Member</th><th>Roles</th><th /></tr></thead>

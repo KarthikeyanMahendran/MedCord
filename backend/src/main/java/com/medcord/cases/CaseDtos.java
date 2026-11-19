@@ -35,7 +35,7 @@ public final class CaseDtos {
     public record LibraryHit(UUID id, String specialty, String questionSummary, String answer,
                              int helpfulCount, Instant verifiedAt) {}
 
-    public record NotificationDto(UUID id, String kind, UUID caseId, String title, String body,
+    public record NotificationDto(UUID id, String kind, UUID caseId, UUID fundraiserId, String title, String body,
                                   boolean read, Instant createdAt) {}
 
     public record ImpactDto(long totalCases, long resolved, long redCases, long open,

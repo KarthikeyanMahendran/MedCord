@@ -227,7 +227,7 @@ public class CaseService {
     public List<NotificationDto> notifications(UUID me) {
         return jdbc.sql("SELECT * FROM notifications WHERE user_id = :u ORDER BY created_at DESC LIMIT 50").param("u", me)
             .query((rs, i) -> new NotificationDto(rs.getObject("id", UUID.class), rs.getString("kind"), rs.getObject("case_id", UUID.class),
-                rs.getString("title"), rs.getString("body"), rs.getTimestamp("read_at") != null, rs.getTimestamp("created_at").toInstant())).list();
+                rs.getObject("fundraiser_id", UUID.class), rs.getString("title"), rs.getString("body"), rs.getTimestamp("read_at") != null, rs.getTimestamp("created_at").toInstant())).list();
     }
 
     @Transactional

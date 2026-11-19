@@ -23,7 +23,7 @@ export interface SubmitCase {
   language?: string; vitals?: Record<string, number>
 }
 
-export interface AppNotification { id: string; kind: string; caseId: string | null; title: string; body: string | null; read: boolean; createdAt: string }
+export interface AppNotification { id: string; kind: string; caseId: string | null; fundraiserId?: string | null; title: string; body: string | null; read: boolean; createdAt: string }
 
 export interface Impact {
   totalCases: number; resolved: number; redCases: number; open: number; avgMinutesToAccept: number | null

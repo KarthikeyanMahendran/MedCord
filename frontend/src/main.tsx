@@ -14,6 +14,7 @@ import './styles/call.css'
 import './styles/cases.css'
 import './styles/radar.css'
 import './styles/network.css'
+import './styles/fund.css'
 import './styles/ai.css'
 
 createRoot(document.getElementById('root')!).render(

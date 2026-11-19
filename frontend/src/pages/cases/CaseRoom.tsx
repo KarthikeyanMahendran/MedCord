@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, HeartHandshake, TriangleAlert } from 'lucide-react'
 import { Alert, Button, Card, EmptyState, Textarea } from '../../components/ui'
 import { CaseChat } from '../../components/cases/CaseChat'
 import { StatusBadge, UrgencyBadge, ago } from '../../components/cases/UrgencyBadge'
@@ -70,6 +70,10 @@ export default function CaseRoom() {
               <dt>Doctor</dt><dd>{c.assignedDoctorName ?? 'Not yet accepted'}{c.escalationLevel > 0 && !c.assignedDoctorName ? ' · escalated' : ''}</dd>
             </dl>
           </Card>
+
+          <div className="mc-row" style={{ justifyContent: 'flex-end' }}>
+            <Link to={`/fund/new?caseId=${c.id}`} style={{ textDecoration: 'none' }}><Button variant="secondary"><HeartHandshake size={15} /> Raise funds for this patient</Button></Link>
+          </div>
 
           {canAccept && (
             <Card><div className="mc-card-body mc-row" style={{ justifyContent: 'space-between' }}>
