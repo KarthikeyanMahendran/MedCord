@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import { UserPanel } from './UserPanel'
+import { LogoMark } from '../Logo'
 import { BarChart3, Bell, BellOff, Bookmark, BookOpenCheck, CircleHelp, HandHeart, HeartHandshake, HeartPulse, MapPin, MessageCircle, Plus, Radar, Search, ShieldCheck, Stethoscope } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { colorFor, initialsOf } from '../ui'
@@ -32,13 +33,7 @@ function RailGroup({ title }: { title: string }) {
   return <div className="mc-rail-group" role="presentation"><span>{title}</span></div>
 }
 
-function LogoMark() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 4v16M4 12h16" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-    </svg>
-  )
-}
+
 
 /** Left-most column: home, DMs, one tile per community, then tools. */
 export function ServerRail() {
@@ -66,7 +61,7 @@ export function ServerRail() {
 
   return (
     <nav className={`mc-rail ${menuOpen ? 'is-open' : ''}`} aria-label="Main menu">
-      <RailButton to="/" end label="Home" primary><span className="mc-rail-icon mc-rail-home"><LogoMark /></span></RailButton>
+      <RailButton to="/" end label="Home" primary><span className="mc-rail-icon mc-rail-home"><LogoMark size={36} /></span></RailButton>
 
       <RailGroup title="Patient care" />
       <RailButton to="/cases" label="Patient cases" primary><span className="mc-rail-icon"><Stethoscope size={18} /></span></RailButton>

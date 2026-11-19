@@ -17,7 +17,7 @@
 .lp-nav { position: fixed; top: 0; inset-inline: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 16px max(20px, calc((100% - 1160px) / 2)); color: #fff; transition: background .3s, box-shadow .3s, padding .3s; }
 .lp-nav.is-solid { background: rgba(6, 26, 61, .88); backdrop-filter: blur(14px); box-shadow: 0 6px 30px rgba(3, 12, 32, .25); padding-block: 11px; }
 .lp-logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
-.lp-logo > span { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(135deg, var(--b500), #00c2ff); color: #fff; }
+.lp-logo > span { display: grid; place-items: center; line-height: 0; }
 .lp-logo em { font-style: normal; font-weight: 400; opacity: .7; }
 .lp-nav nav { display: flex; gap: 26px; font-size: 14px; }
 .lp-nav nav a { opacity: .8; transition: opacity .2s; } .lp-nav nav a:hover { opacity: 1; }

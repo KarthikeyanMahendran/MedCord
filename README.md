@@ -1,14 +1,12 @@
 <div align="center">
 
-<img src="docs/assets/nexconn-mark.png" alt="Nexconn logo" height="84">
-
-<sub>**Built on Nexconn**</sub>
-
-<br>
+<img src="docs/assets/medcord-logo.png" alt="MedCord logo" height="96">
 
 # MedCord · Rural Case Rooms
 
 ### A doctor in every village, one tap away.
+
+<sub>Built on</sub> <img src="docs/assets/nexconn-mark.png" alt="Nexconn" height="22" align="middle"> <sub>**Nexconn**</sub>
 
 Community health workers send a patient case by **voice, text or symptom tap**.<br>
 A verified doctor picks it up in a **live private room**. The whole village can help pay for care.

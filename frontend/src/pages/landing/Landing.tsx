@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  Activity, ArrowRight, BellRing, BookOpenCheck, CheckCircle2, Mic, Phone, ShieldCheck, Siren,
+  ArrowRight, BellRing, BookOpenCheck, CheckCircle2, Mic, Phone, ShieldCheck, Siren,
   Stethoscope, Wifi, WifiOff, Zap,
 } from 'lucide-react'
+import { LogoMark } from '../../components/Logo'
 import { Person } from './People'
 import { VillageScene } from './Scenes'
 import { useCount, useReveal } from './useReveal'
@@ -96,7 +97,7 @@ export default function Landing() {
     <div className="lp">
       <div className="lp-progress" style={{ transform: `scaleX(${progress})` }} aria-hidden="true" />
       <header className={`lp-nav ${scrolled ? 'is-solid' : ''}`}>
-        <Link to="/welcome" className="lp-logo"><span><Activity size={18} /></span>MedCord <em>Case Rooms</em></Link>
+        <Link to="/welcome" className="lp-logo"><span><LogoMark size={34} /></span>MedCord <em>Case Rooms</em></Link>
         <nav aria-label="Sections">
           <a href="#how">How it works</a><a href="#features">Features</a><a href="#people">Who it is for</a><a href="#nexconn">Real-time</a>
         </nav>
@@ -240,7 +241,7 @@ export default function Landing() {
 
       <footer className="lp-foot">
         <div className="lp-wrap">
-          <span className="lp-logo"><span><Activity size={16} /></span>MedCord Case Rooms</span>
+          <span className="lp-logo"><span><LogoMark size={30} /></span>MedCord Case Rooms</span>
           <p>Demo project for the Nexconn Build Challenge 2026. Uses test data only. Not a medical device and not a diagnosis.</p>
         </div>
       </footer>

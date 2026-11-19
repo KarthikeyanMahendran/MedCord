@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { BrandFilm } from './BrandFilm'
+import { LogoMark } from './Logo'
 
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -9,9 +10,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       <aside className="mc-auth-brand">
         <BrandFilm />
         <div className="mc-logo">
-          <span className="mc-logo-mark" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 4v16M4 12h16" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" /></svg>
-          </span>
+          <span className="mc-logo-mark" aria-hidden="true"><LogoMark size={34} /></span>
           MedCord
         </div>
         <div className="mc-auth-copy">

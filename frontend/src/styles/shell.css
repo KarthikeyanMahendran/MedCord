@@ -218,3 +218,9 @@ html[data-text="xlarge"] .mc-shell { height: calc(100vh / 1.3); }
   .mc-btn, button.mc-btn { min-height: 44px; }
   .mc-rail.is-open .mc-rail-badge { position: static; margin: 0 18px 0 auto; }
 }
+
+/* The MedCord mark is a full icon: no tile behind it */
+.mc-rail-icon.mc-rail-home, .mc-rail-btn:hover .mc-rail-home { background: transparent; box-shadow: none; }
+.mc-rail-btn.is-active .mc-rail-home { box-shadow: none; filter: drop-shadow(0 0 0 transparent); }
+.mc-rail-btn:hover .mc-rail-home svg { transform: scale(1.06); }
+.mc-rail-home svg { transition: transform .15s; }
