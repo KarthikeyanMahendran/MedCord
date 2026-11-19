@@ -16,6 +16,9 @@ import './styles/radar.css'
 import './styles/network.css'
 import './styles/fund.css'
 import './styles/ai.css'
+import { applyTextSize, savedTextSize } from './lib/textSize'
+
+applyTextSize(savedTextSize())
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -8,6 +8,8 @@ import Impact from './pages/cases/Impact'
 import Radar from './pages/radar/Radar'
 import NetworkPage from './pages/network/Network'
 import FundHub from './pages/fund/FundHub'
+import DispatchPage from './pages/support/Dispatch'
+import CheckinPage from './pages/support/Checkin'
 import FundraiserDetail from './pages/fund/FundraiserDetail'
 import NewFundraiser from './pages/fund/NewFundraiser'
 import Library from './pages/cases/Library'
@@ -44,6 +46,8 @@ export default function App() {
           <Route path="/radar" element={<Radar />} />
           <Route path="/network" element={<NetworkPage />} />
           <Route path="/fund" element={<FundHub />} />
+          <Route path="/dispatch" element={<DispatchPage />} />
+          <Route path="/checkin" element={<CheckinPage />} />
           <Route path="/fund/new" element={<NewFundraiser />} />
           <Route path="/fund/:id" element={<FundraiserDetail />} />
           <Route path="/search" element={<Search />} />

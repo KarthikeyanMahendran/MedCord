@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BarChart3, Bell, BellOff, Bookmark, BookOpenCheck, CircleHelp, HeartHandshake, MapPin, MessageCircle, Plus, Radar, Search, ShieldCheck, Stethoscope } from 'lucide-react'
+import { BarChart3, Bell, BellOff, Bookmark, BookOpenCheck, CircleHelp, HandHeart, HeartHandshake, HeartPulse, MapPin, MessageCircle, Plus, Radar, Search, ShieldCheck, Stethoscope } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { colorFor, initialsOf } from '../ui'
 import { listMine } from '../../api/communities'
@@ -88,6 +88,8 @@ export function ServerRail() {
         {totalMentions > 0 && <span className="mc-rail-badge is-mention" aria-hidden="true">@</span>}
       </button>
       <RailButton to="/bookmarks" label="Saved messages"><span className="mc-rail-icon"><Bookmark size={17} /></span></RailButton>
+      <RailButton to="/dispatch" label="Volunteer help"><span className="mc-rail-icon"><HandHeart size={17} /></span></RailButton>
+      <RailButton to="/checkin" label="Daily check-in"><span className="mc-rail-icon"><HeartPulse size={17} /></span></RailButton>
       <RailButton to="/fund" label="Care Fund"><span className="mc-rail-icon"><HeartHandshake size={17} /></span></RailButton>
       <RailButton to="/network" label="Care network map"><span className="mc-rail-icon"><MapPin size={17} /></span></RailButton>
       <RailButton to="/radar" label="Outbreak radar"><span className="mc-rail-icon"><Radar size={17} /></span></RailButton>

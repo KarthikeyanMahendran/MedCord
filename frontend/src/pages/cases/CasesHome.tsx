@@ -110,7 +110,7 @@ export default function CasesHome() {
           {notes.length === 0 ? <EmptyState title="Nothing yet">Case offers, answers and follow-ups show up here.</EmptyState> : (
             <div className="mc-list">
               {notes.slice(0, 8).map((n) => (
-                <Link key={n.id} to={n.kind === 'OUTBREAK' ? '/radar' : n.fundraiserId ? `/fund/${n.fundraiserId}` : n.caseId ? `/cases/${n.caseId}` : '/cases'} className="mc-list-row" style={{ opacity: n.read ? 0.6 : 1 }}
+                <Link key={n.id} to={n.kind === 'OUTBREAK' ? '/radar' : n.kind === 'DISPATCH' ? '/dispatch' : n.kind === 'CHECKIN' ? '/checkin' : n.fundraiserId ? `/fund/${n.fundraiserId}` : n.caseId ? `/cases/${n.caseId}` : '/cases'} className="mc-list-row" style={{ opacity: n.read ? 0.6 : 1 }}
                   onClick={() => { if (!n.read) void markNotificationRead(n.id) }}>
                   <span className="mc-list-main"><strong style={{ fontWeight: 500 }}>{n.title}</strong><span>{n.body}</span></span>
                   <span className="mc-list-meta">{ago(n.createdAt)}</span>
