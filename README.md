@@ -1,11 +1,10 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/nexconn-logo-dark.svg">
-  <img src="docs/assets/nexconn-logo.svg" alt="Nexconn" height="34">
-</picture>
+<img src="docs/assets/nexconn-mark.png" alt="Nexconn logo" height="84">
 
-<br><br>
+<sub>**Built on Nexconn**</sub>
+
+<br>
 
 # MedCord · Rural Case Rooms
 
@@ -64,6 +63,8 @@ In rural India a patient can be hours from the nearest doctor. The **ASHA worker
 ---
 
 ## Built on Nexconn
+
+<img src="docs/assets/nexconn-mark.png" alt="Nexconn logo" height="56" align="right">
 
 MedCord uses the **Nexconn Chat SDK** for real-time conversation in case rooms, and the **Nexconn Call SDK** for voice and video calls.
 
