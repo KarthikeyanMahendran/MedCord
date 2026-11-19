@@ -5,6 +5,7 @@ import { Archive, Copy, Hash, Megaphone, MessageCircle, Trash2, Volume2 } from '
 import { ModerationPanel } from '../components/community/ModerationPanel'
 import { AuditPanel } from '../components/community/AuditPanel'
 import { CommunityFundTab } from '../components/fund/CommunityFundTab'
+import { FundPopup } from '../components/fund/FundPopup'
 import { muteMember } from '../api/moderation'
 import { PageHeader } from '../components/ui'
 import { Alert, Avatar, Badge, Button, Card, CardBody, EmptyState, FormGroup, Input, Modal, Tabs } from '../components/ui'
@@ -106,6 +107,7 @@ export default function CommunityDetail() {
           {isOwner && <Button variant="danger" onClick={() => setModal('delete')}><Trash2 size={14} /> Delete community</Button>}
         </>} />
 
+      {isMember && <FundPopup communityId={id} communityName={community.name} />}
       {notice && <Alert tone="success">{notice}</Alert>}
       {error && <Alert tone="danger">{error}</Alert>}
       {!isMember && <Alert tone="info">Join this community to see its channels and members.</Alert>}

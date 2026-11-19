@@ -75,3 +75,8 @@
 .nf-label { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
 
 .fd-tab-list { display: grid; gap: 12px; }
+
+.fd-popup-list { display: grid; gap: 12px; }
+.fd-popup-item { display: grid; gap: 6px; padding: 14px; text-decoration: none !important; color: inherit; border: 1px solid var(--mc-border-strong); border-radius: 12px; background: var(--mc-surface-2); transition: border-color .15s; }
+.fd-popup-item:hover { border-color: var(--mc-brand); }
+.fd-popup-cta { justify-self: end; font-size: 13px; font-weight: 600; color: var(--mc-brand-text); }
