@@ -10,7 +10,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       <aside className="mc-auth-brand">
         <BrandFilm />
         <div className="mc-logo">
-          <span className="mc-logo-mark" aria-hidden="true"><LogoMark size={34} /></span>
+          <span className="mc-logo-mark" aria-hidden="true"><LogoMark size={44} /></span>
           MedCord
         </div>
         <div className="mc-auth-copy">

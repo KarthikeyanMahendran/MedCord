@@ -66,7 +66,7 @@ export function ServerRail() {
           (document.activeElement as HTMLElement).blur()
         }
       }}>
-      <RailButton to="/" end label="Home" primary><span className="mc-rail-icon mc-rail-home"><LogoMark size={36} /></span></RailButton>
+      <RailButton to="/" end label="Home" primary><span className="mc-rail-icon mc-rail-home"><LogoMark size={44} /></span></RailButton>
 
       <RailGroup title="Patient care" />
       <RailButton to="/cases" label="Patient cases" primary><span className="mc-rail-icon"><Stethoscope size={18} /></span></RailButton>

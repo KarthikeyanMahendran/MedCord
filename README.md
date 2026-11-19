@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/medcord-logo.png" alt="MedCord logo" height="96">
+<img src="docs/assets/medcord-logo.png" alt="MedCord logo" height="130">
 
 # MedCord · Rural Case Rooms
 
@@ -30,9 +30,33 @@ A verified doctor picks it up in a **live private room**. The whole village can 
 
 <br>
 
+<p>
+<a href="https://med-cord.vercel.app/welcome"><b>Live demo</b></a> ·
+<a href="#what-medcord-does">What it does</a> ·
+<a href="#built-on-nexconn">Nexconn</a> ·
+<a href="#features">Features</a> ·
+<a href="#architecture">Architecture</a> ·
+<a href="#run-it-locally">Run it</a> ·
+<a href="docs/SUBMISSION.md">Submission pack</a>
+</p>
+
 <img src="docs/screenshots/01-landing.png" alt="MedCord landing page" width="92%">
 
 </div>
+
+---
+
+## At a glance
+
+| | |
+|---|---|
+| **For** | ASHA and community health workers, verified doctors, and the communities around them |
+| **Track** | Humanitarian and Social Good |
+| **Core promise** | A patient in a remote village reaches a doctor in minutes, in their own language |
+| **Nexconn** | Chat SDK for live case rooms, Call SDK for voice and video, Server API for tokens |
+| **Also** | Care Fund, Volunteer help, daily check-in, Outbreak Radar, care network map |
+| **Languages** | English, Tamil, Hindi, Malayalam, Telugu, Kannada, Bengali |
+| **Try it now** | [med-cord.vercel.app](https://med-cord.vercel.app/welcome): tap **Worker**, **Doctor** or **Admin** on the sign-in page |
 
 ---
 
@@ -257,6 +281,26 @@ cd backend  && ./mvnw test                                       # 119 tests aga
 | `docs/` | Architecture, runbook, ADRs, use cases, task log, demo script, [submission pack](docs/SUBMISSION.md) |
 | `docs/assets/` | Logos used in this README |
 | `docs/screenshots/` | App screenshots |
+
+---
+
+## Why this is Humanitarian and Social Good
+
+- **Reach:** it serves people who are hours from a clinic, through the health worker who is already there.
+- **Dignity and access:** voice in local languages, large text for seniors, and a phone-first design for people with basic phones and weak signal.
+- **Community power:** neighbours fund treatment, volunteers give rides and medicine, and health workers look after each other.
+- **Prevention:** the Outbreak Radar warns a district before a cluster becomes an outbreak.
+- **Trust:** doctors are verified, answers are reviewed by humans, and patient identity is never shared.
+
+## FAQ
+
+**Is this a diagnosis tool?** No. Triage and the radar are decision support. A verified doctor makes the medical decision.
+
+**Does it work without signal?** A case can be written offline and sends when the signal returns. Live chat needs a connection.
+
+**Do payments move real money?** Not in this demo. Care Fund gifts are simulated.
+
+**Where does Nexconn fit?** Live case chat and voice or video calls. Our database keeps the record of every message, so a bad network never loses a conversation.
 
 ---
 
