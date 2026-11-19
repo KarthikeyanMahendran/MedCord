@@ -129,7 +129,7 @@ export default function FundraiserDetail() {
 
           <section>
             <h2>Supporters</h2>
-            {d.recent.length === 0 ? <EmptyState icon={<Heart size={20} />} title="Be the first to help" description="Even ₹10 makes a difference." /> : (
+            {d.recent.length === 0 ? <EmptyState icon={<Heart size={20} />} title="Be the first to help">Even ₹10 makes a difference.</EmptyState> : (
               <ul className="fd-supporters">
                 {d.recent.map((s, i) => (
                   <li key={i}><span className="fd-avatar" aria-hidden="true">{s.name.slice(0, 1).toUpperCase()}</span>

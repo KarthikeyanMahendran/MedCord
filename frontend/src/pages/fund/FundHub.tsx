@@ -51,15 +51,15 @@ export default function FundHub() {
       {cards && cards.length === 0 && (
         scope === 'live' ? (
           <div className="fd-how">
-            <EmptyState icon={<HeartHandshake size={22} />} title="No fundraiser is open right now"
-              description={canStart ? 'When a patient needs money for medicine or surgery, start a fundraiser in their community.' : 'When a doctor or health worker opens one in your community, it shows here.'} />
+            <EmptyState icon={<HeartHandshake size={22} />} title="No fundraiser is open right now">
+              {canStart ? 'When a patient needs money for medicine or surgery, start a fundraiser in their community.' : 'When a doctor or health worker opens one in your community, it shows here.'}</EmptyState>
             <ol>
               <li><strong>Start</strong> A doctor or health worker tells the patient's story, with no private details.</li>
               <li><strong>Verify</strong> A verified doctor confirms it, so everyone can trust it.</li>
               <li><strong>Give</strong> Community members give ₹10, ₹100 or more. Every update is shared.</li>
             </ol>
           </div>
-        ) : <EmptyState icon={<HeartHandshake size={22} />} title="Nothing here yet" description="Fundraisers will appear here." />
+        ) : <EmptyState icon={<HeartHandshake size={22} />} title="Nothing here yet">Fundraisers will appear here.</EmptyState>
       )}
       {cards && cards.length > 0 && <div className="fd-grid">{cards.map((c) => <FundCardView key={c.id} c={c} />)}</div>}
     </div>

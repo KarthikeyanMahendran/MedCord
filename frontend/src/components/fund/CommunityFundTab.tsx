@@ -22,8 +22,8 @@ export function CommunityFundTab({ communityId, canStart }: { communityId: strin
       </div>
       {err && <Alert tone="danger">{err}</Alert>}
       {cards === null && !err && <p className="mc-hint">Loading…</p>}
-      {cards?.length === 0 && <EmptyState icon={<HeartHandshake size={22} />} title="No fundraiser in this community yet"
-        description={canStart ? 'When someone needs help paying for care, start one here.' : 'A doctor or health worker can start one when a patient needs help.'} />}
+      {cards?.length === 0 && <EmptyState icon={<HeartHandshake size={22} />} title="No fundraiser in this community yet">
+        {canStart ? 'When someone needs help paying for care, start one here.' : 'A doctor or health worker can start one when a patient needs help.'}</EmptyState>}
       {cards && cards.length > 0 && <div className="fd-grid" style={{ marginTop: 0 }}>{cards.map((c) => <FundCardView key={c.id} c={c} />)}</div>}
     </div>
   )

@@ -48,7 +48,7 @@ export default function NetworkPage() {
               {data.scope === 'ALL' && <div className="mc-stat"><span>Doctors</span><strong>{data.doctors.length}</strong></div>}
             </div>
             <Card>
-              {!area ? <EmptyState title="Pick an area" description="Choose a pin on the map to see its health workers and recent cases." icon={<Users size={20} />} /> : (
+              {!area ? <EmptyState title="Pick an area" icon={<Users size={20} />}>Choose a pin on the map to see its health workers and recent cases.</EmptyState> : (
                 <div className="nw-detail">
                   <h3>{area.name}</h3>
                   <p className="nw-sub">{area.district}, {area.state} · {area.cases72h} case{area.cases72h === 1 ? '' : 's'} in 72 h{area.liveAlerts ? ` · ${area.liveAlerts} live alert${area.liveAlerts === 1 ? '' : 's'}` : ''}</p>
