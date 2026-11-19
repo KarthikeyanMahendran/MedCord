@@ -49,7 +49,8 @@ export function connectNexconn(): Promise<boolean> {
       sdk = mod; myNexconnId = data.userId
       setStatus('live')
       return true
-    } catch {
+    } catch (e) {
+      console.warn('Nexconn is not connected:', e)
       setStatus('failed')
       return false
     } finally {
