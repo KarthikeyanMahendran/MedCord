@@ -74,6 +74,7 @@ export default function Landing() {
   const [scrolled, setScrolled] = useState(false)
   const [progress, setProgress] = useState(0)
   const [y, setY] = useState(0)
+  const [sceneVideo, setSceneVideo] = useState(false)
   useEffect(() => {
     // The app shell locks page scroll; the landing page is a normal long page.
     const root = document.documentElement
@@ -148,6 +149,9 @@ export default function Landing() {
 
       <section className="lp-scene" aria-label="From village to doctor">
         <VillageScene className="lp-scene-art" />
+        <video className={`lp-scene-video ${sceneVideo ? 'is-on' : ''}`} src="/media/brand3.mp4" autoPlay muted loop playsInline
+          onCanPlay={() => setSceneVideo(true)} onError={() => setSceneVideo(false)} aria-hidden="true" />
+        <div className="lp-scene-shade" aria-hidden="true" />
         <div className="lp-scene-cap lp-wrap">
           <Reveal><h2>The village sends the case. The doctor answers live.</h2>
             <p>No travel, no lost phone calls. Every case gets its own room, its own record, and a verified answer.</p></Reveal>
