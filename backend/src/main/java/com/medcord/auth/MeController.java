@@ -85,6 +85,7 @@ public class MeController {
         return new MeResponse(id.toString(), u.getEmail(), u.getDisplayName(), u.getStatus().name(),
             u.getPlatformRole().name(), p == null ? null : p.getSpecialty(),
             p == null ? null : p.getLicenseCountry(),
-            p == null ? null : p.getVerificationStatus().name(), p == null ? null : p.getBio(), rejectionReason(id, p));
+            p == null ? null : p.getVerificationStatus().name(), p == null ? null : p.getBio(), rejectionReason(id, p),
+            u.getAccountType(), u.getPreferredLanguage());
     }
 }

@@ -13,7 +13,9 @@ export type TourRole = 'worker' | 'doctor' | 'admin'
 
 export function roleOf(user: Me | null): TourRole {
   if (user?.platformRole === 'ADMIN') return 'admin'
-  if (user?.verificationStatus === 'APPROVED') return 'doctor'
+  if (user?.accountType === 'HEALTH_WORKER') return 'worker'
+  // A doctor still waiting for licence review gets the doctor tour too.
+  if (user?.accountType === 'DOCTOR' || user?.verificationStatus === 'APPROVED') return 'doctor'
   return 'worker'
 }
 

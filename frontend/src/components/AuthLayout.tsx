@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { BrandFilm } from './BrandFilm'
 
 export function AuthLayout({ children }: { children: ReactNode }) {
@@ -18,7 +20,10 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         </div>
         <div className="mc-auth-foot"><span>© {new Date().getFullYear()} MedCord</span><span>No patient-identifiable information</span></div>
       </aside>
-      <main className="mc-auth-form"><div className="mc-auth-panel">{children}</div></main>
+      <main className="mc-auth-form">
+        <Link to="/welcome" className="mc-auth-home"><ArrowLeft size={15} /> Back to home</Link>
+        <div className="mc-auth-panel">{children}</div>
+      </main>
     </div>
   )
 }
