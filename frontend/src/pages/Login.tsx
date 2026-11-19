@@ -75,13 +75,11 @@ export default function Login() {
         <Button type="submit" full loading={busy} disabled={!email || !password}>Sign in</Button>
       </form>
 
-      <div className="mc-demo-panel" aria-label="Demo accounts">
-        <p className="mc-demo-title">Just visiting? Try a demo account</p>
+      <div className="mc-demo-row" aria-label="Demo accounts">
+        <span className="mc-demo-label">Try a demo:</span>
         {DEMOS.map((d) => (
-          <button key={d.role} type="button" className="mc-demo-card" disabled={busy} onClick={() => void quickSignIn(d)}>
-            <span className="mc-demo-role"><strong>{d.role}</strong><small>{d.hint}</small></span>
-            <span className="mc-demo-cred"><code>{d.email}</code><code>{d.password}</code></span>
-            <span className="mc-demo-go">Sign in →</span>
+          <button key={d.role} type="button" className="mc-demo-chip" disabled={busy} title={`${d.email} / ${d.password}`} onClick={() => void quickSignIn(d)}>
+            {d.role === 'Health worker' ? 'Worker' : d.role}
           </button>
         ))}
       </div>
