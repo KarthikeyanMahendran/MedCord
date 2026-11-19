@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, BadgeCheck, CheckCircle2, Copy, Heart, ShieldCheck } from 'lucide-react'
 import { Alert, Badge, Button, Card, EmptyState, FormGroup, Input, Textarea } from '../../components/ui'
+import { VoiceTextarea } from '../../components/VoiceField'
 import { ProgressBar } from '../../components/fund/FundCardView'
 import { ago } from '../../components/cases/UrgencyBadge'
 import { closeFund, contribute, getFund, postFundUpdate, rejectFund, verifyFund } from '../../api/fundraisers'
@@ -109,7 +110,7 @@ export default function FundraiserDetail() {
                   <button type="button" role="radio" aria-checked={upd.kind === 'FUNDS_USED'} className={upd.kind === 'FUNDS_USED' ? 'is-on' : ''} onClick={() => setUpd({ ...upd, kind: 'FUNDS_USED' })}>How the money was used</button>
                 </div>
                 <FormGroup id="upd" label="" error={errors.body}>
-                  <Textarea id="upd" rows={3} value={upd.body} onChange={(e) => setUpd({ ...upd, body: e.target.value })} maxLength={1000} placeholder="Tell supporters what has happened. No phone or ID numbers." />
+                  <VoiceTextarea id="upd" rows={3} value={upd.body} onValue={(v) => setUpd((u) => ({ ...u, body: v }))} maxLength={1000} placeholder="Tell supporters what has happened. No phone or ID numbers." />
                 </FormGroup>
                 <div><Button loading={busy} disabled={upd.body.trim().length < 5} onClick={() => run(async () => setD(await postFundUpdate(id, upd)), () => setUpd({ ...upd, body: '' }))}>Post update</Button></div>
               </div>

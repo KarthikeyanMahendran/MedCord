@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { HandHeart, MessageCircle, Plus } from 'lucide-react'
 import { Alert, Badge, Button, Card, EmptyState, FormGroup, Input, Modal, PageHeader, Tabs, Textarea } from '../../components/ui'
 import { ago } from '../../components/cases/UrgencyBadge'
+import { VoiceInput, VoiceTextarea } from '../../components/VoiceField'
 import { cancelDispatch, claimDispatch, createDispatch, finishDispatch, listDispatch } from '../../api/support'
 import type { Dispatch, DispatchKind } from '../../api/support'
 import { startDm } from '../../api/dms'
@@ -89,13 +90,13 @@ export default function DispatchPage() {
           </div>
           {errors.kind && <p className="mc-error">{errors.kind}</p>}
           <FormGroup id="dtitle" label="In a few words" error={errors.title}>
-            <Input id="dtitle" value={form.title} maxLength={100} placeholder="Need a ride to the clinic tomorrow morning" onChange={(e) => setForm({ ...form, title: e.target.value })} invalid={!!errors.title} />
+            <VoiceInput id="dtitle" value={form.title} maxLength={100} placeholder="Need a ride to the clinic tomorrow morning" onValue={(v) => setForm((f) => ({ ...f, title: v }))} invalid={!!errors.title} />
           </FormGroup>
           <FormGroup id="dnear" label="Where? (village or town)" error={errors.area}>
             <Input id="dnear" value={form.area} maxLength={120} placeholder="Meppadi, Wayanad" onChange={(e) => setForm({ ...form, area: e.target.value })} />
           </FormGroup>
           <FormGroup id="ddet" label="Anything else they should know? (optional)" error={errors.details} hint="Do not write phone numbers. Volunteers will message you here.">
-            <Textarea id="ddet" rows={3} value={form.details} maxLength={600} onChange={(e) => setForm({ ...form, details: e.target.value })} />
+            <VoiceTextarea id="ddet" rows={3} value={form.details} maxLength={600} onValue={(v) => setForm((f) => ({ ...f, details: v }))} />
           </FormGroup>
           <label className="fd-check"><input type="checkbox" checked={form.urgency === 'URGENT'} onChange={(e) => setForm({ ...form, urgency: e.target.checked ? 'URGENT' : 'NORMAL' })} /> This is urgent</label>
         </div>

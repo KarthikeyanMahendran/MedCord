@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, ShieldAlert } from 'lucide-react'
 import { Alert, Button, Card, FormGroup, Input, Textarea } from '../../components/ui'
+import { VoiceInput, VoiceTextarea } from '../../components/VoiceField'
 import { listMine } from '../../api/communities'
 import type { Community } from '../../api/communities'
 import { createFund } from '../../api/fundraisers'
@@ -89,11 +90,11 @@ export default function NewFundraiser() {
         </div>
 
         <FormGroup id="title" label="5. A short title" error={errors.title}>
-          <Input id="title" value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} placeholder="Heart surgery for Ravi" invalid={!!errors.title} />
+          <VoiceInput id="title" value={title} maxLength={120} onValue={setTitle} placeholder="Heart surgery for Ravi" invalid={!!errors.title} />
         </FormGroup>
 
         <FormGroup id="story" label="6. Tell the story" error={errors.story} hint={`${story.length}/2000. What happened, what treatment is needed, and why the family cannot pay.`}>
-          <Textarea id="story" rows={6} value={story} maxLength={2000} onChange={(e) => setStory(e.target.value)} invalid={!!errors.story} />
+          <VoiceTextarea id="story" rows={6} value={story} maxLength={2000} onValue={setStory} invalid={!!errors.story} />
         </FormGroup>
 
         <div>

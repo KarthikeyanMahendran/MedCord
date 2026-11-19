@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Flame, Heart } from 'lucide-react'
 import { Alert, Button, Card, EmptyState, FormGroup, Input, PageHeader } from '../../components/ui'
 import { ago } from '../../components/cases/UrgencyBadge'
+import { VoiceInput } from '../../components/VoiceField'
 import { checkIn, cheer, circle, myCheckins } from '../../api/support'
 import type { CircleItem, MyCheckins } from '../../api/support'
 import { fieldErrors, problemMessage } from '../../api/client'
@@ -59,7 +60,7 @@ export default function CheckinPage() {
           </div>
           {errors.mood && <p className="mc-error">{errors.mood}</p>}
           <FormGroup id="cknote" label="Anything you would like to add? (optional)" error={errors.note}>
-            <Input id="cknote" value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} placeholder="Long shift today, feeling tired" invalid={!!errors.note} />
+            <VoiceInput id="cknote" value={note} maxLength={200} onValue={setNote} placeholder="Long shift today, feeling tired" invalid={!!errors.note} />
           </FormGroup>
           <label className="fd-check"><input type="checkbox" checked={shared} onChange={(e) => setShared(e.target.checked)} /> Share with people in my communities</label>
           <Button full loading={busy} disabled={!mood} onClick={submit}>Check in</Button>

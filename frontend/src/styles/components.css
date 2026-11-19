@@ -141,3 +141,13 @@ select.mc-input {
 
 /* Disabled primary reads as clearly inactive, not as a dimmed accent. */
 .mc-btn-primary:disabled { background: var(--mc-surface-3); color: var(--mc-text-faint); opacity: 1; }
+
+/* Voice input */
+.vf-wrap { position: relative; }
+.vf-mic { position: absolute; right: 8px; top: 7px; width: 30px; height: 30px; display: grid; place-items: center; border: 0; border-radius: 50%; cursor: pointer; color: var(--mc-text-2); background: transparent; transition: background .15s, color .15s; }
+.vf-mic:hover { background: var(--mc-surface-3); color: var(--mc-text); }
+.vf-mic.is-on { background: #ef4444; color: #fff; animation: vfpulse 1.4s infinite; }
+.vf-err { display: block; margin-top: 4px; font-size: 12.5px; color: var(--mc-danger, #ef4444); }
+@keyframes vfpulse { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,.5); } 100% { box-shadow: 0 0 0 10px rgba(239,68,68,0); } }
+@media (prefers-reduced-motion: reduce) { .vf-mic.is-on { animation: none; } }
+.vf-mic.is-inline { position: static; flex: none; }

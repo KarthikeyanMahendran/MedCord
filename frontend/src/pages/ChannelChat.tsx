@@ -33,6 +33,7 @@ import type { ChannelNotifLevel } from '../api/notifications'
 import { problemMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useCall } from '../context/CallContext'
+import { MicButton } from '../components/VoiceField'
 import { useRealtime } from '../context/RealtimeContext'
 import { attachNexconnFeatureListener } from '../utils/nexconnFeatures'
 import { PHI_CATEGORY_LABELS, scanPhi } from '../utils/phiDetector'
@@ -791,6 +792,7 @@ export default function ChannelChat() {
                     <VoiceRecorder disabled={uploading || sending || !canPost} blockedTerms={blockedTerms} onSend={handleVoiceSend} onError={setError} />
                   </>
                 )}
+                {canPost && <MicButton inline value={text} onText={updateComposerText} label="Speak your message" />}
                 <textarea ref={composer} rows={1} aria-label="Message" placeholder={dmMode ? `Message ${conv?.name ?? ''}` : channel ? `Message #${channel.name}` : 'Message'}
                   value={text} onChange={(e) => updateComposerText(e.target.value)} onKeyDown={onKey}
                   onPaste={(e) => {
