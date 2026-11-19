@@ -85,8 +85,8 @@
 
 /* Back to the landing page */
 .mc-auth-form { position: relative; }
-.mc-auth-home { position: absolute; top: 20px; left: 24px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px 7px 8px; font-size: 13px; font-weight: 500; color: var(--mc-text-2); text-decoration: none !important; border: 1px solid var(--mc-border-strong); border-radius: 99px; background: var(--mc-surface-2); transition: border-color .15s, color .15s, background .15s; }
-.mc-auth-home:hover { color: var(--mc-text); border-color: var(--mc-brand); background: var(--mc-brand-soft); }
+.mc-auth-home { position: absolute; top: 18px; left: 22px; display: inline-flex; align-items: center; gap: 4px; padding: 2px 0; font-size: 12.5px; font-weight: 500; color: var(--mc-text-2); text-decoration: none !important; transition: color .15s; }
+.mc-auth-home:hover { color: var(--mc-brand-text); }
 .mc-auth-home:focus-visible { outline: 2px solid var(--mc-brand-ring); outline-offset: 2px; }
-@media (max-width: 960px) { .mc-auth-home { top: 14px; left: 14px; } .mc-auth-form { padding-top: 64px; align-items: start; } }
+@media (max-width: 960px) { .mc-auth-form { display: flex; flex-direction: column; align-items: stretch; padding: 16px 20px 32px; } .mc-auth-home { position: static; align-self: flex-start; margin-bottom: 20px; } .mc-auth-panel { margin: 0 auto; } }
 .mc-link-btn { background: none; border: 0; padding: 0; font: inherit; color: var(--mc-brand-text); cursor: pointer; text-decoration: underline; }
