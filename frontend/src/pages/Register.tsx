@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Check } from 'lucide-react'
 import { Alert, Button, FormGroup, Input, PasswordInput } from '../components/ui'
+import { AreaPicker } from '../components/AreaPicker'
 import { AuthLayout } from '../components/AuthLayout'
 import { useAuth } from '../context/AuthContext'
 import { fieldErrors, problemMessage } from '../api/client'
@@ -151,12 +152,9 @@ export default function Register() {
           </>
         ) : (
           <>
-            {isAsha && text('licenseNumber', 'ASHA / NHM ID card number', { placeholder: 'ASHA / NHM ID', autoComplete: 'off', autoCapitalize: 'characters' }, 'The ID number on your ASHA / NHM card. You will use it to sign in.')}
-            <FormGroup id="regionId" label="Your area" error={errors.regionId} hint={regions === null && !regionsFailed ? 'Loading areas…' : 'The district where you work. Cases are mapped to it.'}>
-              <select id="regionId" className="mc-select mc-select-block" value={form.regionId} onChange={(e) => set('regionId', e.target.value)} aria-invalid={!!errors.regionId || undefined}>
-                <option value="">Choose your area</option>
-                {(regions ?? []).map((r) => <option key={r.id} value={r.id}>{r.name} · {r.district}, {r.state}</option>)}
-              </select>
+            {isAsha && text('licenseNumber', 'ASHA / NHM ID card number', { placeholder: 'ASHA / NHM ID', autoComplete: 'off', autoCapitalize: 'characters' }, 'The ID number on your ASHA / NHM card.')}
+            <FormGroup id="regionId" label="Your area" error={errors.regionId} hint={regions === null && !regionsFailed ? 'Loading areas…' : 'Type your district or state. Any district in India.'}>
+              <AreaPicker id="regionId" options={regions ?? []} value={form.regionId} onChange={(v) => set('regionId', v)} invalid={!!errors.regionId} />
             </FormGroup>
             {regionsFailed && <Alert tone="danger">Could not load the areas. <button type="button" className="mc-linkbtn" onClick={loadLists}>Try again</button></Alert>}
             <div className="mc-grid-2">

@@ -43,7 +43,11 @@ public class NetworkController {
             SELECT r.id, r.name, r.district, r.state, r.lat, r.lng,
                    (SELECT count(*) FROM cases c WHERE c.region_id = r.id AND c.created_at >= now() - interval '72 hours') AS cases72,
                    (SELECT count(*) FROM outbreak_alerts a WHERE a.region_id = r.id AND a.status <> 'RESOLVED') AS alerts
-            FROM regions r WHERE (:all OR r.id = :mine) ORDER BY r.state, r.name
+            FROM regions r WHERE (:all OR r.id = :mine)
+              AND (EXISTS (SELECT 1 FROM health_worker_profiles h WHERE h.region_id = r.id)
+                   OR EXISTS (SELECT 1 FROM cases c WHERE c.region_id = r.id AND c.created_at >= now() - interval '72 hours')
+                   OR EXISTS (SELECT 1 FROM outbreak_alerts a WHERE a.region_id = r.id AND a.status <> 'RESOLVED'))
+            ORDER BY r.state, r.name
             """).param("all", staff).param("mine", myArea).query().listOfRows();
 
         Map<UUID, List<Person>> byArea = new HashMap<>();

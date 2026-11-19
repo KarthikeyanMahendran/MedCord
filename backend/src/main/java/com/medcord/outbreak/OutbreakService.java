@@ -150,7 +150,11 @@ public class OutbreakService {
         List<RegionPoint> regions = jdbc.sql("""
             SELECT r.id, r.name, r.district, r.state, r.lat, r.lng,
                    (SELECT count(*) FROM cases c WHERE c.region_id = r.id AND c.created_at >= now() - make_interval(hours => :h)) AS n
-            FROM regions r ORDER BY r.name
+            FROM regions r
+            WHERE (EXISTS (SELECT 1 FROM health_worker_profiles h WHERE h.region_id = r.id)
+                   OR EXISTS (SELECT 1 FROM cases c WHERE c.region_id = r.id AND c.created_at >= now() - interval '72 hours')
+                   OR EXISTS (SELECT 1 FROM outbreak_alerts a WHERE a.region_id = r.id AND a.status <> 'RESOLVED'))
+            ORDER BY r.name
             """).param("h", WINDOW_HOURS).query((rs, i) -> new RegionPoint(rs.getObject("id", UUID.class), rs.getString("name"),
                 rs.getString("district"), rs.getString("state"), dbl(rs.getBigDecimal("lat")), dbl(rs.getBigDecimal("lng")), rs.getInt("n"))).list();
         boolean admin = isAdmin(me);

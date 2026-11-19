@@ -90,3 +90,9 @@
 .mc-auth-home:focus-visible { outline: 2px solid var(--mc-brand-ring); outline-offset: 2px; }
 @media (max-width: 960px) { .mc-auth-form { display: flex; flex-direction: column; align-items: stretch; padding: 16px 20px 32px; } .mc-auth-home { position: static; align-self: flex-start; margin-bottom: 20px; } .mc-auth-panel { margin: 0 auto; } }
 .mc-link-btn { background: none; border: 0; padding: 0; font: inherit; color: var(--mc-brand-text); cursor: pointer; text-decoration: underline; }
+.mc-area { position: relative; }
+.mc-area-list { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); max-height: 260px; overflow: auto; margin: 0; padding: 4px; list-style: none; background: var(--mc-surface); border: 1px solid var(--mc-border-strong); border-radius: var(--mc-radius); box-shadow: 0 12px 32px rgba(0,0,0,.35); }
+.mc-area-list li { padding: 8px 10px; font-size: 14px; border-radius: 6px; cursor: pointer; color: var(--mc-text); }
+.mc-area-list li.is-active { background: var(--mc-brand-soft); color: var(--mc-brand-text); }
+.mc-area-list li[aria-selected="true"] { font-weight: 600; }
+.mc-area-empty { color: var(--mc-text-2); cursor: default !important; }
