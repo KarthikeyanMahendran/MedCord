@@ -229,3 +229,24 @@ html[data-text="xlarge"] .mc-shell { height: calc(100vh / 1.3); }
 .mc-rail-btn.is-active .mc-rail-home { box-shadow: none; filter: drop-shadow(0 0 0 transparent); }
 .mc-rail-btn:hover .mc-rail-home svg { transform: scale(1.06); }
 .mc-rail-home svg { transition: transform .15s; }
+
+/* Phone bottom bar: short labels that always fit, a right-sized logo, nothing overlapping */
+.mc-rail-label .s { display: none; }
+@media (max-width: 900px) {
+  .mc-rail .mc-rail-btn.mc-rail-primary { min-width: 0; overflow: hidden; padding: 0 2px; }
+  .mc-rail .mc-rail-primary .mc-rail-label { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; line-height: 1.1; }
+  .mc-rail .mc-rail-primary .mc-rail-label .l { display: none; }
+  .mc-rail .mc-rail-primary .mc-rail-label .s { display: inline; }
+  .mc-rail .mc-rail-home img { width: 32px !important; height: 32px !important; }
+  .mc-rail .mc-rail-btn.mc-rail-primary .mc-rail-icon { width: 36px; height: 30px; }
+  .mc-rail.is-open .mc-rail-label .l { display: inline; } .mc-rail.is-open .mc-rail-label .s { display: none; }
+  .mc-rail.is-open .mc-rail-home img { width: 40px !important; height: 40px !important; }
+}
+
+/* Phone: page titles get the full width and their buttons sit below */
+@media (max-width: 640px) {
+  .mc-page-header { flex-direction: column; align-items: stretch; gap: 12px; }
+  .mc-page-header > .mc-row:last-child { width: 100%; flex-wrap: wrap; }
+  .mc-page-header > .mc-row:last-child > a, .mc-page-header > .mc-row:last-child > button { flex: 1 1 auto; }
+  .mc-page-header > .mc-row:last-child .mc-btn { width: 100%; justify-content: center; }
+}

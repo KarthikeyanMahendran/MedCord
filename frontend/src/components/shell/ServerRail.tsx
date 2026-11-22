@@ -11,14 +11,14 @@ import { useAuth } from '../../context/AuthContext'
 import { START_TOUR_EVENT } from '../tour/steps'
 import { useRealtime } from '../../context/RealtimeContext'
 
-function RailButton({ to, label, end, badge, hasUnread, isMention, primary, children }: {
-  to: string; label: string; end?: boolean; badge?: number; hasUnread?: boolean; isMention?: boolean; primary?: boolean; children: React.ReactNode
+function RailButton({ to, label, short, end, badge, hasUnread, isMention, primary, children }: {
+  to: string; label: string; short?: string; end?: boolean; badge?: number; hasUnread?: boolean; isMention?: boolean; primary?: boolean; children: React.ReactNode
 }) {
   return (
     <NavLink to={to} end={end} onClick={(e) => { e.currentTarget.blur() }} className={({ isActive }) => `mc-rail-btn ${isActive ? 'is-active' : ''} ${hasUnread ? 'has-unread' : ''} ${primary ? 'mc-rail-primary' : ''}`} aria-label={label} data-tip={label}>
       <span className="mc-rail-pill" aria-hidden="true" />
       {children}
-      <span className="mc-rail-label" aria-hidden="true">{label}</span>
+      <span className="mc-rail-label" aria-hidden="true"><span className="l">{label}</span><span className="s">{short ?? label}</span></span>
       {badge && badge > 0 ? (
         <span className={`mc-rail-badge ${isMention ? 'is-mention' : ''}`} aria-hidden="true">
           {isMention ? '@' : (badge > 99 ? '99+' : badge)}
@@ -69,7 +69,7 @@ export function ServerRail() {
       <RailButton to="/" end label="Home" primary><span className="mc-rail-icon mc-rail-home"><LogoMark size={44} /></span></RailButton>
 
       <RailGroup title="Patient care" />
-      <RailButton to="/cases" label="Patient cases" primary><span className="mc-rail-icon"><Stethoscope size={18} /></span></RailButton>
+      <RailButton to="/cases" label="Patient cases" short="Cases" primary><span className="mc-rail-icon"><Stethoscope size={18} /></span></RailButton>
       <RailButton to="/messages" label="Messages" primary badge={totalDmUnreads} hasUnread={totalDmUnreads > 0} isMention={totalDmUnreads > 0}>
         <span className="mc-rail-icon"><MessageCircle size={18} /></span>
       </RailButton>
@@ -87,7 +87,7 @@ export function ServerRail() {
       <RailButton to="/communities" end label="Find or create a community"><span className="mc-rail-icon mc-rail-add"><Plus size={18} /></span></RailButton>
 
       <RailGroup title="Help each other" />
-      <RailButton to="/fund" label="Care Fund" primary><span className="mc-rail-icon"><HeartHandshake size={17} /></span></RailButton>
+      <RailButton to="/fund" label="Care Fund" short="Fund" primary><span className="mc-rail-icon"><HeartHandshake size={17} /></span></RailButton>
       <RailButton to="/dispatch" label="Volunteer help"><span className="mc-rail-icon"><HandHeart size={17} /></span></RailButton>
       <RailButton to="/checkin" label="Daily check-in"><span className="mc-rail-icon"><HeartPulse size={17} /></span></RailButton>
 
